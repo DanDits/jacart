@@ -50,11 +50,13 @@ public class CartogramContext {
     private FftPlan2D grid_fluxx_init;
     private FftPlan2D grid_fluxy_init;
     private FftPlan2D plan_fwd;
+    private double absoluteTolerance;
 
     public void initPoly(int lx, int ly, int n_poly, int[] n_polycorn, Point[][] polycorn, Point[][] origcorn,
                          int[] polygonId) {
         this.lx = lx;
         this.ly = ly;
+        this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
         this.n_poly = n_poly;
         this.n_polycorn = n_polycorn;
         this.polycorn = polycorn;
@@ -63,7 +65,7 @@ public class CartogramContext {
     }
 
     public double ABS_TOL() {
-        return Math.min(lx, ly) * 1e-6;
+        return absoluteTolerance;
     }
 
     public double CONV_MAX_CHANGE() {

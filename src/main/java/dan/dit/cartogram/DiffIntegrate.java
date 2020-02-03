@@ -113,8 +113,8 @@ public class DiffIntegrate {
             diff_calcv(t);
             for (k = 0; k < lx * ly; k++) {
 
-                vx_intp[k] = integrate.interpol(proj[k].x, proj[k].y, gridvx, 'x');
-                vy_intp[k] = integrate.interpol(proj[k].x, proj[k].y, gridvy, 'y');
+                vx_intp[k] = integrate.interpolate(proj[k].x, proj[k].y, gridvx, 'x');
+                vy_intp[k] = integrate.interpolate(proj[k].x, proj[k].y, gridvy, 'y');
             }
 
             accept = false;
@@ -136,10 +136,10 @@ public class DiffIntegrate {
                     }
                 if (accept) {
                     for (k = 0; k < lx * ly; k++) {
-                        vx_intp_half[k] = integrate.interpol(proj[k].x + 0.5 * delta_t * vx_intp[k],
+                        vx_intp_half[k] = integrate.interpolate(proj[k].x + 0.5 * delta_t * vx_intp[k],
                                 proj[k].y + 0.5 * delta_t * vy_intp[k],
                                 gridvx, 'x');
-                        vy_intp_half[k] = integrate.interpol(proj[k].x + 0.5 * delta_t * vx_intp[k],
+                        vy_intp_half[k] = integrate.interpolate(proj[k].x + 0.5 * delta_t * vx_intp[k],
                                 proj[k].y + 0.5 * delta_t * vy_intp[k],
                                 gridvy, 'y');
                         mid[k].x = proj[k].x + vx_intp_half[k] * delta_t;

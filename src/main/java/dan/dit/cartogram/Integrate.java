@@ -14,67 +14,66 @@ public class Integrate {
     }
 
 
-    double interpol(double x, double y, double[] grid, char zero) {
-        double delta_x, delta_y, fx0y0, fx0y1, fx1y0, fx1y1, x0, x1, y0, y1;
+    double interpolate(double x, double y, double[] grid, char zero) {
         int lx = context.getLx();
         int ly = context.getLy();
-
-        if (x < 0 || x > lx || y < 0 || y > ly) {
-            printError("ERROR: coordinate outside bounding box in interpol().\n");
-            printError("x=%f, y=%f\n", x, y);
-            throw new IllegalArgumentException();
-        }
-        if (zero != 'x' && zero != 'y') {
-            printError("ERROR: unknown argument zero in interpol().\n");
-            throw new IllegalArgumentException();
-        }
-
-        x0 =
-                Math.max(0.0, Math.floor(x + 0.5) - 0.5);
-        x1 =
-                Math.min(lx, Math.floor(x + 0.5) + 0.5);
-        y0 = Math.max(0.0, Math.floor(y + 0.5) - 0.5);
-        y1 = Math.min(ly, Math.floor(y + 0.5) + 0.5);
-        delta_x = (x - x0) / (x1 - x0);
-        delta_y = (y - y0) / (y1 - y0);
-
-        if ((x < 0.5 && y < 0.5) || (x < 0.5 && zero == 'x') ||
-                (y < 0.5 && zero == 'y')) {
-            fx0y0 = 0.0;
-        } else {
-            fx0y0 = grid[(int) x0 * ly + (int) y0];
-        }
-        if ((x < 0.5 && y >= ly - 0.5) || (x < 0.5 && zero == 'x') ||
-                (y >= ly - 0.5 && zero == 'y')) {
-            fx0y1 = 0.0;
-        } else if (x >= 0.5 && y >= ly - 0.5 && zero == 'x') {
-            fx0y1 = grid[(int) x0 * ly + ly - 1];
-        } else {
-            fx0y1 = grid[(int) x0 * ly + (int) y1];
-        }
-
-        if ((x >= lx - 0.5 && y < 0.5) || (x >= lx - 0.5 && zero == 'x') ||
-                (y < 0.5 && zero == 'y')) {
-            fx1y0 = 0.0;
-        } else if (x >= lx - 0.5 && y >= 0.5 && zero == 'y') {
-            fx1y0 = grid[(lx - 1) * ly + (int) y0];
-        } else {
-            fx1y0 = grid[(int) x1 * ly + (int) y0];
-        }
-
-        if ((x >= lx - 0.5 && y >= ly - 0.5) || (x >= lx - 0.5 && zero == 'x') ||
-                (y >= ly - 0.5 && zero == 'y')) {
-            fx1y1 = 0.0;
-        } else if (x >= lx - 0.5 && y < ly - 0.5 && zero == 'y') {
-            fx1y1 = grid[(lx - 1) * ly + (int) y1];
-        } else if (x < lx - 0.5 && y >= ly - 0.5 && zero == 'x') {
-            fx1y1 = grid[(int) x1 * ly + ly - 1];
-        } else {
-            fx1y1 = grid[(int) x1 * ly + (int) y1];
-        }
+        final double x0 = Math.max(0.0, Math.floor(x + 0.5) - 0.5);
+        final double x1 = Math.min(lx, Math.floor(x + 0.5) + 0.5);
+        final double y0 = Math.max(0.0, Math.floor(y + 0.5) - 0.5);
+        final double y1 = Math.min(ly, Math.floor(y + 0.5) + 0.5);
+        final double delta_x = (x - x0) / (x1 - x0);
+        final double delta_y = (y - y0) / (y1 - y0);
+        final double fx0y0 = getFx0y0(x, y, grid, zero, ly, (int) x0, (int) y0);
+        final double fx0y1 = getFx0y1(x, y, grid, zero, ly, (int) x0, (int) y1);
+        final double fx1y0 = getFx1y0(x, y, grid, zero, lx, ly, (int) x1, (int) y0);
+        final double fx1y1 = getFx1y1(x, y, grid, zero, lx, ly, (int) x1, (int) y1);
 
         return (1 - delta_x) * (1 - delta_y) * fx0y0 + (1 - delta_x) * delta_y * fx0y1
                 + delta_x * (1 - delta_y) * fx1y0 + delta_x * delta_y * fx1y1;
+    }
+
+    private double getFx1y1(double x, double y, double[] grid, char zero, int lx, int ly, int x1, int y1) {
+        if ((x >= lx - 0.5 && y >= ly - 0.5) || (x >= lx - 0.5 && zero == 'x') ||
+                (y >= ly - 0.5 && zero == 'y')) {
+            return 0.0;
+        } else if (x >= lx - 0.5 && y < ly - 0.5 && zero == 'y') {
+            return grid[(lx - 1) * ly + y1];
+        } else if (x < lx - 0.5 && y >= ly - 0.5 && zero == 'x') {
+            return grid[x1 * ly + ly - 1];
+        } else {
+            return grid[x1 * ly + y1];
+        }
+    }
+
+    private double getFx1y0(double x, double y, double[] grid, char zero, int lx, int ly, int x1, int y0) {
+        if ((x >= lx - 0.5 && y < 0.5) || (x >= lx - 0.5 && zero == 'x') ||
+                (y < 0.5 && zero == 'y')) {
+            return 0.0;
+        } else if (x >= lx - 0.5 && y >= 0.5 && zero == 'y') {
+            return grid[(lx - 1) * ly + y0];
+        } else {
+            return grid[x1 * ly + y0];
+        }
+    }
+
+    private double getFx0y0(double x, double y, double[] grid, char zero, int ly, int x0, int y0) {
+        if ((x < 0.5 && y < 0.5) || (x < 0.5 && zero == 'x') ||
+                (y < 0.5 && zero == 'y')) {
+            return 0.0;
+        } else {
+            return grid[x0 * ly + y0];
+        }
+    }
+
+    private double getFx0y1(double x, double y, double[] grid, char zero, int ly, int x0, int y1) {
+        if ((x < 0.5 && y >= ly - 0.5) || (x < 0.5 && zero == 'x') ||
+                (y >= ly - 0.5 && zero == 'y')) {
+            return 0.0;
+        } else if (x >= 0.5 && y >= ly - 0.5 && zero == 'x') {
+            return grid[x0 * ly + ly - 1];
+        } else {
+            return grid[x0 * ly + y1];
+        }
     }
 
     private void printError(String text, Object... parameters) {
@@ -85,11 +84,11 @@ public class Integrate {
         int lx = context.getLx();
         int ly = context.getLy();
         double[] rho_ft = context.getRho_ft();
-        double di, dlx, dly;
+        double di;
         int i, j;
 
-        dlx = (double) lx;
-        dly = (double) ly;
+        final double dlx = lx;
+        final double dly = ly;
 
         for (i = 0; i < lx * ly; i++) {
             rho_ft[i] /= 4 * lx * ly;
@@ -162,11 +161,7 @@ public class Integrate {
 
         do {
             ffb_calcv(t);
-            // TODO candidate for parallelization
-            for (k = 0; k < lx * ly; k++) {
-                vx_intp[k] = interpol(proj[k].x, proj[k].y, gridvx, 'x');
-                vy_intp[k] = interpol(proj[k].x, proj[k].y, gridvy, 'y');
-            }
+            interpolateSpeed(vx_intp, vy_intp, lx, ly, proj, gridvx, gridvy);
             accept = false;
             while (!accept) {
                 // TODO candidate for parallelization
@@ -189,24 +184,7 @@ public class Integrate {
                     }
                 }
                 if (accept) {
-                    // TODO candidate for parallelization
-                    for (k = 0; k < lx * ly; k++) {
-                        vx_intp_half[k] = interpol(proj[k].x + 0.5 * delta_t * vx_intp[k],
-                                proj[k].y + 0.5 * delta_t * vy_intp[k],
-                                gridvx, 'x');
-                        vy_intp_half[k] = interpol(proj[k].x + 0.5 * delta_t * vx_intp[k],
-                                proj[k].y + 0.5 * delta_t * vy_intp[k],
-                                gridvy, 'y');
-                        mid[k].x = proj[k].x + vx_intp_half[k] * delta_t;
-                        mid[k].y = proj[k].y + vy_intp_half[k] * delta_t;
-
-                        if ((mid[k].x - eul[k].x) * (mid[k].x - eul[k].x) +
-                                (mid[k].y - eul[k].y) * (mid[k].y - eul[k].y) > context.ABS_TOL() ||
-                                mid[k].x < 0.0 || mid[k].x > lx ||
-                                mid[k].y < 0.0 || mid[k].y > ly) {
-                            accept = false;
-                        }
-                    }
+                    accept = integrateAcceptedTimestep(delta_t, vx_intp, vx_intp_half, vy_intp, vy_intp_half, eul, mid, lx, ly, proj, gridvx, gridvy);
                 }
                 if (!accept) {
                     delta_t *= DEC_AFTER_NOT_ACC;
@@ -225,6 +203,36 @@ public class Integrate {
             delta_t *= INC_AFTER_ACC;
 
         } while (t < 1.0);
+    }
+
+    private boolean integrateAcceptedTimestep(double delta_t, double[] vx_intp, double[] vx_intp_half, double[] vy_intp, double[] vy_intp_half, Point[] eul, Point[] mid, int lx, int ly, Point[] proj, double[] gridvx, double[] gridvy) {
+        // TODO candidate for parallelization
+        for (int k = 0; k < lx * ly; k++) {
+            vx_intp_half[k] = interpolate(proj[k].x + 0.5 * delta_t * vx_intp[k],
+                    proj[k].y + 0.5 * delta_t * vy_intp[k],
+                    gridvx, 'x');
+            vy_intp_half[k] = interpolate(proj[k].x + 0.5 * delta_t * vx_intp[k],
+                    proj[k].y + 0.5 * delta_t * vy_intp[k],
+                    gridvy, 'y');
+            mid[k].x = proj[k].x + vx_intp_half[k] * delta_t;
+            mid[k].y = proj[k].y + vy_intp_half[k] * delta_t;
+
+            if ((mid[k].x - eul[k].x) * (mid[k].x - eul[k].x) +
+                    (mid[k].y - eul[k].y) * (mid[k].y - eul[k].y) > context.ABS_TOL() ||
+                    mid[k].x < 0.0 || mid[k].x > lx ||
+                    mid[k].y < 0.0 || mid[k].y > ly) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void interpolateSpeed(double[] vx_intp, double[] vy_intp, int lx, int ly, Point[] proj, double[] gridvx, double[] gridvy) {
+        int k;// TODO candidate for parallelization
+        for (k = 0; k < lx * ly; k++) {
+            vx_intp[k] = interpolate(proj[k].x, proj[k].y, gridvx, 'x');
+            vy_intp[k] = interpolate(proj[k].x, proj[k].y, gridvy, 'y');
+        }
     }
 
     void ffb_calcv(double t) {
