@@ -51,6 +51,7 @@ public class CartogramContext {
     private FftPlan2D grid_fluxy_init;
     private FftPlan2D plan_fwd;
     private double absoluteTolerance;
+    private double timeStep = 1e-2;
 
     public void initPoly(int lx, int ly, int n_poly, int[] n_polycorn, Point[][] polycorn, Point[][] origcorn,
                          int[] polygonId) {
@@ -321,5 +322,13 @@ public class CartogramContext {
 
     public void initRhoPlan() {
         rho = fftFactory.createDCT3_2D(lx, ly);
+    }
+
+    public double getTimeStep() {
+        return timeStep;
+    }
+
+    public void saveTimeStep(double lastTimeStep) {
+        this.timeStep = lastTimeStep;
     }
 }

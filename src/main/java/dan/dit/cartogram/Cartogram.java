@@ -161,10 +161,10 @@ public class Cartogram {
         for (i = 0; i < n_poly; i++) {
             for (j = 0; j < n_polycorn[i]; j++) {
                 cartcorn[i][j].x =
-                        integrate.interpolate(polycorn[i][j].x, polycorn[i][j].y, xdisp, 'x')
+                    Integrate.interpolateX(lx, ly, polycorn[i][j].x, polycorn[i][j].y, xdisp)
                                 + polycorn[i][j].x;
                 cartcorn[i][j].y =
-                        integrate.interpolate(polycorn[i][j].x, polycorn[i][j].y, ydisp, 'y')
+                    Integrate.interpolateY(lx, ly, polycorn[i][j].x, polycorn[i][j].y, ydisp)
                                 + polycorn[i][j].y;
             }
         }
@@ -173,8 +173,8 @@ public class Cartogram {
             for (i = 0; i < lx * ly; i++) {
                 x2 = proj2[i].x;
                 y2 = proj2[i].y;
-                proj2[i].x = integrate.interpolate(x2, y2, xdisp, 'x') + x2;
-                proj2[i].y = integrate.interpolate(x2, y2, ydisp, 'y') + y2;
+                proj2[i].x = Integrate.interpolateX(lx, ly, x2, y2, xdisp) + x2;
+                proj2[i].y = Integrate.interpolateY(lx, ly, x2, y2, ydisp) + y2;
             }
         }
     }
@@ -344,8 +344,8 @@ public class Cartogram {
 
         for (i = 0; i <= lx; i++) {
             for (j = 0; j <= ly; j++) {
-                projgrid[i][j].x = integrate.interpolate(i, j, xdisp, 'x') + i;
-                projgrid[i][j].y = integrate.interpolate(i, j, ydisp, 'y') + j;
+                projgrid[i][j].x = Integrate.interpolateX(lx, ly, i, j, xdisp) + i;
+                projgrid[i][j].y = Integrate.interpolateY(lx, ly, i, j, ydisp) + j;
             }
         }
 
