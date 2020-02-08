@@ -8,7 +8,7 @@ public class Polygon {
     private static final double AREA_THRESHOLD = 1e-12;
 
     public static void processMap(MapFeatureData mapData, CartogramContext context) {
-        remove_tiny_polygons(mapData, context);
+        remove_tiny_polygons_in_nonLSpace(mapData, context);
         make_region(mapData, context);
     }
 
@@ -67,14 +67,14 @@ public class Polygon {
     private static void make_region(MapFeatureData mapData, CartogramContext context) {
         context.initRegions(mapData.getRegions());
         context.initInverseRegionId();
-        context.initPolyInRegion();
+        context.initPolyInRegionAssumesPolygonIdAndRegionIdInv();
     }
 
 
 /*****************************************************************************/
     /********************* Function to remove tiny polygons. *********************/
 
-    public static void remove_tiny_polygons(MapFeatureData mapData, CartogramContext context) {
+    public static void remove_tiny_polygons_in_nonLSpace(MapFeatureData mapData, CartogramContext context) {
 
         /* Find out whether there are any tiny polygons. */
         int n_poly = context.getN_poly();
@@ -88,8 +88,10 @@ public class Polygon {
 
         boolean[] poly_has_tiny_area = new boolean[n_poly];
         for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
+            double current_area = Math.abs(polygon_area(n_polycorn[poly_indx], polycorn[poly_indx]));
+            printDebug(MessageFormat.format("Polygon (id= {0}) with {1} points has area {2,number,#.######E0}", context.getPolygonId()[poly_indx], n_polycorn[poly_indx], current_area));
             poly_has_tiny_area[poly_indx] =
-                    (Math.abs(polygon_area(n_polycorn[poly_indx], polycorn[poly_indx])) <
+                    (current_area <
                             AREA_THRESHOLD * (map_maxx - map_minx) * (map_maxy - map_miny));
         }
         int n_non_tiny_poly = 0;

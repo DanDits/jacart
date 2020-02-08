@@ -242,7 +242,7 @@ public class Integrate {
 
     init_gridv();
     t = 0.0;
-    delta_t = context.getTimeStep();
+    delta_t = 1E-2;
     iter = 0;
     int non_accepted_dts_count = 0;
     do {
@@ -265,11 +265,13 @@ public class Integrate {
               proj[k].y + 0.5 * delta_t * vy_intp[k] < 0.0 ||
               proj[k].y + 0.5 * delta_t * vy_intp[k] > ly) {
             accept = false;
+            printError("NOT ACCEPTED_A: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
             delta_t *= DEC_AFTER_NOT_ACC;
             break;
           }
         }
         if (accept) {
+          printError("ACCEPTED_A: {0}", delta_t);
           accept = integrateAcceptedTimestep(
               delta_t,
               vx_intp,
@@ -287,11 +289,12 @@ public class Integrate {
         }
         if (!accept) {
           non_accepted_dts_count++;
+          printError("NOT ACCEPTED_B: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
           delta_t *= DEC_AFTER_NOT_ACC;
         }
       }
 
-      if (iter % 5 == 0) {
+      if (iter % 1 == 0) {
         printError("iter = {0}, t = {1}, delta_t = {2}", iter, t, delta_t);
       }
       t += delta_t;
@@ -309,7 +312,6 @@ public class Integrate {
         t,
         delta_t,
         non_accepted_dts_count);
-    context.saveTimeStep(delta_t);
   }
 
   private static boolean integrateAcceptedTimestep(

@@ -39,16 +39,7 @@ public class Density {
         this.context = context;
     }
 
-    void transformMapToLSpace(MapFeatureData featureData, boolean inv) {
-        double latt_const, new_maxx, new_maxy, new_minx, new_miny;
-        int i, j;
-
-        int lx, ly;
-        double map_minx = featureData.getMap_minx();
-        double map_miny = featureData.getMap_miny();
-        double map_maxx = featureData.getMap_maxx();
-        double map_maxy = featureData.getMap_maxy();
-
+    void initPolycornAndPolygonId(MapFeatureData featureData) {
         List<Region> regions = featureData.getRegions();
         int n_poly = 0;
         for (Region region : regions) {
@@ -68,6 +59,18 @@ public class Density {
                 poly_counter++;
             }
         }
+        context.initPoly(n_poly, n_polycorn, polycorn, polygonId);
+    }
+
+    void transformMapToLSpace(MapFeatureData featureData, boolean inv) {
+        double latt_const, new_maxx, new_maxy, new_minx, new_miny;
+        int i, j;
+
+        int lx, ly;
+        double map_minx = featureData.getMap_minx();
+        double map_miny = featureData.getMap_miny();
+        double map_maxx = featureData.getMap_maxx();
+        double map_maxy = featureData.getMap_maxy();
 
         new_maxx = 0.5 * ((1.0 + PADDING) * map_maxx + (1.0 - PADDING) * map_minx);
         new_minx = 0.5 * ((1.0 - PADDING) * map_maxx + (1.0 + PADDING) * map_minx);
@@ -92,11 +95,15 @@ public class Density {
                 "Using a {0} x {1} lattice with bounding box\n\t({2} {3} {4} {5}).\n",
                 lx, ly, new_minx, new_miny, new_maxx, new_maxy);
 
-        for (i = 0; i < n_poly; i++)
+        int n_poly = context.getN_poly();
+        int[] n_polycorn = context.getN_polycorn();
+        Point[][] polycorn = context.getPolycorn();
+        for (i = 0; i < n_poly; i++) {
             for (j = 0; j < n_polycorn[i]; j++) {
                 polycorn[i][j].x = (polycorn[i][j].x - new_minx) / latt_const;
                 polycorn[i][j].y = (polycorn[i][j].y - new_miny) / latt_const;
             }
+        }
 
         Point[][] origcorn = null;
         if (inv) {
@@ -111,7 +118,8 @@ public class Density {
             }
         }
 
-        context.initPoly(lx, ly, n_poly, n_polycorn, polycorn, origcorn, polygonId);
+        context.initMapGrid(lx, ly);
+        context.initOriginalPolygon(origcorn);
     }
 
     private void printError(String s, Object... parameters) {
@@ -155,8 +163,9 @@ public class Density {
         int i, id, j;
         boolean eps = config.isEps();
 
-        transformMapToLSpace(featureData, config.isInv());
+        initPolycornAndPolygonId(featureData);
         Polygon.processMap(featureData, context);
+        transformMapToLSpace(featureData, config.isInv());
         context.initArea();
 
         int n_reg = context.getN_reg();

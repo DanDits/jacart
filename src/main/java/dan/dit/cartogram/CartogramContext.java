@@ -51,18 +51,23 @@ public class CartogramContext {
     private FftPlan2D grid_fluxy_init;
     private FftPlan2D plan_fwd;
     private double absoluteTolerance;
-    private double timeStep = 1e-2;
 
-    public void initPoly(int lx, int ly, int n_poly, int[] n_polycorn, Point[][] polycorn, Point[][] origcorn,
+    public void initPoly(int n_poly, int[] n_polycorn, Point[][] polycorn,
                          int[] polygonId) {
-        this.lx = lx;
-        this.ly = ly;
-        this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
         this.n_poly = n_poly;
         this.n_polycorn = n_polycorn;
         this.polycorn = polycorn;
-        this.origcorn = origcorn;
         this.polygonId = polygonId;
+    }
+
+    public void initOriginalPolygon(Point[][] origcorn) {
+        this.origcorn = origcorn;
+    }
+
+    public void initMapGrid(int lx, int ly) {
+        this.lx = lx;
+        this.ly = ly;
+        this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
     }
 
     public double ABS_TOL() {
@@ -220,7 +225,7 @@ public class CartogramContext {
         }
     }
 
-    public void initPolyInRegion() {
+    public void initPolyInRegionAssumesPolygonIdAndRegionIdInv() {
         n_polyinreg = new int[n_reg];
         polyinreg = new int[n_reg][];
         last_id = polygonId[0];
@@ -324,11 +329,4 @@ public class CartogramContext {
         rho = fftFactory.createDCT3_2D(lx, ly);
     }
 
-    public double getTimeStep() {
-        return timeStep;
-    }
-
-    public void saveTimeStep(double lastTimeStep) {
-        this.timeStep = lastTimeStep;
-    }
 }
