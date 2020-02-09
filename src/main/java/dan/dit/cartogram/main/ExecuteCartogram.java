@@ -19,6 +19,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.locationtech.jts.geom.PrecisionModel.FLOATING;
@@ -27,7 +28,12 @@ public class ExecuteCartogram {
 
     public static void main(String[] args) throws IOException {
 
-        InputStream geoJsonResource = ExecuteCartogram.class.getResourceAsStream("sample_usa_geo.json");
+        InputStream geoJsonResource = ExecuteCartogram.class.getResourceAsStream("reordered_geo.json");
+        if (args.length > 1 && args[0].equals("-s")) {
+            FileOutputStream outpFile = new FileOutputStream(args[1]);
+            new GeoJsonIO().reWriteDataInIdOrder(geoJsonResource, outpFile);
+            return;
+        }
         InputStream dataResource = ExecuteCartogram.class.getResourceAsStream("sample_usa_data.csv");
         FileOutputStream epsOut = new FileOutputStream(new File("/home/daniel/cartogram/java/src/main/resources/dan/dit/cartogram/main/image.eps"));
 
@@ -40,16 +46,15 @@ public class ExecuteCartogram {
         ReferencedEnvelope bounds = geo.getBounds();
         int regionIdColumnIndex = data.getNames().indexOf("Region.Id");
         int regionDataColumnIndex = data.getNames().indexOf("Region.Data");
-        List<Region> regions = data.getData().stream()
-                .map(csvValues -> {
-                    Integer regionId = (Integer) csvValues[regionIdColumnIndex];
-                    Map.Entry<Double, Point[][]> areaAndGeo = getGeoForRegion(geo, regionId);
-                    return new Region(
-                            regionId,
-                            (Double) csvValues[regionDataColumnIndex],
-                            areaAndGeo.getValue());
-                })
-                .collect(Collectors.toList());
+        List<Region> regions = createRegions(geo, id -> {
+            for (int i = 0; i < data.getData().size(); i++) {
+                Object[] csvValues = data.getData().get(i);
+                if (csvValues[regionIdColumnIndex] == id) {
+                    return (Double) csvValues[regionDataColumnIndex];
+                }
+            }
+            throw new IllegalStateException("Did not find value for region " + id);
+        });
         double[] targetAreaPerRegion = new double[regions.size()];
         for (int i = 0; i < regions.size(); i++) {
             Region region = regions.get(i);
@@ -62,9 +67,8 @@ public class ExecuteCartogram {
                 bounds.getMaxY(),
                 regions,
                 targetAreaPerRegion);
-        CartogramContext context = new Cartogram().calculate(mapFeatureData,
-                (cxt) ->
-                {
+        CartogramContext context = new Cartogram()
+                .calculate(mapFeatureData, cxt -> {
                 });
         new EpsWriter().ps_figure(
                 epsOut,
@@ -124,28 +128,34 @@ public class ExecuteCartogram {
         return new Polygon(new LinearRing(coords, precision, 0), precision, 0);
     }
 
-    private static Map.Entry<Double, Point[][]> getGeoForRegion(FeatureCollection<SimpleFeatureType, SimpleFeature> geo, Integer regionId) {
+
+    private static List<Region> createRegions(FeatureCollection<SimpleFeatureType, SimpleFeature> geo,
+                                              Function<Integer, Double> valueProvider) {
         FeatureIterator<SimpleFeature> iterator = geo.features();
+        List<Region> regions = new ArrayList<>();
         while (iterator.hasNext()) {
             SimpleFeature feature = iterator.next();
             Object value = feature.getProperties("cartogram_id").iterator().next().getValue();
-            if (regionId.equals(Integer.parseInt(value.toString()))) {
-                Object geometry = feature.getDefaultGeometry();
-                if (geometry instanceof Polygon) {
-                    Point[][] points = new Point[1][];
-                    points[0] = convertPolygon((Polygon) geometry);
-                    return Map.entry(((Polygon) geometry).getArea(), points);
-                } else if (geometry instanceof MultiPolygon) {
-                    MultiPolygon multiPolygon = (MultiPolygon) geometry;
-                    Point[][] points = new Point[multiPolygon.getNumGeometries()][];
-                    for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
-                        points[i] = convertPolygon((Polygon) multiPolygon.getGeometryN(i));
-                    }
-                    return Map.entry(((MultiPolygon) geometry).getArea(), points);
+            int regionId = Integer.parseInt(value.toString());
+            Object geometry = feature.getDefaultGeometry();
+            if (geometry instanceof Polygon) {
+                Point[][] points = new Point[1][];
+                points[0] = convertPolygon((Polygon) geometry);
+                regions.add(new Region(regionId,
+                        valueProvider.apply(regionId),
+                        points));
+            } else if (geometry instanceof MultiPolygon) {
+                MultiPolygon multiPolygon = (MultiPolygon) geometry;
+                Point[][] points = new Point[multiPolygon.getNumGeometries()][];
+                for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
+                    points[i] = convertPolygon((Polygon) multiPolygon.getGeometryN(i));
                 }
+                regions.add(new Region(regionId,
+                        valueProvider.apply(regionId),
+                        points));
             }
         }
-        throw new IllegalStateException("No feature found for id " + regionId);
+        return regions;
     }
 
     private static Point[] convertPolygon(Polygon polygon) {

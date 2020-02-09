@@ -40,7 +40,7 @@ Region.Id:Integer,Region.Data:Double,Region.Name:String
 39,9,South Carolina
 40,3,South Dakota
 41,11,Tennessee
-42,38,Texas
+42,200,Texas
 43,6,Utah
 44,3,Vermont
 45,13,Virginia

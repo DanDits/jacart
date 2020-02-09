@@ -87,9 +87,10 @@ public class Polygon {
         double map_miny = mapData.getMap_miny();
 
         boolean[] poly_has_tiny_area = new boolean[n_poly];
+        printDebug("Amount of polygons: " + n_poly + " and amount of regions: " + context.getN_reg());
         for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
             double current_area = Math.abs(polygon_area(n_polycorn[poly_indx], polycorn[poly_indx]));
-            printDebug(MessageFormat.format("Polygon (id= {0}) with {1} points has area {2,number,#.######E0}", context.getPolygonId()[poly_indx], n_polycorn[poly_indx], current_area));
+            printDebug(MessageFormat.format("Polygon {3} (id= {0}) with {1} points has area {2,number,#.######E0}", context.getPolygonId()[poly_indx], n_polycorn[poly_indx], current_area, poly_indx));
             poly_has_tiny_area[poly_indx] =
                     (current_area <
                             AREA_THRESHOLD * (map_maxx - map_minx) * (map_maxy - map_miny));
