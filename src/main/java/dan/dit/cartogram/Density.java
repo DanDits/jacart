@@ -6,6 +6,9 @@ import dan.dit.cartogram.dft.FftPlanFactory;
 import java.text.MessageFormat;
 import java.util.List;
 
+import static dan.dit.cartogram.Integrate.displayDoubleArray;
+import static dan.dit.cartogram.Integrate.displayIntArray;
+
 public class Density {
     /**
      * Defines a threshold for the resulting cartogram areas: The maximum error of each region
@@ -199,6 +202,7 @@ public class Density {
                         MessageFormat.format("ERROR: No target area for region {0}", region_id[i]));
             }
         }
+        displayDoubleArray("target_area", target_area);
 
         int na_ctr = 0;
         double tmp_tot_target_area = 0.0;
@@ -220,6 +224,8 @@ public class Density {
             }
             tot_init_area += init_area[i];
         }
+        System.out.println("Total init area= " + tot_init_area);
+        displayDoubleArray("init_area", init_area);
 
         for (i = 0; i < n_reg; i++) {
             for (j = 0; j < n_polyinreg[i]; j++) {
@@ -227,6 +233,7 @@ public class Density {
                         polycorn[polyinreg[i][j]]);
             }
         }
+        displayDoubleArray("region perimeter", region_perimeter);
         int first_region = 1;
         double total_NA_ratio = 0;
 
@@ -315,10 +322,12 @@ public class Density {
                 }
             }
         }
+        displayDoubleArray("target_area ___!___", target_area);
 
         for (i = 0; i < n_reg; i++) {
             dens[i] = target_area[i] / init_area[i];
         }
+        displayDoubleArray("dens", dens);
 
         for (i = 0, tot_target_area = 0.0; i < n_reg; i++) {
             tot_target_area += target_area[i];
@@ -332,19 +341,25 @@ public class Density {
         int[][] xyhalfshift2reg = context.getXyHalfShift2Reg();
         double[] rho_init = context.getRho_init();
         double[] rho_ft = context.getRho_ft();
-        for (i = 0; i < lx; i++)
+        for (i = 0; i < lx; i++) {
             for (j = 0; j < ly; j++) {
                 if (xyhalfshift2reg[i][j] == -1)
                     rho_init[i * ly + j] = avg_dens;
                 else
                     rho_init[i * ly + j] = dens[xyhalfshift2reg[i][j]];
             }
+        }
+        displayIntArray("xyhalfshift2reg[0]", xyhalfshift2reg[0]);
+        displayDoubleArray("(beforeblur) rho_init", rho_init);
+        displayDoubleArray("(beforeblur) rho_ft", rho_ft);
 
         context.initFwdPlan(lx, ly);
 
         gaussian_blur(tot_init_area, avg_dens);
 
         context.getPlan_fwd().execute();
+        displayDoubleArray("(afterblur) rho_init", rho_init);
+        displayDoubleArray("(afterblur) rho_ft", rho_ft);
 
         return false;
     }
@@ -419,6 +434,7 @@ public class Density {
                 xyhalfshift2reg[i][j] = -1;
             }
         }
+        displayIntArray("xyhalfshift2reg[0] before init", xyhalfshift2reg[0]);
 
         for (i = 0; i < n_reg; i++) {
             for (j = 0; j < n_polyinreg[i]; j++) {
@@ -427,6 +443,7 @@ public class Density {
                         xyhalfshift2reg);
             }
         }
+        displayIntArray("xyhalfshift2reg[0]", xyhalfshift2reg[0]);
     }
 
     void gaussian_blur(double tot_init_area, double avg_dens) {

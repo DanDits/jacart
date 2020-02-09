@@ -1,5 +1,9 @@
 package dan.dit.cartogram.dft;
 
+import java.util.Arrays;
+
+import static dan.dit.cartogram.Integrate.displayDoubleArray;
+
 /**
  * For computing FFTs we have quite a range of possibilities:
  * A) https://sites.google.com/site/piotrwendykier/software/jtransforms
@@ -16,6 +20,16 @@ package dan.dit.cartogram.dft;
  */
 public class FftPlanFactory {
 
+    public static void main(String[] args) {
+
+        double[] test = new double[16];
+        Arrays.fill(test, 1.);
+        displayDoubleArray("test (before)", test);
+        var plan_bwd = new FftPlanFactory().createDCT3_2D(4, 4, test, test);
+        plan_bwd.execute();
+        displayDoubleArray("test (after)", test);
+    }
+
     /* REDFT10:
      * real-even-discrete-fourier-transform  type2 DCT-II aka "the" fast discrete-cosine-transform (DCT)
      * Defined by Y_k = 2 SUM_{j=0}^{n-1}X_j\cos[\pi j(k+1/2)/n]
@@ -29,9 +43,11 @@ public class FftPlanFactory {
         if (inputData.length != outputData.length) {
             throw new IllegalArgumentException("Input and output buffers must have identical length");
         }
-        System.arraycopy(inputData, 0, outputData, 0, inputData.length);
         return new FftPlan2D(width, height, inputData, outputData, DCT::transform);
     }
+
+    // TODO my DFT 2d is dividing by 4 for 4x4 and by 64 for 512x512
+    // TODO rho_init should be identical, rho_ft should be sum 13060.375509 and start with 13052.077, 55.368057, -26.447481
 
     /* REDFT01:
      * real-even-discrete-fourier-transform type3 DCT-III aka a fast-cosine-transform

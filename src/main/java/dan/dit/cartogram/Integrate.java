@@ -3,6 +3,8 @@ package dan.dit.cartogram;
 import dan.dit.cartogram.dft.FftPlan2D;
 
 import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Integrate {
@@ -172,6 +174,7 @@ public class Integrate {
     double di;
     int i, j;
 
+    displayDoubleArray("rho_ft", rho_ft);
     int rho_ft_initial = 4 * lx * ly;
     for (i = 0; i < lx * ly; i++) {
       rho_ft[i] /= rho_ft_initial;
@@ -203,8 +206,27 @@ public class Integrate {
     for (i = 0; i < lx; i++)
       grid_fluxy_init[i * ly + ly - 1] = 0.0;
 
+
+    displayDoubleArray("rho_ft", rho_ft);
+    displayDoubleArray("grid_fluxx_init before plan execution", grid_fluxy_init);
     grid_fluxx_init_plan.execute();
     grid_fluxy_init_plan.execute();
+  }
+
+  public static void displayIntArray(String text, int[] data) {
+    System.out.print(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
+    System.out.println(Arrays.stream(data)
+            .limit(10L)
+            .mapToObj(Integer::toString)
+            .collect(Collectors.joining(", ")));
+  }
+
+  public static void displayDoubleArray(String text, double[] data) {
+    System.out.print(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
+    System.out.println(Arrays.stream(data)
+            .limit(10L)
+            .mapToObj(Double::toString)
+            .collect(Collectors.joining(", ")));
   }
 
   void ffb_integrate() {
@@ -347,17 +369,19 @@ public class Integrate {
           mid[k].x = proj[k].x + vx_intp_half[k] * delta_t;
           mid[k].y = proj[k].y + vy_intp_half[k] * delta_t;
 
-          if ((mid[k].x - eul[k].x) * (mid[k].x - eul[k].x) +
-              (mid[k].y - eul[k].y) * (mid[k].y - eul[k].y) > absTol ||
-              mid[k].x < 0.0 || mid[k].x > lx ||
-              mid[k].y < 0.0 || mid[k].y > ly) {
-            return false;
-          }
-          return true;
+          double midX = mid[k].x;
+          double midY = mid[k].y;
+          double midEulDiffX = midX - eul[k].x;
+          double midEulDiffY = midY - eul[k].y;
+          boolean withinTolerance = !(midEulDiffX * midEulDiffX +
+                  midEulDiffY * midEulDiffY > absTol);
+          boolean inBoundX = !(midX < 0.0) && !(midX > lx);
+          boolean inBoundY = !(midY < 0.0) && !(midY > ly);
+          return withinTolerance && inBoundX && inBoundY;
         });
   }
 
-  private void interpolateSpeed(
+  private static void interpolateSpeed(
       double[] vx_intp,
       double[] vy_intp,
       int lx,
