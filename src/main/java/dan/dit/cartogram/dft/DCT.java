@@ -55,6 +55,9 @@ public final class DCT {
             double temp = i * Math.PI / (len * 2);
             vector[i] = real[i] * Math.cos(temp) + vector[i] * Math.sin(temp);
         }
+        for (int i = 0; i < len; i++) {
+            vector[i] *= 2;
+        }
     }
 
 
@@ -87,6 +90,9 @@ public final class DCT {
         }
         if (len % 2 == 1)
             vector[len - 1] = real[halfLen];
+        for (int i = 0; i < len; i++) {
+            vector[i] *= 2;
+        }
     }
 
 }

@@ -22,12 +22,32 @@ public class FftPlanFactory {
 
     public static void main(String[] args) {
 
-        double[] test = new double[16];
-        Arrays.fill(test, 1.);
-        displayDoubleArray("test (before)", test);
-        var plan_bwd = new FftPlanFactory().createDCT3_2D(4, 4, test, test);
-        plan_bwd.execute();
-        displayDoubleArray("test (after)", test);
+        System.out.println("DCT3_2D:");
+
+        for (int i = 2; i <= 1024; i*=2) {
+            double[] test = new double[i * i];
+            double[] target = new double[i * i];
+            Arrays.fill(test, 1.);
+            displayDoubleArray(i + " test (before)", test);
+            var plan_bwd = new FftPlanFactory().createDCT3_2D(i, i, test, target);
+            plan_bwd.execute();
+            displayDoubleArray(i + " target (after)", target);
+            System.out.println("");
+        }
+
+
+        System.out.println("DCT2_2D:");
+
+        for (int i = 2; i <= 1024; i*=2) {
+            double[] test = new double[i * i];
+            double[] target = new double[i * i];
+            Arrays.fill(test, 1.);
+            displayDoubleArray(i + " test (before)", test);
+            var plan_bwd = new FftPlanFactory().createDCT2_2D(i, i, test, target);
+            plan_bwd.execute();
+            displayDoubleArray(i + " target (after)", target);
+            System.out.println("");
+        }
     }
 
     /* REDFT10:
