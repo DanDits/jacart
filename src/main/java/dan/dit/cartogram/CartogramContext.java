@@ -3,9 +3,9 @@ package dan.dit.cartogram;
 import dan.dit.cartogram.dft.FftPlan2D;
 import dan.dit.cartogram.dft.FftPlanFactory;
 
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Map;
 
 /**
  * For now this holds all previously global variables with the goal to better encapsulate, group and separate them
@@ -29,7 +29,7 @@ public class CartogramContext {
     private int[][] polyinreg;
     private double[] target_area;
     private int[] region_id;
-    private int[] region_id_inv;
+    private Map<Integer, Integer> region_id_inv; // using a map instead of an array to support large ids and sparse ids and non positive ids
     private boolean[] region_na;
     private double[] region_perimeter;
 
@@ -193,14 +193,14 @@ public class CartogramContext {
     }
 
     public void initInverseRegionId() {
-        int max_id = IntStream.of(polygonId)
-                .max()
-                .orElseThrow();
-        region_id_inv = new int[max_id + 1];
-        Arrays.fill(region_id_inv, -1);
+        region_id_inv = new HashMap<>(polygonId.length);
         for (int i = 0; i < region_id.length; i++) {
-            region_id_inv[region_id[i]] = i;
+            region_id_inv.put(region_id[i], i);
         }
+    }
+
+    private int regionIdToIndex(int id) {
+        return region_id_inv.getOrDefault(id, -1);
     }
 
     public void initPolyInRegionAssumesPolygonIdAndRegionIdInv() {
@@ -211,10 +211,10 @@ public class CartogramContext {
         double polygonCount = polycorn.length;
         for (int j = 0; j < polygonCount; j++) {
             if (polygonId[j] != -99999) {
-                n_polyinreg[region_id_inv[polygonId[j]]]++;
+                n_polyinreg[regionIdToIndex(polygonId[j])]++;
                 last_id = polygonId[j];
             } else {
-                n_polyinreg[region_id_inv[last_id]]++;
+                n_polyinreg[regionIdToIndex(last_id)]++;
             }
         }
         for (int j = 0; j < n_reg; j++) {
@@ -226,12 +226,14 @@ public class CartogramContext {
         last_id = polygonId[0];
         for (int j = 0; j < polygonCount; j++) {
             if (polygonId[j] != -99999) {
-                polyinreg[region_id_inv[polygonId[j]]]
-                        [n_polyinreg[region_id_inv[polygonId[j]]]++] = j;
+                int regionIndex = regionIdToIndex(polygonId[j]);
+                polyinreg[regionIndex]
+                        [n_polyinreg[regionIndex]++] = j;
                 last_id = polygonId[j];
             } else {
-                polyinreg[region_id_inv[last_id]]
-                        [n_polyinreg[region_id_inv[last_id]]++] = j;
+                int regionIndex = regionIdToIndex(last_id);
+                polyinreg[regionIndex]
+                        [n_polyinreg[regionIndex]++] = j;
             }
         }
 

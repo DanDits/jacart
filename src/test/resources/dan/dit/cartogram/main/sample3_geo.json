@@ -1,0 +1,6 @@
+{"type":"FeatureCollection",  "bbox": [
+    -1,
+    -2,
+    2,
+    1.5
+  ],"crs":{"type":"name","properties":{"name":"CRS:84"}},"features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-0.5,1],[0.5,1],[0.5,-1],[-0.5,-1],[-0.5,1]]]},"properties":{"cartogram_id": "13"},"id":"0"},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[0.5,1],[1.5,1],[1.5,-1],[0.5,-1],[0.5,1]]]},"properties":{"cartogram_id": "-13"},"id":"1"},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-0.25,-1],[0.75,-1],[0.75,-1.5],[-0.25,-1.5],[-0.25,-1]]]},"properties":{"cartogram_id": "505055005"},"id":"2"}]}

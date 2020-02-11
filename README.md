@@ -16,3 +16,4 @@ TODOs:
 - Write tests and support edge cases (e.g. no or negative value for a region, skipping of small parts of a multi geometry, simplification of a geometry to reduce chance for self intersections,...)
 - Deploy on MavenCentral 
 - Analyse and compare with C implementation in regards to execution speed, memory usage and usability
+- When neighbored polygons share a border but share no corner point then the topology is not/can not be retained (sample3). Maybe automatically create artificial intermediate corner points on the segment for that (sample4).

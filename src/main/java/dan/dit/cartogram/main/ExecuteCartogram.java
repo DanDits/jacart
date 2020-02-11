@@ -49,7 +49,7 @@ public class ExecuteCartogram {
         List<Region> regions = createRegions(geo, id -> {
             for (int i = 0; i < data.getData().size(); i++) {
                 Object[] csvValues = data.getData().get(i);
-                if (csvValues[regionIdColumnIndex] == id) {
+                if (csvValues[regionIdColumnIndex].equals(id)) {
                     return (Double) csvValues[regionDataColumnIndex];
                 }
             }
@@ -79,13 +79,13 @@ public class ExecuteCartogram {
                 context.getCartcorn(),
                 context.getProj(),
                 true);
-        outputPolycornToFile(context, "/home/daniel/cartogram/test/transformed.json");
+        outputPolycornToFile(context.getCartcorn(), "/home/daniel/cartogram/test/transformed.json");
     }
 
-    private static void outputPolycornToFile(CartogramContext context, String path) throws IOException {
+    private static void outputPolycornToFile(Point[][] polygons, String path) throws IOException {
         DefaultFeatureCollection resultAsGeo = new DefaultFeatureCollection();
         int dummy_id = 0;
-        for (Point[] points : context.getCartcorn()) {
+        for (Point[] points : polygons) {
             List<Point[]> allPoints = new ArrayList<>();
             allPoints.add(points);
             SimpleFeature feature = createFeature(dummy_id, allPoints);
