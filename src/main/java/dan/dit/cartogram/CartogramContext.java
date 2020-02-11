@@ -22,7 +22,6 @@ public class CartogramContext {
 
     private Point[] proj;
     private Point[] proj2;
-    private int n_poly;
     private int[] n_polycorn;
     private Point[][] polycorn;
     private int[] polygonId;
@@ -49,7 +48,6 @@ public class CartogramContext {
 
     public void initPoly(int n_poly, int[] n_polycorn, Point[][] polycorn,
                          int[] polygonId) {
-        this.n_poly = n_poly;
         this.n_polycorn = n_polycorn;
         this.polycorn = polycorn;
         this.polygonId = polygonId;
@@ -79,10 +77,6 @@ public class CartogramContext {
 
     public FftPlan2D getRho() {
         return rho;
-    }
-
-    public int getN_poly() {
-        return n_poly;
     }
 
     public int[] getN_polycorn() {
@@ -129,8 +123,9 @@ public class CartogramContext {
     }
 
     public Point[][] initCartcorn() {
-        cartcorn = new Point[n_poly][];
-        for (int i = 0; i < n_poly; i++) {
+        int polygonCount = polycorn.length;
+        cartcorn = new Point[polygonCount][];
+        for (int i = 0; i < polygonCount; i++) {
             cartcorn[i] = new Point[n_polycorn[i]];
             for (int j = 0; j < n_polycorn[i]; j++) {
                 cartcorn[i][j] = new Point(Double.NaN, Double.NaN);
@@ -213,7 +208,8 @@ public class CartogramContext {
         polyinreg = new int[n_reg][];
         int last_id = polygonId[0];
         int[] n_polyinreg = new int[n_reg];
-        for (int j = 0; j < n_poly; j++) {
+        double polygonCount = polycorn.length;
+        for (int j = 0; j < polygonCount; j++) {
             if (polygonId[j] != -99999) {
                 n_polyinreg[region_id_inv[polygonId[j]]]++;
                 last_id = polygonId[j];
@@ -228,7 +224,7 @@ public class CartogramContext {
             n_polyinreg[j] = 0;
         }
         last_id = polygonId[0];
-        for (int j = 0; j < n_poly; j++) {
+        for (int j = 0; j < polygonCount; j++) {
             if (polygonId[j] != -99999) {
                 polyinreg[region_id_inv[polygonId[j]]]
                         [n_polyinreg[region_id_inv[polygonId[j]]]++] = j;
@@ -242,7 +238,7 @@ public class CartogramContext {
     }
 
     public void overridePolygons(int n_non_tiny_poly, Point[][] non_tiny_polycorn, int[] n_non_tiny_polycorn, int[] non_tiny_polygon_id) {
-        n_poly = n_non_tiny_poly;
+        int n_poly = n_non_tiny_poly;
         polygonId = new int[n_poly];
         n_polycorn = new int[n_poly];
         for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {

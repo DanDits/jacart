@@ -71,16 +71,11 @@ public class Polygon {
         printDebug("Amount of regions: " + context.getRegionId().length);
     }
 
-
-/*****************************************************************************/
-    /********************* Function to remove tiny polygons. *********************/
-
     public static void remove_tiny_polygons_in_nonLSpace(MapFeatureData mapData, CartogramContext context) {
 
-        /* Find out whether there are any tiny polygons. */
-        int n_poly = context.getN_poly();
         int[] n_polycorn = context.getN_polycorn();
         Point[][] polycorn = context.getPolycorn();
+        int n_poly = polycorn.length;
 
         double map_maxx = mapData.getMap_maxx();
         double map_maxy = mapData.getMap_maxy();
@@ -107,9 +102,6 @@ public class Polygon {
         }
         if (n_non_tiny_poly < n_poly) {
             printDebug("Removing tiny polygons.\n");
-
-            /* If there are tiny polygons, we replace the original polygons by the   */
-            /* subset of non-tiny polygons.                                          */
 
             int[] n_non_tiny_polycorn = new int[n_non_tiny_poly];
             int[] non_tiny_polygon_id = new int[n_non_tiny_poly];
@@ -139,8 +131,6 @@ public class Polygon {
                 }
             }
 
-            /* Copy the non-tiny polygons to the variables used by the original      */
-            /* polygons.                                                             */
             context.overridePolygons(n_non_tiny_poly, non_tiny_polycorn, n_non_tiny_polycorn, non_tiny_polygon_id);
         }
     }

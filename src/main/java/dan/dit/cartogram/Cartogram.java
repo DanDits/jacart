@@ -114,10 +114,9 @@ public class Cartogram {
         return context;
     }
 
-    private void scalePolygonsToMatchInitialTotalArea(double sqrt, int lx, int ly, Point[][] cartcorn) {
-        int n_poly = context.getN_poly();
+    private void scalePolygonsToMatchInitialTotalArea(double correction_factor, int lx, int ly, Point[][] cartcorn) {
+        int n_poly = cartcorn.length;
         int[] n_polycorn = context.getN_polycorn();
-        double correction_factor = sqrt;
         printDebug("correction_factor = {0}", correction_factor);
         for (int i = 0; i < n_poly; i++) {
             for (int j = 0; j < n_polycorn[i]; j++) {
@@ -151,9 +150,9 @@ public class Cartogram {
             }
         }
 
-        int n_poly = context.getN_poly();
         int[] n_polycorn = context.getN_polycorn();
         Point[][] polycorn = context.getPolycorn();
+        int n_poly = polycorn.length;
         Point[] proj2 = context.getProj2();
         Point[][] cartcorn = context.getCartcorn();
 

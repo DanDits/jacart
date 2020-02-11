@@ -98,9 +98,9 @@ public class Density {
                 "Using a {0} x {1} lattice with bounding box\n\t({2} {3} {4} {5}).\n",
                 lx, ly, new_minx, new_miny, new_maxx, new_maxy);
 
-        int n_poly = context.getN_poly();
         int[] n_polycorn = context.getN_polycorn();
         Point[][] polycorn = context.getPolycorn();
+        int n_poly = polycorn.length;
         for (i = 0; i < n_poly; i++) {
             for (j = 0; j < n_polycorn[i]; j++) {
                 polycorn[i][j].x = (polycorn[i][j].x - new_minx) / latt_const;
@@ -369,9 +369,9 @@ public class Density {
         double[] dens, tmp_area;
         int i, j;
 
-        int n_poly = context.getN_poly();
         int[] n_polycorn = context.getN_polycorn();
         Point[][] polycorn = context.getPolycorn();
+        int n_poly = polycorn.length;
         Point[][] cartcorn = context.getCartcorn();
         double[] rho_init = context.getRho_init();
         int lx = context.getLx();
