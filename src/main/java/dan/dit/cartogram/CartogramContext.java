@@ -14,7 +14,6 @@ import java.util.stream.IntStream;
  */
 public class CartogramContext {
     private final FftPlanFactory fftFactory = new FftPlanFactory();
-    // related to density
     private int lx;
     private int ly;
     private double[] rho_ft;
@@ -28,9 +27,6 @@ public class CartogramContext {
     private Point[][] polycorn;
     private int[] polygonId;
 
-    private Point[][] origcorn; // original parsed (and rescaled) polygon
-    private int n_reg; // amount of regions
-    private int[] n_polyinreg; // the amount of polygons within a region
     private int[][] polyinreg;
     private int last_id;
     private double[] target_area;
@@ -58,10 +54,6 @@ public class CartogramContext {
         this.n_polycorn = n_polycorn;
         this.polycorn = polycorn;
         this.polygonId = polygonId;
-    }
-
-    public void initOriginalPolygon(Point[][] origcorn) {
-        this.origcorn = origcorn;
     }
 
     public void initMapGrid(int lx, int ly) {
@@ -165,11 +157,7 @@ public class CartogramContext {
     }
 
     public int getN_reg() {
-        return n_reg;
-    }
-
-    public int[] getN_polyinreg() {
-        return n_polyinreg;
+        return polyinreg.length;
     }
 
     public int[][] getPolyinreg() {
@@ -202,12 +190,12 @@ public class CartogramContext {
     }
 
     public void initRegions(List<Region> regions) {
-        this.n_reg = regions.size();
+        int regionsCount = regions.size();
         region_id = regions.stream()
                 .mapToInt(Region::getId)
                 .toArray();
-        region_na = new boolean[n_reg];
-        region_perimeter = new double[n_reg];
+        region_na = new boolean[regionsCount];
+        region_perimeter = new double[regionsCount];
     }
 
     public int[] getRegionId() {
@@ -220,15 +208,16 @@ public class CartogramContext {
                 .orElseThrow();
         region_id_inv = new int[max_id + 1];
         Arrays.fill(region_id_inv, -1);
-        for (int i = 0; i < n_reg; i++) {
+        for (int i = 0; i < region_id.length; i++) {
             region_id_inv[region_id[i]] = i;
         }
     }
 
     public void initPolyInRegionAssumesPolygonIdAndRegionIdInv() {
-        n_polyinreg = new int[n_reg];
+        int n_reg = region_id.length;
         polyinreg = new int[n_reg][];
         last_id = polygonId[0];
+        int[] n_polyinreg = new int[n_reg];
         for (int j = 0; j < n_poly; j++) {
             if (polygonId[j] != -99999) {
                 n_polyinreg[region_id_inv[polygonId[j]]]++;
@@ -278,6 +267,7 @@ public class CartogramContext {
     }
 
     public void initArea() {
+        int n_reg = polyinreg.length;
         cartogramArea = new double[n_reg];
         areaError = new double[n_reg];
         target_area = new double[n_reg];

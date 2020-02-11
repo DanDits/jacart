@@ -74,7 +74,6 @@ public class ExecuteCartogram {
                 epsOut,
                 context.getLx(),
                 context.getLy(),
-                context.getN_reg(),
                 context.getPolyinreg(),
                 context.getRegionNa(),
                 context.getCartcorn(),

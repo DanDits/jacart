@@ -7,7 +7,7 @@ import java.util.Locale;
 public class EpsWriter {
     public static final int GRAT_LINES = 64;
 
-    public void ps_figure(OutputStream out, int lx, int ly, int n_reg, int[][] polyinreg, boolean[] region_na, Point[][] corn, Point[] prj, boolean plotGraticule) throws FileNotFoundException {
+    public void ps_figure(OutputStream out, int lx, int ly, int[][] polyinreg, boolean[] region_na, Point[][] corn, Point[] prj, boolean plotGraticule) throws FileNotFoundException {
 
         Locale.setDefault(Locale.US); // required for writig EPS correctly for now
         PrintWriter printWriter = new PrintWriter(out);
@@ -25,7 +25,7 @@ public class EpsWriter {
         printWriter.println("/SRGB {setrgbcolor} def");
 
         printWriter.println("0.7 SLW");
-        for (int i = 0; i < n_reg; i++) {
+        for (int i = 0; i < polyinreg.length; i++) {
             printWriter.println("n");
             for (int j = 0; j < polyinreg[i].length; j++) {
                 printWriter.println(MessageFormat.format("{0} {1} m",

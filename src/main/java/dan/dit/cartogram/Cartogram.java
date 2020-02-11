@@ -60,7 +60,6 @@ public class Cartogram {
                 epsOut,
                 context.getLx(),
                 context.getLy(),
-                context.getN_reg(),
                 context.getPolyinreg(),
                 context.getRegionNa(),
                 context.getCartcorn(),
@@ -185,19 +184,18 @@ public class Cartogram {
         int i, j;
 
         int[] n_polycorn = context.getN_polycorn();
-        int n_reg = context.getN_reg();
-        int[] n_polyinreg = context.getN_polyinreg();
         int[][] polyinreg = context.getPolyinreg();
+        int n_reg = polyinreg.length;
         double[] target_area = context.getTarget_area();
         for (i = 0; i < n_reg; i++) {
             // if all polygons in a region were tiny they will be removed and thus it will be impossible for
             // the cartogram area to reach the target area (e.g.: Washington D.C.)
             // or we could also remove the region and ignore it completely
-            if (n_polyinreg[i] > 0) {
+            int[] polyI = polyinreg[i];
+            if (polyI.length > 0) {
                 cart_area[i] = 0.0;
-                for (j = 0; j < n_polyinreg[i]; j++) {
-                    cart_area[i] += Polygon.polygon_area(n_polycorn[polyinreg[i][j]],
-                            corn[polyinreg[i][j]]);
+                for (j = 0; j < polyI.length; j++) {
+                    cart_area[i] += Polygon.polygon_area(n_polycorn[polyI[j]], corn[polyI[j]]);
                 }
             } else {
                 cart_area[i] = -1.0;
