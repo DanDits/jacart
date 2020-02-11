@@ -80,6 +80,7 @@ public class ExecuteCartogram {
                 context.getCartcorn(),
                 context.getProj(),
                 true);
+        outputPolycornToFile(context, "/home/daniel/cartogram/test/transformed.json");
     }
 
     private static void outputPolycornToFile(CartogramContext context, String path) throws IOException {
@@ -90,6 +91,7 @@ public class ExecuteCartogram {
             allPoints.add(points);
             SimpleFeature feature = createFeature(dummy_id, allPoints);
             resultAsGeo.add(feature);
+            dummy_id++;
         }
         new GeoJsonIO().exportData(
                 resultAsGeo,

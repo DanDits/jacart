@@ -15,7 +15,8 @@ public class ExecuteCartogramTest {
     @DisplayName("Creating cartogram")
     @ParameterizedTest(name = "processing \"{0}\" with \"{1}\" must match \"{2}\"")
     @CsvSource({
-            "sample1_geo.json, sample1_data.csv, result1.eps"})
+            "sample1_geo.json, sample1_data.csv, result1.eps",
+            "sample1_geo.json, sample2_data.csv, result2.eps"})
     public void createCartogramAndWriteToEps(String geoJsonResource, String dataResource, String epsInResource) throws IOException {
         var epsOut = new ByteArrayOutputStream();
         StringBuilder textBuilder = new StringBuilder();

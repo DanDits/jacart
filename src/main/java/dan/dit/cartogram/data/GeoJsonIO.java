@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * For visualization, simplification and detecting of self intersections of GeoJson FeatureCollections
+ * https://mapshaper.org/ is a great tool!
+ */
 public class GeoJsonIO {
 
     public FeatureCollection<SimpleFeatureType, SimpleFeature> importData(InputStream resource) throws IOException {
