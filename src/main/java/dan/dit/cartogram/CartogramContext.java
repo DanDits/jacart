@@ -28,7 +28,6 @@ public class CartogramContext {
     private int[] polygonId;
 
     private int[][] polyinreg;
-    private int last_id;
     private double[] target_area;
     private int[] region_id;
     private int[] region_id_inv;
@@ -156,10 +155,6 @@ public class CartogramContext {
         return proj2;
     }
 
-    public int getN_reg() {
-        return polyinreg.length;
-    }
-
     public int[][] getPolyinreg() {
         return polyinreg;
     }
@@ -216,7 +211,7 @@ public class CartogramContext {
     public void initPolyInRegionAssumesPolygonIdAndRegionIdInv() {
         int n_reg = region_id.length;
         polyinreg = new int[n_reg][];
-        last_id = polygonId[0];
+        int last_id = polygonId[0];
         int[] n_polyinreg = new int[n_reg];
         for (int j = 0; j < n_poly; j++) {
             if (polygonId[j] != -99999) {
