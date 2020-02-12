@@ -38,7 +38,7 @@ public class Integrate {
     final double fx1y1 = getFx1y1_X(x, y, grid, lx, ly, (int) x1, (int) y1);
 
     return (1 - delta_x) * (1 - delta_y) * fx0y0 + (1 - delta_x) * delta_y * fx0y1
-        + delta_x * (1 - delta_y) * fx1y0 + delta_x * delta_y * fx1y1;
+      + delta_x * (1 - delta_y) * fx1y0 + delta_x * delta_y * fx1y1;
   }
 
   static double interpolateY(int lx, int ly, double x, double y, double[] grid) {
@@ -56,17 +56,17 @@ public class Integrate {
     final double fx1y1 = getFx1y1_Y(x, y, grid, lx, ly, (int) x1, (int) y1);
 
     return (1 - delta_x) * (1 - delta_y) * fx0y0 + (1 - delta_x) * delta_y * fx0y1
-        + delta_x * (1 - delta_y) * fx1y0 + delta_x * delta_y * fx1y1;
+      + delta_x * (1 - delta_y) * fx1y0 + delta_x * delta_y * fx1y1;
   }
 
   private static double getFx1y1_X(
-      double x,
-      double y,
-      double[] grid,
-      int lx,
-      int ly,
-      int x1,
-      int y1) {
+    double x,
+    double y,
+    double[] grid,
+    int lx,
+    int ly,
+    int x1,
+    int y1) {
     double lxM = lx - 0.5;
     double lyM = ly - 0.5;
     if (x >= lxM) {
@@ -79,13 +79,13 @@ public class Integrate {
   }
 
   private static double getFx1y0_X(
-      double x,
-      double y,
-      double[] grid,
-      int lx,
-      int ly,
-      int x1,
-      int y0) {
+    double x,
+    double y,
+    double[] grid,
+    int lx,
+    int ly,
+    int x1,
+    int y0) {
     if (x >= lx - 0.5) {
       return 0.0;
     } else {
@@ -112,13 +112,13 @@ public class Integrate {
   }
 
   private static double getFx1y1_Y(
-      double x,
-      double y,
-      double[] grid,
-      int lx,
-      int ly,
-      int x1,
-      int y1) {
+    double x,
+    double y,
+    double[] grid,
+    int lx,
+    int ly,
+    int x1,
+    int y1) {
     double lxM = lx - 0.5;
     double lyM = ly - 0.5;
     if (y >= lyM) {
@@ -131,13 +131,13 @@ public class Integrate {
   }
 
   private static double getFx1y0_Y(
-      double x,
-      double y,
-      double[] grid,
-      int lx,
-      int ly,
-      int x1,
-      int y0) {
+    double x,
+    double y,
+    double[] grid,
+    int lx,
+    int ly,
+    int x1,
+    int y0) {
     if (y < 0.5) {
       return 0.0;
     } else if (x >= lx - 0.5) {
@@ -163,14 +163,11 @@ public class Integrate {
     }
   }
 
-  private static void printError(String text, Object... parameters) {
-    System.err.println(MessageFormat.format(text, parameters));
-  }
-
   void init_gridv() {
-    int lx = context.getLx();
-    int ly = context.getLy();
-    double[] rho_ft = context.getRho_ft();
+    MapGrid mapGrid = context.getMapGrid();
+    int lx = mapGrid.getLx();
+    int ly = mapGrid.getLy();
+    double[] rho_ft = mapGrid.getRho_ft();
     double di;
     int i, j;
 
@@ -180,18 +177,18 @@ public class Integrate {
       rho_ft[i] /= rho_ft_initial;
     }
 
-    FftPlan2D grid_fluxx_init_plan = context.getGrid_fluxx_init();
-    FftPlan2D grid_fluxy_init_plan = context.getGrid_fluxy_init();
+    FftPlan2D grid_fluxx_init_plan = mapGrid.getGrid_fluxx_init();
+    FftPlan2D grid_fluxy_init_plan = mapGrid.getGrid_fluxy_init();
     double[] grid_fluxx_init = grid_fluxx_init_plan.getOutputData();
     double[] grid_fluxy_init = grid_fluxy_init_plan.getOutputData();
     for (i = 0; i < lx - 1; i++) {
       di = i;
       for (j = 0; j < ly; j++)
         grid_fluxx_init[i * ly + j] =
-            -rho_ft[(i + 1) * ly + j] /
-                (Math.PI * ((di + 1) / (double) lx + (j / (di + 1))
-                    * (j / (double) ly)
-                    * ((double) lx / (double) ly)));
+          -rho_ft[(i + 1) * ly + j] /
+            (Math.PI * ((di + 1) / (double) lx + (j / (di + 1))
+              * (j / (double) ly)
+              * ((double) lx / (double) ly)));
     }
     for (j = 0; j < ly; j++)
       grid_fluxx_init[(lx - 1) * ly + j] = 0.0;
@@ -199,9 +196,9 @@ public class Integrate {
       di = i;
       for (j = 0; j < ly - 1; j++)
         grid_fluxy_init[i * ly + j] =
-            -rho_ft[i * ly + j + 1] /
-                (Math.PI * ((di / (j + 1)) * (di / (double) lx) * ((double) ly / (double) lx)
-                    + (j + 1) / (double) ly));
+          -rho_ft[i * ly + j + 1] /
+            (Math.PI * ((di / (j + 1)) * (di / (double) lx) * ((double) ly / (double) lx)
+              + (j + 1) / (double) ly));
     }
     for (i = 0; i < lx; i++)
       grid_fluxy_init[i * ly + ly - 1] = 0.0;
@@ -214,19 +211,19 @@ public class Integrate {
   }
 
   public static void displayIntArray(String text, int[] data) {
-    System.out.print(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
-    System.out.println(Arrays.stream(data)
-            .limit(10L)
-            .mapToObj(Integer::toString)
-            .collect(Collectors.joining(", ")));
+    Logging.debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
+    Logging.debug(Arrays.stream(data)
+      .limit(10L)
+      .mapToObj(Integer::toString)
+      .collect(Collectors.joining(", ")));
   }
 
   public static void displayDoubleArray(String text, double[] data) {
-    System.out.print(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
-    System.out.println(Arrays.stream(data)
-            .limit(10L)
-            .mapToObj(Double::toString)
-            .collect(Collectors.joining(", ")));
+    Logging.debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
+    Logging.debug(Arrays.stream(data)
+      .limit(10L)
+      .mapToObj(Double::toString)
+      .collect(Collectors.joining(", ")));
   }
 
   void ffb_integrate() {
@@ -236,12 +233,13 @@ public class Integrate {
     int iter, k;
     Point[] eul, mid;
 
-    int lx = context.getLx();
-    int ly = context.getLy();
-    Point[] proj = context.getProj();
+    MapGrid mapGrid = context.getMapGrid();
+    int lx = mapGrid.getLx();
+    int ly = mapGrid.getLy();
+    Point[] proj = mapGrid.getProj();
 
-    double[] gridvx = context.getGridvx().getOutputData();
-    double[] gridvy = context.getGridvy().getOutputData();
+    double[] gridvx = mapGrid.getGridvx().getOutputData();
+    double[] gridvy = mapGrid.getGridvy().getOutputData();
 
     eul = new Point[lx * ly];
     for (int i = 0; i < eul.length; i++) {
@@ -280,41 +278,41 @@ public class Integrate {
         accept = true;
         for (k = 0; k < lx * ly; k++) {
           if (proj[k].x + 0.5 * delta_t * vx_intp[k] < 0.0 ||
-              proj[k].x + 0.5 * delta_t * vx_intp[k] > lx ||
-              proj[k].y + 0.5 * delta_t * vy_intp[k] < 0.0 ||
-              proj[k].y + 0.5 * delta_t * vy_intp[k] > ly) {
+            proj[k].x + 0.5 * delta_t * vx_intp[k] > lx ||
+            proj[k].y + 0.5 * delta_t * vy_intp[k] < 0.0 ||
+            proj[k].y + 0.5 * delta_t * vy_intp[k] > ly) {
             accept = false;
-            printError("NOT ACCEPTED_A: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
+            Logging.error("NOT ACCEPTED_A: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
             delta_t *= DEC_AFTER_NOT_ACC;
             break;
           }
         }
         if (accept) {
-          printError("ACCEPTED_A: {0}", delta_t);
+          Logging.error("ACCEPTED_A: {0}", delta_t);
           accept = integrateAcceptedTimestep(
-              delta_t,
-              vx_intp,
-              vx_intp_half,
-              vy_intp,
-              vy_intp_half,
-              eul,
-              mid,
-              lx,
-              ly,
-              proj,
-              gridvx,
-              gridvy,
-              context.ABS_TOL());
+            delta_t,
+            vx_intp,
+            vx_intp_half,
+            vy_intp,
+            vy_intp_half,
+            eul,
+            mid,
+            lx,
+            ly,
+            proj,
+            gridvx,
+            gridvy,
+            mapGrid.getAbsoluteTolerance());
         }
         if (!accept) {
           non_accepted_dts_count++;
-          printError("NOT ACCEPTED_B: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
+          Logging.error("NOT ACCEPTED_B: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
           delta_t *= DEC_AFTER_NOT_ACC;
         }
       }
 
       if (iter % 1 == 0) {
-        printError("iter = {0}, t = {1}, delta_t = {2}", iter, t, delta_t);
+        Logging.error("iter = {0}, t = {1}, delta_t = {2}", iter, t, delta_t);
       }
       t += delta_t;
       iter++;
@@ -325,92 +323,92 @@ public class Integrate {
       delta_t *= INC_AFTER_ACC;
 
     } while (t < 1.0);
-    printError(
-        "Finished integration with iter = {0}, t = {1}, delta_t = {2}, non accepted dts= {3}",
-        iter,
-        t,
-        delta_t,
-        non_accepted_dts_count);
+    Logging.error(
+      "Finished integration with iter = {0}, t = {1}, delta_t = {2}, non accepted dts= {3}",
+      iter,
+      t,
+      delta_t,
+      non_accepted_dts_count);
   }
 
   private static boolean integrateAcceptedTimestep(
-      double delta_t,
-      double[] vx_intp,
-      double[] vx_intp_half,
-      double[] vy_intp,
-      double[] vy_intp_half,
-      Point[] eul,
-      Point[] mid,
-      int lx,
-      int ly,
-      Point[] proj,
-      double[] gridvx,
-      double[] gridvy,
-      double absTol) {
+    double delta_t,
+    double[] vx_intp,
+    double[] vx_intp_half,
+    double[] vy_intp,
+    double[] vy_intp_half,
+    Point[] eul,
+    Point[] mid,
+    int lx,
+    int ly,
+    Point[] proj,
+    double[] gridvx,
+    double[] gridvy,
+    double absTol) {
     // TODO candidate for parallelization
     return IntStream.range(0, lx * ly)
-        .parallel()
-        .allMatch(k -> {
-          vx_intp_half[k] = interpolateX(
-              lx,
-              ly,
-              proj[k].x + 0.5 * delta_t * vx_intp[k],
-              proj[k].y + 0.5 * delta_t * vy_intp[k],
-              gridvx);
-          vy_intp_half[k] = interpolateY(
-              lx,
-              ly,
-              proj[k].x + 0.5 * delta_t * vx_intp[k],
-              proj[k].y + 0.5 * delta_t * vy_intp[k],
-              gridvy);
-          mid[k].x = proj[k].x + vx_intp_half[k] * delta_t;
-          mid[k].y = proj[k].y + vy_intp_half[k] * delta_t;
+      .parallel()
+      .allMatch(k -> {
+        vx_intp_half[k] = interpolateX(
+          lx,
+          ly,
+          proj[k].x + 0.5 * delta_t * vx_intp[k],
+          proj[k].y + 0.5 * delta_t * vy_intp[k],
+          gridvx);
+        vy_intp_half[k] = interpolateY(
+          lx,
+          ly,
+          proj[k].x + 0.5 * delta_t * vx_intp[k],
+          proj[k].y + 0.5 * delta_t * vy_intp[k],
+          gridvy);
+        mid[k].x = proj[k].x + vx_intp_half[k] * delta_t;
+        mid[k].y = proj[k].y + vy_intp_half[k] * delta_t;
 
-          double midX = mid[k].x;
-          double midY = mid[k].y;
-          double midEulDiffX = midX - eul[k].x;
-          double midEulDiffY = midY - eul[k].y;
-          boolean withinTolerance = !(midEulDiffX * midEulDiffX +
-                  midEulDiffY * midEulDiffY > absTol);
-          boolean inBoundX = !(midX < 0.0) && !(midX > lx);
-          boolean inBoundY = !(midY < 0.0) && !(midY > ly);
-          return withinTolerance && inBoundX && inBoundY;
-        });
+        double midX = mid[k].x;
+        double midY = mid[k].y;
+        double midEulDiffX = midX - eul[k].x;
+        double midEulDiffY = midY - eul[k].y;
+        boolean withinTolerance = !(midEulDiffX * midEulDiffX +
+          midEulDiffY * midEulDiffY > absTol);
+        boolean inBoundX = !(midX < 0.0) && !(midX > lx);
+        boolean inBoundY = !(midY < 0.0) && !(midY > ly);
+        return withinTolerance && inBoundX && inBoundY;
+      });
   }
 
   private static void interpolateSpeed(
-      double[] vx_intp,
-      double[] vy_intp,
-      int lx,
-      int ly,
-      Point[] proj,
-      double[] gridvx,
-      double[] gridvy) {
+    double[] vx_intp,
+    double[] vy_intp,
+    int lx,
+    int ly,
+    Point[] proj,
+    double[] gridvx,
+    double[] gridvy) {
     IntStream.range(0, lx * ly)
-        .parallel()
-        .forEach(k -> {
-          vx_intp[k] = interpolateX(lx, ly, proj[k].x, proj[k].y, gridvx);
-          vy_intp[k] = interpolateY(lx, ly, proj[k].x, proj[k].y, gridvy);
-        });
+      .parallel()
+      .forEach(k -> {
+        vx_intp[k] = interpolateX(lx, ly, proj[k].x, proj[k].y, gridvx);
+        vy_intp[k] = interpolateY(lx, ly, proj[k].x, proj[k].y, gridvy);
+      });
   }
 
   void ffb_calcv(double t) {
-    int lx = context.getLx();
-    int ly = context.getLy();
-    double[] gridvx = context.getGridvx().getOutputData();
-    double[] gridvy = context.getGridvy().getOutputData();
-    double[] rho_ft = context.getRho_ft();
-    double[] rho_init = context.getRho_init();
-    double[] grid_fluxx_init = context.getGrid_fluxx_init().getOutputData();
-    double[] grid_fluxy_init = context.getGrid_fluxy_init().getOutputData();
+    MapGrid mapGrid = context.getMapGrid();
+    int lx = mapGrid.getLx();
+    int ly = mapGrid.getLy();
+    double[] gridvx = mapGrid.getGridvx().getOutputData();
+    double[] gridvy = mapGrid.getGridvy().getOutputData();
+    double[] rho_ft = mapGrid.getRho_ft();
+    double[] rho_init = mapGrid.getRho_init();
+    double[] grid_fluxx_init = mapGrid.getGrid_fluxx_init().getOutputData();
+    double[] grid_fluxy_init = mapGrid.getGrid_fluxy_init().getOutputData();
 
-    // TODO candidate for parallelization
     IntStream.range(0, lx * ly)
-        .parallel()
-        .forEach(k -> {
-          double rho = rho_ft[0] + (1.0 - t) * (rho_init[k] - rho_ft[0]);
-          gridvx[k] = -grid_fluxx_init[k] / rho;
-          gridvy[k] = -grid_fluxy_init[k] / rho;
-        });
+      .parallel()
+      .forEach(k -> {
+        double rho = rho_ft[0] + (1.0 - t) * (rho_init[k] - rho_ft[0]);
+        gridvx[k] = -grid_fluxx_init[k] / rho;
+        gridvy[k] = -grid_fluxy_init[k] / rho;
+      });
   }
 }

@@ -15,20 +15,20 @@ import java.io.OutputStream;
  */
 public class GeoJsonIO {
 
-    public FeatureCollection<SimpleFeatureType, SimpleFeature> importData(InputStream resource) throws IOException {
-        FeatureJSON featureJSON = new FeatureJSON();
-        FeatureCollection<SimpleFeatureType, SimpleFeature> featureCollection = featureJSON.readFeatureCollection(resource);
-        return featureCollection;
-    }
+  public FeatureCollection<SimpleFeatureType, SimpleFeature> importData(InputStream resource) throws IOException {
+    FeatureJSON featureJSON = new FeatureJSON();
+    FeatureCollection<SimpleFeatureType, SimpleFeature> featureCollection = featureJSON.readFeatureCollection(resource);
+    return featureCollection;
+  }
 
-    public void reWriteDataInIdOrder(InputStream resource, OutputStream outputResource) throws IOException {
-        FeatureJSON featureJSON = new FeatureJSON();
-        FeatureCollection<SimpleFeatureType, SimpleFeature> featureCollection = featureJSON.readFeatureCollection(resource);
-        featureJSON.writeFeatureCollection(featureCollection, outputResource);
-    }
+  public void reWriteDataInIdOrder(InputStream resource, OutputStream outputResource) throws IOException {
+    FeatureJSON featureJSON = new FeatureJSON();
+    FeatureCollection<SimpleFeatureType, SimpleFeature> featureCollection = featureJSON.readFeatureCollection(resource);
+    featureJSON.writeFeatureCollection(featureCollection, outputResource);
+  }
 
-    public void exportData(FeatureCollection<SimpleFeatureType, SimpleFeature> features, OutputStream resource) throws IOException {
-        FeatureJSON featureJSON = new FeatureJSON();
-        featureJSON.writeFeatureCollection(features, resource);
-    }
+  public void exportData(FeatureCollection<SimpleFeatureType, SimpleFeature> features, OutputStream resource) throws IOException {
+    FeatureJSON featureJSON = new FeatureJSON();
+    featureJSON.writeFeatureCollection(features, resource);
+  }
 }

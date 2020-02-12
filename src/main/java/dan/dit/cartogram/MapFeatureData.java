@@ -17,50 +17,50 @@ import java.util.List;
  */
 public class MapFeatureData {
 
-    /* BoundingBox parsed from the input data */
-    private final double map_minx;
-    private final double map_miny;
-    private final double map_maxx;
-    private final double map_maxy;
+  /* BoundingBox parsed from the input data */
+  private final double map_minx;
+  private final double map_miny;
+  private final double map_maxx;
+  private final double map_maxy;
 
-    private final double[] targetAreaPerRegion; // use -1.0 for invalid areas, use -2.0 for explicitly set not available value, see region_na
-    private final List<Region> regions;
+  private final double[] targetAreaPerRegion; // use -1.0 for invalid areas, use -2.0 for explicitly set not available value, see region_na
+  private final List<Region> regions;
 
-    /* The feature data describing a value belonging to each region that will define the target area
-     * for the region that consists of multiple polygons minus their holes */
+  /* The feature data describing a value belonging to each region that will define the target area
+   * for the region that consists of multiple polygons minus their holes */
 
-    public MapFeatureData(double map_minx, double map_miny, double map_maxx, double map_maxy,
-                          List<Region> regions,
-                          double[] targetAreaPerRegion) {
-        this.map_minx = map_minx;
-        this.map_miny = map_miny;
-        this.map_maxx = map_maxx;
-        this.map_maxy = map_maxy;
-        this.regions = regions;
-        this.targetAreaPerRegion = targetAreaPerRegion;
-    }
+  public MapFeatureData(double map_minx, double map_miny, double map_maxx, double map_maxy,
+                        List<Region> regions,
+                        double[] targetAreaPerRegion) {
+    this.map_minx = map_minx;
+    this.map_miny = map_miny;
+    this.map_maxx = map_maxx;
+    this.map_maxy = map_maxy;
+    this.regions = regions;
+    this.targetAreaPerRegion = targetAreaPerRegion;
+  }
 
-    public double getMap_minx() {
-        return map_minx;
-    }
+  public double getMap_minx() {
+    return map_minx;
+  }
 
-    public double getMap_miny() {
-        return map_miny;
-    }
+  public double getMap_miny() {
+    return map_miny;
+  }
 
-    public double getMap_maxx() {
-        return map_maxx;
-    }
+  public double getMap_maxx() {
+    return map_maxx;
+  }
 
-    public double getMap_maxy() {
-        return map_maxy;
-    }
+  public double getMap_maxy() {
+    return map_maxy;
+  }
 
-    public double[] getTargetAreaPerRegion() {
-        return targetAreaPerRegion;
-    }
+  public double[] getTargetAreaPerRegion() {
+    return targetAreaPerRegion;
+  }
 
-    public List<Region> getRegions() {
-        return regions;
-    }
+  public List<Region> getRegions() {
+    return regions;
+  }
 }

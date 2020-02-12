@@ -29,70 +29,70 @@ import java.util.Objects;
 
 public final class DCT {
 
-    /**
-     * Computes the unscaled DCT type II on the specified array in place.
-     * The array length must be a power of 2 or zero.
-     * <p>For the formula, see <a href="https://en.wikipedia.org/wiki/Discrete_cosine_transform#DCT-II">
-     * Wikipedia: Discrete cosine transform - DCT-II</a>.</p>
-     *
-     * @param vector the vector of numbers to transform
-     * @throws NullPointerException if the array is {@code null}
-     */
-    public static void transform(double[] vector) {
-        Objects.requireNonNull(vector);
-        int len = vector.length;
-        int halfLen = len / 2;
-        double[] real = new double[len];
-        for (int i = 0; i < halfLen; i++) {
-            real[i] = vector[i * 2];
-            real[len - 1 - i] = vector[i * 2 + 1];
-        }
-        if (len % 2 == 1)
-            real[halfLen] = vector[len - 1];
-        Arrays.fill(vector, 0.0);
-        Fft.transform(real, vector);
-        for (int i = 0; i < len; i++) {
-            double temp = i * Math.PI / (len * 2);
-            vector[i] = real[i] * Math.cos(temp) + vector[i] * Math.sin(temp);
-        }
-        for (int i = 0; i < len; i++) {
-            vector[i] *= 2;
-        }
+  /**
+   * Computes the unscaled DCT type II on the specified array in place.
+   * The array length must be a power of 2 or zero.
+   * <p>For the formula, see <a href="https://en.wikipedia.org/wiki/Discrete_cosine_transform#DCT-II">
+   * Wikipedia: Discrete cosine transform - DCT-II</a>.</p>
+   *
+   * @param vector the vector of numbers to transform
+   * @throws NullPointerException if the array is {@code null}
+   */
+  public static void transform(double[] vector) {
+    Objects.requireNonNull(vector);
+    int len = vector.length;
+    int halfLen = len / 2;
+    double[] real = new double[len];
+    for (int i = 0; i < halfLen; i++) {
+      real[i] = vector[i * 2];
+      real[len - 1 - i] = vector[i * 2 + 1];
     }
-
-
-    /**
-     * Computes the unscaled DCT type III on the specified array in place.
-     * The array length must be a power of 2 or zero.
-     * <p>For the formula, see <a href="https://en.wikipedia.org/wiki/Discrete_cosine_transform#DCT-III">
-     * Wikipedia: Discrete cosine transform - DCT-III</a>.</p>
-     *
-     * @param vector the vector of numbers to transform
-     * @throws NullPointerException if the array is {@code null}
-     */
-    public static void inverseTransform(double[] vector) {
-        Objects.requireNonNull(vector);
-        int len = vector.length;
-        if (len > 0)
-            vector[0] /= 2;
-        double[] real = new double[len];
-        for (int i = 0; i < len; i++) {
-            double temp = i * Math.PI / (len * 2);
-            real[i] = vector[i] * Math.cos(temp);
-            vector[i] *= -Math.sin(temp);
-        }
-        Fft.transform(real, vector);
-
-        int halfLen = len / 2;
-        for (int i = 0; i < halfLen; i++) {
-            vector[i * 2 + 0] = real[i];
-            vector[i * 2 + 1] = real[len - 1 - i];
-        }
-        if (len % 2 == 1)
-            vector[len - 1] = real[halfLen];
-        for (int i = 0; i < len; i++) {
-            vector[i] *= 2;
-        }
+    if (len % 2 == 1)
+      real[halfLen] = vector[len - 1];
+    Arrays.fill(vector, 0.0);
+    Fft.transform(real, vector);
+    for (int i = 0; i < len; i++) {
+      double temp = i * Math.PI / (len * 2);
+      vector[i] = real[i] * Math.cos(temp) + vector[i] * Math.sin(temp);
     }
+    for (int i = 0; i < len; i++) {
+      vector[i] *= 2;
+    }
+  }
+
+
+  /**
+   * Computes the unscaled DCT type III on the specified array in place.
+   * The array length must be a power of 2 or zero.
+   * <p>For the formula, see <a href="https://en.wikipedia.org/wiki/Discrete_cosine_transform#DCT-III">
+   * Wikipedia: Discrete cosine transform - DCT-III</a>.</p>
+   *
+   * @param vector the vector of numbers to transform
+   * @throws NullPointerException if the array is {@code null}
+   */
+  public static void inverseTransform(double[] vector) {
+    Objects.requireNonNull(vector);
+    int len = vector.length;
+    if (len > 0)
+      vector[0] /= 2;
+    double[] real = new double[len];
+    for (int i = 0; i < len; i++) {
+      double temp = i * Math.PI / (len * 2);
+      real[i] = vector[i] * Math.cos(temp);
+      vector[i] *= -Math.sin(temp);
+    }
+    Fft.transform(real, vector);
+
+    int halfLen = len / 2;
+    for (int i = 0; i < halfLen; i++) {
+      vector[i * 2 + 0] = real[i];
+      vector[i * 2 + 1] = real[len - 1 - i];
+    }
+    if (len % 2 == 1)
+      vector[len - 1] = real[halfLen];
+    for (int i = 0; i < len; i++) {
+      vector[i] *= 2;
+    }
+  }
 
 }
