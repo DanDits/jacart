@@ -62,13 +62,11 @@ public class Density {
                 poly_counter++;
             }
         }
-        context.initPoly(n_poly, n_polycorn, polycorn, polygonId);
+        context.initPoly(polycorn, polygonId);
     }
 
     void transformMapToLSpace(MapFeatureData featureData, boolean inv) {
         double latt_const, new_maxx, new_maxy, new_minx, new_miny;
-        int i, j;
-
         int lx, ly;
         double map_minx = featureData.getMap_minx();
         double map_miny = featureData.getMap_miny();
@@ -98,29 +96,13 @@ public class Density {
                 "Using a {0} x {1} lattice with bounding box\n\t({2} {3} {4} {5}).\n",
                 lx, ly, new_minx, new_miny, new_maxx, new_maxy);
 
-        int[] n_polycorn = context.getN_polycorn();
         Point[][] polycorn = context.getPolycorn();
-        int n_poly = polycorn.length;
-        for (i = 0; i < n_poly; i++) {
-            for (j = 0; j < n_polycorn[i]; j++) {
-                polycorn[i][j].x = (polycorn[i][j].x - new_minx) / latt_const;
-                polycorn[i][j].y = (polycorn[i][j].y - new_miny) / latt_const;
+        for (Point[] points : polycorn) {
+            for (Point point : points) {
+                point.x = (point.x - new_minx) / latt_const;
+                point.y = (point.y - new_miny) / latt_const;
             }
         }
-
-        Point[][] origcorn = null;
-        if (inv) {
-            origcorn = new Point[n_poly][];
-            for (i = 0; i < n_poly; i++) {
-                origcorn[i] = new Point[n_polycorn[i]];
-            }
-            for (i = 0; i < n_poly; i++) {
-                for (j = 0; j < n_polycorn[i]; j++) {
-                    origcorn[i][j] = polycorn[i][j].createCopy();
-                }
-            }
-        }
-
         context.initMapGrid(lx, ly);
     }
 
@@ -128,16 +110,13 @@ public class Density {
         System.err.println(MessageFormat.format(s, parameters));
     }
 
-    public static void set_inside_values_for_polygon(int region, int n_polycorn,
-                                                     Point[] polycorn, int[][] inside) {
+    public static void set_inside_values_for_polygon(int region, Point[] polycorn, int[][] inside) {
         double poly_minx = polycorn[0].x;
-        int k, n;
-
-        for (k = 0; k < n_polycorn; k++) {
-            poly_minx = Math.min(poly_minx, polycorn[k].x);
+        int n_polycorn = polycorn.length;
+        for (Point point : polycorn) {
+            poly_minx = Math.min(poly_minx, point.x);
         }
-
-        for (k = 0, n = n_polycorn - 1; k < n_polycorn; n = k++) {
+        for (int k = 0, n = n_polycorn - 1; k < n_polycorn; n = k++) {
             set_inside_values_between_points(region, polycorn[k], polycorn[n],
                     poly_minx, inside);
         }
@@ -206,7 +185,6 @@ public class Density {
         int na_ctr = 0;
         double tmp_tot_target_area = 0.0;
         tot_init_area = 0.0;
-        int[] n_polycorn = context.getN_polycorn();
         int[][] polyinreg = context.getPolyinreg();
         Point[][] polycorn = context.getPolycorn();
         double[] region_perimeter = context.getRegionPerimeter();
@@ -218,8 +196,7 @@ public class Density {
                 tmp_tot_target_area += target_area[i];
             }
             for (j = 0; j < polyI.length; j++) {
-                init_area[i] += Polygon.polygon_area(n_polycorn[polyI[j]],
-                        polycorn[polyI[j]]);
+                init_area[i] += Polygon.polygon_area(polycorn[polyI[j]]);
             }
             tot_init_area += init_area[i];
         }
@@ -229,8 +206,7 @@ public class Density {
         for (i = 0; i < n_reg; i++) {
             int[] polyI = polyinreg[i];
             for (j = 0; j < polyI.length; j++) {
-                region_perimeter[i] += Polygon.polygon_perimeter(n_polycorn[polyI[j]],
-                        polycorn[polyI[j]]);
+                region_perimeter[i] += Polygon.polygon_perimeter(polycorn[polyI[j]]);
             }
         }
         displayDoubleArray("region perimeter", region_perimeter);
@@ -369,7 +345,6 @@ public class Density {
         double[] dens, tmp_area;
         int i, j;
 
-        int[] n_polycorn = context.getN_polycorn();
         Point[][] polycorn = context.getPolycorn();
         int n_poly = polycorn.length;
         Point[][] cartcorn = context.getCartcorn();
@@ -378,7 +353,7 @@ public class Density {
         int ly = context.getLy();
 
         for (i = 0; i < n_poly; i++) {
-            for (j = 0; j < n_polycorn[i]; j++) {
+            for (j = 0; j < polycorn[i].length; j++) {
                 polycorn[i][j] = cartcorn[i][j];
             }
         }
@@ -398,8 +373,7 @@ public class Density {
         for (i = 0; i < n_reg; i++) {
             int[] polyI = polyinreg[i];
             for (j = 0; j < polyI.length; j++) {
-                tmp_area[i] +=
-                        Polygon.polygon_area(n_polycorn[polyI[j]], polycorn[polyI[j]]);
+                tmp_area[i] += Polygon.polygon_area(polycorn[polyI[j]]);
             }
         }
         for (i = 0; i < n_reg; i++) dens[i] = target_area[i] / tmp_area[i];
@@ -425,7 +399,6 @@ public class Density {
 
         int lx = context.getLx();
         int ly = context.getLy();
-        int[] n_polycorn = context.getN_polycorn();
         Point[][] polycorn = context.getPolycorn();
         int[][] xyhalfshift2reg = context.getXyHalfShift2Reg();
         int[][] polyinreg = context.getPolyinreg();
@@ -441,7 +414,7 @@ public class Density {
             int[] polyI = polyinreg[i];
             for (j = 0; j < polyI.length; j++) {
                 poly = polyI[j];
-                set_inside_values_for_polygon(i, n_polycorn[poly], polycorn[poly],
+                set_inside_values_for_polygon(i, polycorn[poly],
                         xyhalfshift2reg);
             }
         }

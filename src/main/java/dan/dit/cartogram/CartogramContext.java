@@ -22,7 +22,6 @@ public class CartogramContext {
 
     private Point[] proj;
     private Point[] proj2;
-    private int[] n_polycorn;
     private Point[][] polycorn;
     private int[] polygonId;
 
@@ -45,10 +44,10 @@ public class CartogramContext {
     private FftPlan2D grid_fluxy_init;
     private FftPlan2D plan_fwd;
     private double absoluteTolerance;
+    private double convergenceMaxChangeThreshold;
 
-    public void initPoly(int n_poly, int[] n_polycorn, Point[][] polycorn,
+    public void initPoly(Point[][] polycorn,
                          int[] polygonId) {
-        this.n_polycorn = n_polycorn;
         this.polycorn = polycorn;
         this.polygonId = polygonId;
     }
@@ -57,6 +56,7 @@ public class CartogramContext {
         this.lx = lx;
         this.ly = ly;
         this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
+        this.convergenceMaxChangeThreshold = Math.min(lx, ly) * 1e-9;
     }
 
     public double ABS_TOL() {
@@ -64,7 +64,7 @@ public class CartogramContext {
     }
 
     public double CONV_MAX_CHANGE() {
-        return Math.min(lx, ly) * 1e-9;
+        return convergenceMaxChangeThreshold;
     }
 
     public int getLx() {
@@ -77,10 +77,6 @@ public class CartogramContext {
 
     public FftPlan2D getRho() {
         return rho;
-    }
-
-    public int[] getN_polycorn() {
-        return n_polycorn;
     }
 
     public Point[][] getPolycorn() {
@@ -126,8 +122,8 @@ public class CartogramContext {
         int polygonCount = polycorn.length;
         cartcorn = new Point[polygonCount][];
         for (int i = 0; i < polygonCount; i++) {
-            cartcorn[i] = new Point[n_polycorn[i]];
-            for (int j = 0; j < n_polycorn[i]; j++) {
+            cartcorn[i] = new Point[polycorn[i].length];
+            for (int j = 0; j < cartcorn[i].length; j++) {
                 cartcorn[i][j] = new Point(Double.NaN, Double.NaN);
             }
         }
@@ -242,7 +238,7 @@ public class CartogramContext {
     public void overridePolygons(int n_non_tiny_poly, Point[][] non_tiny_polycorn, int[] n_non_tiny_polycorn, int[] non_tiny_polygon_id) {
         int n_poly = n_non_tiny_poly;
         polygonId = new int[n_poly];
-        n_polycorn = new int[n_poly];
+        int[] n_polycorn = new int[n_poly];
         for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
             polygonId[poly_indx] = non_tiny_polygon_id[poly_indx];
             n_polycorn[poly_indx] = n_non_tiny_polycorn[poly_indx];

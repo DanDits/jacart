@@ -27,6 +27,12 @@ import static org.locationtech.jts.geom.PrecisionModel.FLOATING;
 public class ExecuteCartogram {
 
     public static void main(String[] args) throws IOException {
+        Point[][] examplePolygons = new Point[3][];
+        examplePolygons[0] = new Point[] {new Point(-0.5, 1), new Point(0.5, 1), new Point(0.5, -1), new Point(-0.5, -1), new Point(-0.5, 1)};
+        examplePolygons[1] = new Point[] {new Point(0.5, 1), new Point(1.5, 1), new Point(1.5, -1), new Point(0.5, -1), new Point(0.5, 1)};
+        examplePolygons[2] = new Point[] {new Point(-0.25, -1), new Point(0.75, -1), new Point(0.75, -1.5), new Point(-0.25, -1.5), new Point(-0.25, -1)};
+
+        outputPolycornToFile(examplePolygons, "/home/daniel/cartogram/test/example.json");
 
         InputStream geoJsonResource = ExecuteCartogram.class.getResourceAsStream("reordered_geo.json");
         if (args.length > 1 && args[0].equals("-s")) {

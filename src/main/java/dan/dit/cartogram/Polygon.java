@@ -12,43 +12,19 @@ public class Polygon {
         make_region(mapData, context);
     }
 
-    /*****************************************************************************/
-    /* Function to determine polygon area. This is needed to remove polygons     */
-    /* zero area and determine the average population.                            */
-    /* The problem in short is to find the area of a polygon whose vertices are  */
-    /* given. Recall Stokes' theorem in 3d for a vector field v:                 */
-    /* integral[around closed curve dA]v(x,y,z).ds =                             */
-    /*                                          integral[over area A]curl(v).dA. */
-    /* Now let v(x,y,z) = (0,Q(x,y),0) and dA = (0,0,dx*dy). Then                */
-    /* integral[around closed curve dA]Q(x,y)dy =                                */
-    /*                                         integral[over area A]dQ/dx*dx*dy. */
-    /* If Q = x:                                                                 */
-    /* A = integral[over area A]dx*dy = integral[around closed curve dA]x dy.    */
-    /* For every edge from (x[i],y[i]) to (x[i+1],y[i+1]) there is a             */
-    /* parametrization                                                           */
-    /* (x(t),y(t)) = ((1-t)x[i]+t*x[i+1],(1-t)y[i]+t*y[i+1]), 0<t<1              */
-    /* so that the path integral along this edge is                              */
-    /* int[from 0 to 1]{(1-t)x[i]+t*x[i+1]}(y[i+1]-y[i])dt =                     */
-    /*                                          0.5*(y[i+1]-y[i])*(x[i]+x[i+1]). */
-    /* Summing over all edges yields:                                            */
-    /* Area = 0.5*[(x[0]+x[1])(y[1]-y[0]) + (x[1]+x[2])(y[2]-y[1]) + ...         */
-    /*               ... + (x[n-1]+x[n])(y[n]-y[n-1]) + (x[n]+x[0])(y[0]-y[n])]. */
-    /* ArcGIS treats a clockwise direction as positive, so that there is an      */
-    /* additional minus sign.                                                    */
-    public static double polygon_area(int ncrns, Point[] polygon) {
+    public static double polygon_area(Point[] polygon) {
         double area = 0.0;
-        int i;
-
-        for (i = 0; i < ncrns - 1; i++) {
-            area -=
-                    0.5 * (polygon[i].x + polygon[i + 1].x) * (polygon[i + 1].y - polygon[i].y);
+        int pointCount = polygon.length;
+        for (int i = 0; i < pointCount - 1; i++) {
+            area -= 0.5 * (polygon[i].x + polygon[i + 1].x) * (polygon[i + 1].y - polygon[i].y);
         }
-        area -= 0.5 * (polygon[ncrns - 1].x + polygon[0].x) *
-                (polygon[0].y - polygon[ncrns - 1].y);
+        area -= 0.5 * (polygon[pointCount - 1].x + polygon[0].x) *
+                (polygon[0].y - polygon[pointCount - 1].y);
         return area;
     }
 
-    public static double polygon_perimeter(int ncrns, Point[] polygon) {
+    public static double polygon_perimeter(Point[] polygon) {
+        int ncrns = polygon.length;
         double perimeter = 0.0;
         for (int i = 0; i < ncrns - 1; i++) {
             perimeter += Math.sqrt((polygon[i + 1].x - polygon[i].x) * (polygon[i + 1].x - polygon[i].x) +
@@ -73,7 +49,6 @@ public class Polygon {
 
     public static void remove_tiny_polygons_in_nonLSpace(MapFeatureData mapData, CartogramContext context) {
 
-        int[] n_polycorn = context.getN_polycorn();
         Point[][] polycorn = context.getPolycorn();
         int n_poly = polycorn.length;
 
@@ -87,8 +62,8 @@ public class Polygon {
         printDebug("Amount of polygons: " + n_poly);
         printDebug("Relative area threshold: " + relativeTinyAreaThreshold);
         for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
-            double current_area = Math.abs(polygon_area(n_polycorn[poly_indx], polycorn[poly_indx]));
-            printDebug(MessageFormat.format("Polygon {3} (id= {0}) with {1} points has area {2,number,#.######E0}", context.getPolygonId()[poly_indx], n_polycorn[poly_indx], current_area, poly_indx));
+            double current_area = Math.abs(polygon_area(polycorn[poly_indx]));
+            printDebug(MessageFormat.format("Polygon {3} (id= {0}) with {1} points has area {2,number,#.######E0}", context.getPolygonId()[poly_indx], polycorn[poly_indx].length, current_area, poly_indx));
             poly_has_tiny_area[poly_indx] =
                     (current_area <
                             relativeTinyAreaThreshold);
@@ -109,7 +84,7 @@ public class Polygon {
             int[] polygon_id = context.getPolygonId();
             for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
                 if (!poly_has_tiny_area[poly_indx]) {
-                    n_non_tiny_polycorn[n_non_tiny_poly] = n_polycorn[poly_indx];
+                    n_non_tiny_polycorn[n_non_tiny_poly] = polycorn[poly_indx].length;
                     non_tiny_polygon_id[n_non_tiny_poly] = polygon_id[poly_indx];
                     n_non_tiny_poly++;
                 }
@@ -122,7 +97,7 @@ public class Polygon {
             for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
                 if (!poly_has_tiny_area[poly_indx]) {
                     for (int corn_indx = 0;
-                         corn_indx < n_polycorn[poly_indx];
+                         corn_indx < polycorn[poly_indx].length;
                          corn_indx++) {
                         non_tiny_polycorn[n_non_tiny_poly][corn_indx]
                                 = polycorn[poly_indx][corn_indx].createCopy();

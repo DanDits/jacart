@@ -115,15 +115,11 @@ public class Cartogram {
     }
 
     private void scalePolygonsToMatchInitialTotalArea(double correction_factor, int lx, int ly, Point[][] cartcorn) {
-        int n_poly = cartcorn.length;
-        int[] n_polycorn = context.getN_polycorn();
         printDebug("correction_factor = {0}", correction_factor);
-        for (int i = 0; i < n_poly; i++) {
-            for (int j = 0; j < n_polycorn[i]; j++) {
-                cartcorn[i][j].x =
-                        correction_factor * (cartcorn[i][j].x - 0.5 * lx) + 0.5 * lx;
-                cartcorn[i][j].y =
-                        correction_factor * (cartcorn[i][j].y - 0.5 * ly) + 0.5 * ly;
+        for (Point[] cartI : cartcorn) {
+            for (Point point : cartI) {
+                point.x = correction_factor * (point.x - 0.5 * lx) + 0.5 * lx;
+                point.y = correction_factor * (point.y - 0.5 * ly) + 0.5 * ly;
             }
         }
     }
@@ -150,20 +146,21 @@ public class Cartogram {
             }
         }
 
-        int[] n_polycorn = context.getN_polycorn();
         Point[][] polycorn = context.getPolycorn();
         int n_poly = polycorn.length;
         Point[] proj2 = context.getProj2();
         Point[][] cartcorn = context.getCartcorn();
 
         for (i = 0; i < n_poly; i++) {
-            for (j = 0; j < n_polycorn[i]; j++) {
+            Point[] polyI = polycorn[i];
+            for (j = 0; j < polyI.length; j++) {
+                Point pointIJ = polyI[j];
                 cartcorn[i][j].x =
-                    Integrate.interpolateX(lx, ly, polycorn[i][j].x, polycorn[i][j].y, xdisp)
-                                + polycorn[i][j].x;
+                    Integrate.interpolateX(lx, ly, pointIJ.x, pointIJ.y, xdisp)
+                                + pointIJ.x;
                 cartcorn[i][j].y =
-                    Integrate.interpolateY(lx, ly, polycorn[i][j].x, polycorn[i][j].y, ydisp)
-                                + polycorn[i][j].y;
+                    Integrate.interpolateY(lx, ly, pointIJ.x, pointIJ.y, ydisp)
+                                + pointIJ.y;
             }
         }
         if (proj_graticule) {
@@ -182,7 +179,6 @@ public class Cartogram {
         double max, obj_area, sum_target_area;
         int i, j;
 
-        int[] n_polycorn = context.getN_polycorn();
         int[][] polyinreg = context.getPolyinreg();
         int n_reg = polyinreg.length;
         double[] target_area = context.getTarget_area();
@@ -194,7 +190,7 @@ public class Cartogram {
             if (polyI.length > 0) {
                 cart_area[i] = 0.0;
                 for (j = 0; j < polyI.length; j++) {
-                    cart_area[i] += Polygon.polygon_area(n_polycorn[polyI[j]], corn[polyI[j]]);
+                    cart_area[i] += Polygon.polygon_area(corn[polyI[j]]);
                 }
             } else {
                 cart_area[i] = -1.0;
@@ -380,7 +376,7 @@ public class Cartogram {
             }
         }
         for (i = 0; i < 4 * lx * ly; i++) {
-            Density.set_inside_values_for_polygon(i, 3, tri[i], xyhalfshift2tri);
+            Density.set_inside_values_for_polygon(i, tri[i], xyhalfshift2tri);
         }
 
         for (i = 0; i < lx; i++) {
