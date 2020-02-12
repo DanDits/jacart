@@ -40,7 +40,7 @@ public class Cartogram {
         }
         int lx = context.getLx();
         int ly = context.getLy();
-        Point[] proj = context.initProj();
+        Point[] proj = context.getProj();
         contextConsumer.accept(context);
         Point[][] cartcorn = context.initCartcorn();
         contextConsumer.accept(context);
@@ -70,9 +70,9 @@ public class Cartogram {
         double mae = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);
         printDebug("max. abs. area error: {0}", mae);
 
-        Point[] proj2 = context.initProj2();
         context.initIntegration();
         contextConsumer.accept(context);
+        Point[] proj2 = context.getProj2();
         while (mae > MAX_PERMITTED_AREA_ERROR) {
             density.fill_with_density2();
 
@@ -227,7 +227,6 @@ public class Cartogram {
         Point q = null;
         Point r = null;
 
-        int lx = context.getLx();
         int ly = context.getLy();
         switch (triid % 4) {
             case 0:

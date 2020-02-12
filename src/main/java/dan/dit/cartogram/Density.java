@@ -65,7 +65,7 @@ public class Density {
         context.initPoly(polycorn, polygonId);
     }
 
-    void transformMapToLSpace(MapFeatureData featureData, boolean inv) {
+    private static MapGrid transformMapToLSpace(MapFeatureData featureData, Point[][] polycorn) {
         double latt_const, new_maxx, new_maxy, new_minx, new_miny;
         int lx, ly;
         double map_minx = featureData.getMap_minx();
@@ -96,17 +96,16 @@ public class Density {
                 "Using a {0} x {1} lattice with bounding box\n\t({2} {3} {4} {5}).\n",
                 lx, ly, new_minx, new_miny, new_maxx, new_maxy);
 
-        Point[][] polycorn = context.getPolycorn();
         for (Point[] points : polycorn) {
             for (Point point : points) {
                 point.x = (point.x - new_minx) / latt_const;
                 point.y = (point.y - new_miny) / latt_const;
             }
         }
-        context.initMapGrid(lx, ly);
+        return new MapGrid(lx, ly);
     }
 
-    private void printError(String s, Object... parameters) {
+    private static void printError(String s, Object... parameters) {
         System.err.println(MessageFormat.format(s, parameters));
     }
 
@@ -139,14 +138,13 @@ public class Density {
     }
 
     boolean fill_with_density1(MapFeatureData featureData, CartogramConfig config) {
-        double area, avg_dens, tot_init_area, tot_target_area;
+        double avg_dens, tot_init_area, tot_target_area;
         double[] dens, init_area;
-        int i, id, j;
-        boolean eps = config.isEps();
+        int i, j;
 
         initPolycornAndPolygonId(featureData);
         Polygon.processMap(featureData, context);
-        transformMapToLSpace(featureData, config.isInv());
+        context.setMapGrid(transformMapToLSpace(featureData, context.getPolycorn()));
         context.initArea();
 
         int n_reg = context.getPolyinreg().length;
@@ -158,7 +156,6 @@ public class Density {
             return true;
         }
 
-        context.initXyHalfShift2Reg();
         dens = new double[n_reg];
         init_area = new double[n_reg];
 
@@ -310,8 +307,6 @@ public class Density {
         }
         avg_dens = tot_target_area / tot_init_area;
 
-        context.initRho();
-
         int lx = context.getLx();
         int ly = context.getLy();
         int[][] xyhalfshift2reg = context.getXyHalfShift2Reg();
@@ -328,8 +323,6 @@ public class Density {
         displayIntArray("xyhalfshift2reg[0]", xyhalfshift2reg[0]);
         displayDoubleArray("(beforeblur) rho_init", rho_init);
         displayDoubleArray("(beforeblur) rho_ft", rho_ft);
-
-        context.initFwdPlan(lx, ly);
 
         gaussian_blur(tot_init_area, avg_dens);
 
@@ -357,8 +350,6 @@ public class Density {
                 polycorn[i][j] = cartcorn[i][j];
             }
         }
-
-        context.initXyHalfShift2Reg();
 
         int[][] polyinreg = context.getPolyinreg();
         int n_reg = polyinreg.length;

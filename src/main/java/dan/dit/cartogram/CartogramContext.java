@@ -13,15 +13,6 @@ import java.util.Map;
  * C program
  */
 public class CartogramContext {
-    private final FftPlanFactory fftFactory = new FftPlanFactory();
-    private int lx;
-    private int ly;
-    private double[] rho_ft;
-    private double[] rho_init;
-    private int[][] xyhalfshift2reg;
-
-    private Point[] proj;
-    private Point[] proj2;
     private Point[][] polycorn;
     private int[] polygonId;
 
@@ -33,18 +24,11 @@ public class CartogramContext {
     private double[] region_perimeter;
 
     private Point[][] cartcorn;
-    private FftPlan2D gridvx;
-    private FftPlan2D gridvy;
-    private FftPlan2D rho;
 
     private int integration;
     private double[] areaError;
     private double[] cartogramArea;
-    private FftPlan2D grid_fluxx_init;
-    private FftPlan2D grid_fluxy_init;
-    private FftPlan2D plan_fwd;
-    private double absoluteTolerance;
-    private double convergenceMaxChangeThreshold;
+    private MapGrid mapGrid;
 
     public void initPoly(Point[][] polycorn,
                          int[] polygonId) {
@@ -52,31 +36,24 @@ public class CartogramContext {
         this.polygonId = polygonId;
     }
 
-    public void initMapGrid(int lx, int ly) {
-        this.lx = lx;
-        this.ly = ly;
-        this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
-        this.convergenceMaxChangeThreshold = Math.min(lx, ly) * 1e-9;
-    }
-
     public double ABS_TOL() {
-        return absoluteTolerance;
+        return mapGrid.getAbsoluteTolerance();
     }
 
     public double CONV_MAX_CHANGE() {
-        return convergenceMaxChangeThreshold;
+        return mapGrid.getConvergenceMaxChangeThreshold();
     }
 
     public int getLx() {
-        return lx;
+        return mapGrid.getLx();
     }
 
     public int getLy() {
-        return ly;
+        return mapGrid.getLy();
     }
 
     public FftPlan2D getRho() {
-        return rho;
+        return mapGrid.getRho();
     }
 
     public Point[][] getPolycorn() {
@@ -84,38 +61,23 @@ public class CartogramContext {
     }
 
     public double[] getRho_init() {
-        return rho_init;
+        return mapGrid.getRho_init();
     }
 
     public double[] getRho_ft() {
-        return rho_ft;
+        return mapGrid.getRho_ft();
     }
 
     public FftPlan2D getGridvx() {
-        return gridvx;
+        return mapGrid.getGridvx();
     }
 
     public FftPlan2D getGridvy() {
-        return gridvy;
+        return mapGrid.getGridvy();
     }
 
     public Point[] getProj() {
-        return proj;
-    }
-
-    public void initGrid() {
-        gridvx = fftFactory.createDCT3_2D(lx, ly);
-        gridvy = fftFactory.createDCT3_2D(lx, ly);
-    }
-
-    public Point[] initProj() {
-        proj = new Point[lx * ly];
-        for (int i = 0; i < lx; i++) {
-            for (int j = 0; j < ly; j++) {
-                proj[i * ly + j] = new Point(i + 0.5, j + 0.5);
-            }
-        }
-        return getProj();
+        return mapGrid.getProj();
     }
 
     public Point[][] initCartcorn() {
@@ -134,16 +96,8 @@ public class CartogramContext {
         return cartcorn;
     }
 
-    public Point[] initProj2() {
-        proj2 = new Point[lx * ly];
-        for (int i = 0; i < proj2.length; i++) {
-            proj2[i] = new Point(Double.NaN, Double.NaN);
-        }
-        return getProj2();
-    }
-
     public Point[] getProj2() {
-        return proj2;
+        return mapGrid.getProj2();
     }
 
     public int[][] getPolyinreg() {
@@ -263,16 +217,7 @@ public class CartogramContext {
     }
 
     public int[][] getXyHalfShift2Reg() {
-        return xyhalfshift2reg;
-    }
-
-    public void initXyHalfShift2Reg() {
-        xyhalfshift2reg = new int[lx][ly];
-    }
-
-    public void initRho() {
-        rho_ft = new double[lx * ly];
-        rho_init = new double[lx * ly];
+        return mapGrid.getXyhalfshift2reg();
     }
 
     public double[] getRegionPerimeter() {
@@ -284,28 +229,18 @@ public class CartogramContext {
     }
 
     public FftPlan2D getGrid_fluxx_init() {
-        return grid_fluxx_init;
+        return mapGrid.getGrid_fluxx_init();
     }
 
     public FftPlan2D getGrid_fluxy_init() {
-        return grid_fluxy_init;
-    }
-
-    public void initFluxInitPlan() {
-        grid_fluxx_init = fftFactory.createDCT3_2D(lx, ly);
-        grid_fluxy_init = fftFactory.createDCT3_2D(lx, ly);
-    }
-
-    public void initFwdPlan(int lx, int ly) {
-        plan_fwd = fftFactory.createDCT2_2D(lx, ly, rho_init, rho_ft);
+        return mapGrid.getGrid_fluxy_init();
     }
 
     public FftPlan2D getPlan_fwd() {
-        return plan_fwd;
+        return mapGrid.getPlan_fwd();
     }
 
-    public void initRhoPlan() {
-        rho = fftFactory.createDCT3_2D(lx, ly);
+    public void setMapGrid(MapGrid mapGrid) {
+        this.mapGrid = mapGrid;
     }
-
 }

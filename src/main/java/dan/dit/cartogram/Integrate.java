@@ -240,11 +240,8 @@ public class Integrate {
     int ly = context.getLy();
     Point[] proj = context.getProj();
 
-    context.initGrid(); // TODO is this really inniting gridvx here? because it is also initialized in DiffIntegrate
     double[] gridvx = context.getGridvx().getOutputData();
     double[] gridvy = context.getGridvy().getOutputData();
-
-    context.initFluxInitPlan();
 
     eul = new Point[lx * ly];
     for (int i = 0; i < eul.length; i++) {

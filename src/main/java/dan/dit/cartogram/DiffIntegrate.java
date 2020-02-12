@@ -12,11 +12,9 @@ public class DiffIntegrate {
     public static final double MAX_T = 1e12;
 
     private final CartogramContext context;
-    private final Integrate integrate;
 
     public DiffIntegrate(CartogramContext context) {
         this.context = context;
-        this.integrate = new Integrate(context);
     }
 
     public void diff_calcv(double t) {
@@ -81,8 +79,6 @@ public class DiffIntegrate {
         int lx = context.getLx();
         int ly = context.getLy();
 
-        context.initRhoPlan();
-        context.initGrid();
         FftPlan2D gridvx_plan = context.getGridvx();
         FftPlan2D gridvy_plan = context.getGridvy();
 

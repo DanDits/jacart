@@ -4,7 +4,6 @@ import java.text.MessageFormat;
 
 
 public class Polygon {
-    /* We remove areas less than AREA_THRESHOLD * (area of bounding box). */
     private static final double AREA_THRESHOLD = 1e-12;
 
     public static void processMap(MapFeatureData mapData, CartogramContext context) {
@@ -34,12 +33,6 @@ public class Polygon {
                 (polygon[0].y - polygon[ncrns - 1].y) * (polygon[0].y - polygon[ncrns - 1].y));
     }
 
-    /*****************************************************************************/
-    /* Function to make regions from polygons. Region IDs in the .gen file must  */
-    /* be nonnegative.
-     * Is required to correctly handle MultiPolygon geometries to ensure that their collective area
-     * is considered. Another option could be to split the contribution to each sub-polygon depending on its
-     * relative area.                                */
     private static void make_region(MapFeatureData mapData, CartogramContext context) {
         context.initRegions(mapData.getRegions());
         context.initInverseRegionId();
