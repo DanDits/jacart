@@ -4,10 +4,12 @@ import dan.dit.cartogram.core.context.*;
 import dan.dit.cartogram.core.Cartogram;
 import dan.dit.cartogram.core.Density;
 import dan.dit.cartogram.core.context.Point;
+import dan.dit.cartogram.core.pub.FftPlanFactory;
 import dan.dit.cartogram.core.pub.Logging;
 import dan.dit.cartogram.data.CsvData;
 import dan.dit.cartogram.data.CsvDataImport;
 import dan.dit.cartogram.data.GeoJsonIO;
+import dan.dit.cartogram.dft.DefaultFftPlanner;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -76,7 +78,8 @@ public class ExecuteCartogram {
       bounds.getMaxY(),
       regions,
       targetAreaPerRegion);
-    CartogramConfig config = new CartogramConfig(false, true, Logging.ofStandardOutput());
+    CartogramConfig config = new CartogramConfig(false, true,
+      Logging.ofStandardOutput(), FftPlanFactory.of(new DefaultFftPlanner()));
     CartogramContext cartogramContext = Density.fill_with_density1(mapFeatureData, config);
     CartogramContext context = new Cartogram(cartogramContext, config)
       .calculate();

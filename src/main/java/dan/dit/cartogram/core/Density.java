@@ -1,9 +1,10 @@
 package dan.dit.cartogram.core;
 
 import dan.dit.cartogram.core.context.*;
+import dan.dit.cartogram.core.pub.Fft2DPlanner;
+import dan.dit.cartogram.core.pub.FftPlanFactory;
 import dan.dit.cartogram.core.pub.Logging;
 import dan.dit.cartogram.dft.FftPlan2D;
-import dan.dit.cartogram.dft.FftPlanFactory;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -65,7 +66,7 @@ public class Density {
     return new PolygonData(polycorn, polygonId);
   }
 
-  private static MapGrid transformMapToLSpace(Logging logging, MapFeatureData featureData, Point[][] polycorn) {
+  private static MapGrid transformMapToLSpace(FftPlanFactory fftPlanFactory, Logging logging, MapFeatureData featureData, Point[][] polycorn) {
     double latt_const, new_maxx, new_maxy, new_minx, new_miny;
     int lx, ly;
     double map_minx = featureData.getMap_minx();
@@ -102,7 +103,7 @@ public class Density {
         point.y = (point.y - new_miny) / latt_const;
       }
     }
-    return new MapGrid(lx, ly);
+    return new MapGrid(fftPlanFactory, lx, ly);
   }
 
   public static void set_inside_values_for_polygon(int region, Point[] polycorn, int[][] inside) {
@@ -142,7 +143,7 @@ public class Density {
     RegionData regionData = Polygon.processMap(config.getLogging(), featureData, polygonData);
     Logging logging = config.getLogging();
     logging.debug("Amount of regions: {0}", regionData.getRegionId().length);
-    MapGrid mapGrid = transformMapToLSpace(logging, featureData, regionData.getPolycorn());
+    MapGrid mapGrid = transformMapToLSpace(config.getFftPlanFactory(), logging, featureData, regionData.getPolycorn());
 
     int n_reg = regionData.getPolyinreg().length;
     double[] target_area = regionData.getTarget_area();
@@ -317,7 +318,7 @@ public class Density {
     displayDoubleArray(logging, "(beforeblur) rho_init", rho_init);
     displayDoubleArray(logging, "(beforeblur) rho_ft", rho_ft);
 
-    gaussian_blur(mapGrid, tot_init_area, avg_dens);
+    gaussian_blur(config.getFftPlanFactory(), mapGrid, tot_init_area, avg_dens);
 
     mapGrid.getPlan_fwd().execute();
     displayDoubleArray(logging, "(afterblur) rho_init", rho_init);
@@ -407,14 +408,14 @@ public class Density {
     displayIntArray(logging, "xyhalfshift2reg[0]", xyhalfshift2reg[0]);
   }
 
-  private static void gaussian_blur(MapGrid mapGrid, double tot_init_area, double avg_dens) {
+  private static void gaussian_blur(FftPlanFactory fftPlanFactory, MapGrid mapGrid, double tot_init_area, double avg_dens) {
     FftPlan2D plan_bwd;
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
     double[] rho_init = mapGrid.getRho_init();
     double[] rho_ft = mapGrid.getRho_ft();
 
-    plan_bwd = new FftPlanFactory().createDCT3_2D(lx, ly, rho_ft, rho_init);
+    plan_bwd = fftPlanFactory.createDCT3_2D(lx, ly, rho_ft, rho_init);
 
     for (int i = 0; i < lx * ly; i++)
       rho_init[i] /= 4 * lx * ly;

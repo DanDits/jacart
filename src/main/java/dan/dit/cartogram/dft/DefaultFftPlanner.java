@@ -1,5 +1,6 @@
 package dan.dit.cartogram.dft;
 
+import dan.dit.cartogram.core.pub.Fft2DPlanner;
 import dan.dit.cartogram.core.pub.Logging;
 
 import java.util.Arrays;
@@ -20,7 +21,7 @@ import static dan.dit.cartogram.core.Integrate.displayDoubleArray;
  * of size lx and ly then we perform lx DFTs along the rows and ly DFTs along the columns (or first along columns and
  * then along rows). Note: This is not the most optimal solution!
  */
-public class FftPlanFactory {
+public class DefaultFftPlanner implements Fft2DPlanner {
 
   public static void main(String[] args) {
     Logging logging = Logging.ofStandardOutput();
@@ -31,7 +32,7 @@ public class FftPlanFactory {
       double[] target = new double[i * i];
       Arrays.fill(test, 1.);
       displayDoubleArray(logging, i + " test (before)", test);
-      var plan_bwd = new FftPlanFactory().createDCT3_2D(i, i, test, target);
+      var plan_bwd = new DefaultFftPlanner().createDCT3_2D(i, i, test, target);
       plan_bwd.execute();
       displayDoubleArray(logging, i + " target (after)", target);
       logging.debug("");
@@ -45,7 +46,7 @@ public class FftPlanFactory {
       double[] target = new double[i * i];
       Arrays.fill(test, 1.);
       displayDoubleArray(logging, i + " test (before)", test);
-      var plan_bwd = new FftPlanFactory().createDCT2_2D(i, i, test, target);
+      var plan_bwd = new DefaultFftPlanner().createDCT2_2D(i, i, test, target);
       plan_bwd.execute();
       displayDoubleArray(logging, i + " target (after)", target);
       logging.debug("");
@@ -61,6 +62,7 @@ public class FftPlanFactory {
     return new FftPlan2D(width, height, data, data, DCT::transform);
   }
 
+  @Override
   public FftPlan2D createDCT2_2D(int width, int height, double[] inputData, double[] outputData) {
     if (inputData.length != outputData.length) {
       throw new IllegalArgumentException("Input and output buffers must have identical length");
@@ -82,6 +84,7 @@ public class FftPlanFactory {
     return new FftPlan2D(width, height, data, data, DCT::inverseTransform);
   }
 
+  @Override
   public FftPlan2D createDCT3_2D(int width, int height, double[] inputData, double[] outputData) {
     return new FftPlan2D(width, height, inputData, outputData, DCT::inverseTransform);
   }

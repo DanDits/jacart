@@ -291,7 +291,6 @@ public class Integrate {
           }
         }
         if (accept) {
-          context.getLogging().debug("ACCEPTED_A: {0}", delta_t);
           accept = integrateAcceptedTimestep(
             delta_t,
             vx_intp,

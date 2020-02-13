@@ -1,7 +1,7 @@
 package dan.dit.cartogram.core.context;
 
+import dan.dit.cartogram.core.pub.FftPlanFactory;
 import dan.dit.cartogram.dft.FftPlan2D;
-import dan.dit.cartogram.dft.FftPlanFactory;
 
 public class MapGrid {
   private final int lx;
@@ -20,23 +20,22 @@ public class MapGrid {
   private final FftPlan2D plan_fwd;
   private final FftPlan2D rho;
 
-  public MapGrid(int lx, int ly) {
+  public MapGrid(FftPlanFactory fftPlanFactory, int lx, int ly) {
     this.lx = lx;
     this.ly = ly;
     this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
     this.convergenceMaxChangeThreshold = Math.min(lx, ly) * 1e-9;
-    FftPlanFactory fftFactory = new FftPlanFactory();
-    this.gridvx = fftFactory.createDCT3_2D(lx, ly);
-    this.gridvy = fftFactory.createDCT3_2D(lx, ly);
+    this.gridvx = fftPlanFactory.createDCT3_2D(lx, ly);
+    this.gridvy = fftPlanFactory.createDCT3_2D(lx, ly);
     this.proj = initProjectionOnGrid(lx, ly);
     this.proj2 = initEmptyProjection(lx, ly);
     this.rho_init = new double[lx * ly];
     this.rho_ft = new double[lx * ly];
     this.xyhalfshift2reg = new int[lx][ly];
-    this.grid_fluxx_init = fftFactory.createDCT3_2D(lx, ly);
-    this.grid_fluxy_init = fftFactory.createDCT3_2D(lx, ly);
-    this.plan_fwd = fftFactory.createDCT2_2D(lx, ly, rho_init, rho_ft);
-    this.rho = fftFactory.createDCT3_2D(lx, ly);
+    this.grid_fluxx_init = fftPlanFactory.createDCT3_2D(lx, ly);
+    this.grid_fluxy_init = fftPlanFactory.createDCT3_2D(lx, ly);
+    this.plan_fwd = fftPlanFactory.createDCT2_2D(lx, ly, rho_init, rho_ft);
+    this.rho = fftPlanFactory.createDCT3_2D(lx, ly);
   }
 
   private static Point[] initEmptyProjection(int lx, int ly) {
