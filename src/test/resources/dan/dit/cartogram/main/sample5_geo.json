@@ -1,0 +1,6 @@
+{"type":"FeatureCollection",  "bbox": [
+  -1,
+  -1.5,
+  1,
+  1.5
+],"crs":{"type":"name","properties":{"name":"CRS:84"}},"features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-0.5,1],[0.5,1],[0.5,-1],[-0.5,-1],[-0.5,1]]]},"properties":{"cartogram_id": "13"},"id":"0"}]}

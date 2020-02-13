@@ -3,7 +3,7 @@ package dan.dit.cartogram;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.util.function.Consumer;
+import java.util.Arrays;
 
 import static dan.dit.cartogram.Density.MAX_PERMITTED_AREA_ERROR;
 
@@ -35,7 +35,12 @@ public class Cartogram {
     // also initializes init_tot_area...
     if (max_area_err(area_err, cart_area, regionData.getPolycorn(), init_tot_area) <= MAX_PERMITTED_AREA_ERROR) {
       Logging.debug("Nothing to do, area already correct.");
-      return null;
+      Point[][] cartcorn = context.getRegionData().getCartcorn();
+      Point[][] polycorn = context.getRegionData().getPolycorn();
+      for (int i = 0; i < polycorn.length; i++) {
+        cartcorn[i] = Arrays.copyOf(polycorn[i], polycorn[i].length);
+      }
+      return context;
     }
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
