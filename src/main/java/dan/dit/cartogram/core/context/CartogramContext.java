@@ -1,4 +1,6 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core.context;
+
+import dan.dit.cartogram.core.pub.Logging;
 
 /**
  * For now this holds all previously global variables with the goal to better encapsulate, group and separate them
@@ -10,8 +12,10 @@ public class CartogramContext {
   private final MapGrid mapGrid;
   private final RegionData regionData;
   private final boolean isSingleRegion;
+  private final Logging logging;
 
-  public CartogramContext(MapGrid mapGrid, RegionData regionData, boolean isSingleRegion) {
+  public CartogramContext(Logging logging, MapGrid mapGrid, RegionData regionData, boolean isSingleRegion) {
+    this.logging = logging;
     this.mapGrid = mapGrid;
     this.regionData = regionData;
     this.isSingleRegion = isSingleRegion;
@@ -27,5 +31,9 @@ public class CartogramContext {
 
   public RegionData getRegionData() {
     return regionData;
+  }
+
+  public Logging getLogging() {
+    return logging;
   }
 }

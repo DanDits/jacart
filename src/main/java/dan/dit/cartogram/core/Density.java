@@ -1,13 +1,15 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core;
 
+import dan.dit.cartogram.core.context.*;
+import dan.dit.cartogram.core.pub.Logging;
 import dan.dit.cartogram.dft.FftPlan2D;
 import dan.dit.cartogram.dft.FftPlanFactory;
 
 import java.text.MessageFormat;
 import java.util.List;
 
-import static dan.dit.cartogram.Integrate.displayDoubleArray;
-import static dan.dit.cartogram.Integrate.displayIntArray;
+import static dan.dit.cartogram.core.Integrate.displayDoubleArray;
+import static dan.dit.cartogram.core.Integrate.displayIntArray;
 
 public class Density {
   /**
@@ -63,7 +65,7 @@ public class Density {
     return new PolygonData(polycorn, polygonId);
   }
 
-  private static MapGrid transformMapToLSpace(MapFeatureData featureData, Point[][] polycorn) {
+  private static MapGrid transformMapToLSpace(Logging logging, MapFeatureData featureData, Point[][] polycorn) {
     double latt_const, new_maxx, new_maxy, new_minx, new_miny;
     int lx, ly;
     double map_minx = featureData.getMap_minx();
@@ -90,7 +92,7 @@ public class Density {
       new_maxx = 0.5 * (map_maxx + map_minx) + 0.5 * lx * latt_const;
       new_minx = 0.5 * (map_maxx + map_minx) - 0.5 * lx * latt_const;
     }
-    Logging.error(
+    logging.debug(
       "Using a {0} x {1} lattice with bounding box\n\t({2} {3} {4} {5}).\n",
       lx, ly, new_minx, new_miny, new_maxx, new_maxy);
 
@@ -137,22 +139,23 @@ public class Density {
     int i, j;
 
     PolygonData polygonData = initPolycornAndPolygonId(featureData);
-    RegionData regionData = Polygon.processMap(featureData, polygonData);
-    Logging.debug("Amount of regions: {0}", regionData.getRegionId().length);
-    MapGrid mapGrid = transformMapToLSpace(featureData, regionData.getPolycorn());
+    RegionData regionData = Polygon.processMap(config.getLogging(), featureData, polygonData);
+    Logging logging = config.getLogging();
+    logging.debug("Amount of regions: {0}", regionData.getRegionId().length);
+    MapGrid mapGrid = transformMapToLSpace(logging, featureData, regionData.getPolycorn());
 
     int n_reg = regionData.getPolyinreg().length;
     double[] target_area = regionData.getTarget_area();
     boolean[] region_na = regionData.getRegion_na();
     if (n_reg == 1) {
       target_area[0] = 1.0;
-      return new CartogramContext(mapGrid, regionData, true);
+      return new CartogramContext(logging, mapGrid, regionData, true);
     }
 
     dens = new double[n_reg];
     init_area = new double[n_reg];
 
-    interior(mapGrid, regionData);
+    interior(logging, mapGrid, regionData);
 
     double[] featureTargetArea = featureData.getTargetAreaPerRegion();
 
@@ -170,7 +173,7 @@ public class Density {
           MessageFormat.format("ERROR: No target area for region {0}", region_id[i]));
       }
     }
-    displayDoubleArray("target_area", target_area);
+    displayDoubleArray(logging, "target_area", target_area);
 
     int na_ctr = 0;
     double tmp_tot_target_area = 0.0;
@@ -190,8 +193,8 @@ public class Density {
       }
       tot_init_area += init_area[i];
     }
-    Logging.debug("Total init area= {0}", tot_init_area);
-    displayDoubleArray("init_area", init_area);
+    logging.debug("Total init area= {0}", tot_init_area);
+    displayDoubleArray(logging, "init_area", init_area);
 
     for (i = 0; i < n_reg; i++) {
       int[] polyI = polyinreg[i];
@@ -199,7 +202,7 @@ public class Density {
         region_perimeter[i] += Polygon.polygon_perimeter(polycorn[polyI[j]]);
       }
     }
-    displayDoubleArray("region perimeter", region_perimeter);
+    displayDoubleArray(logging, "region perimeter", region_perimeter);
     int first_region = 1;
     double total_NA_ratio = 0;
 
@@ -215,18 +218,18 @@ public class Density {
     for (i = 0; i < n_reg; i++) {
       if (region_na[i]) {
         if (first_region == 1) {
-          Logging.error("\nSetting area for NA regions:\n");
+          logging.error("\nSetting area for NA regions:\n");
           first_region = 0;
         }
         target_area[i] = (init_area[i] / tot_init_area) / total_NA_ratio * total_NA_area;
-        Logging.error("{0}: {1}", region_id[i], target_area[i]);
+        logging.error("{0}: {1}", region_id[i], target_area[i]);
       }
     }
 
-    Logging.error("\n");
+    logging.error("\n");
 
     if (config.isUsePerimeterThreshold()) {
-      Logging.error("Note: Enlarging extremely small regions using scaled perimeter threshold.");
+      logging.debug("Note: Enlarging extremely small regions using scaled perimeter threshold.");
       boolean[] region_small = new boolean[n_reg];
       int region_small_ctr = 0;
       double[] region_threshold, region_threshold_area;
@@ -252,7 +255,7 @@ public class Density {
       double total_threshold_area = (total_threshold * (tmp_tot_target_area - tot_region_small_area)) / (1 - total_threshold);
 
       if (region_small_ctr > 0) {
-        Logging.error("Enlarging small regions:\n");
+        logging.debug("Enlarging small regions:\n");
       }
 
       for (i = 0; i < n_reg; i++) {
@@ -262,16 +265,14 @@ public class Density {
           target_area[i] = region_threshold_area[i];
           tmp_tot_target_area += target_area[i];
           tmp_tot_target_area -= old_target_area;
-          Logging.error("{0}: {1}", region_id[i], target_area[i]);
+          logging.debug("{0}: {1}", region_id[i], target_area[i]);
         }
       }
-      if (region_small_ctr > 0) {
-        Logging.error("\n");
-      } else {
-        Logging.error("No regions below minimum threshold.\n\n"); // TODO what about washington DC? all its polygons are removed, use the min perimeter config?
+      if (region_small_ctr <= 0) {
+        logging.debug("No regions below minimum threshold.\n\n"); // TODO what about washington DC? all its polygons are removed, use the min perimeter config?
       }
     } else {
-      Logging.error("Note: Not using scaled perimeter threshold.\n\n");
+      logging.debug("Note: Not using scaled perimeter threshold.");
       double min_area = target_area[0];
       for (i = 1; i < n_reg; i++) {
         if (target_area[i] > 0.0) {
@@ -288,12 +289,12 @@ public class Density {
         }
       }
     }
-    displayDoubleArray("target_area ___!___", target_area);
+    displayDoubleArray(logging, "target_area ___!___", target_area);
 
     for (i = 0; i < n_reg; i++) {
       dens[i] = target_area[i] / init_area[i];
     }
-    displayDoubleArray("dens", dens);
+    displayDoubleArray(logging, "dens", dens);
 
     for (i = 0, tot_target_area = 0.0; i < n_reg; i++) {
       tot_target_area += target_area[i];
@@ -313,17 +314,17 @@ public class Density {
           rho_init[i * ly + j] = dens[xyhalfshift2reg[i][j]];
       }
     }
-    displayIntArray("xyhalfshift2reg[0]", xyhalfshift2reg[0]);
-    displayDoubleArray("(beforeblur) rho_init", rho_init);
-    displayDoubleArray("(beforeblur) rho_ft", rho_ft);
+    displayIntArray(logging, "xyhalfshift2reg[0]", xyhalfshift2reg[0]);
+    displayDoubleArray(logging, "(beforeblur) rho_init", rho_init);
+    displayDoubleArray(logging, "(beforeblur) rho_ft", rho_ft);
 
     gaussian_blur(mapGrid, tot_init_area, avg_dens);
 
     mapGrid.getPlan_fwd().execute();
-    displayDoubleArray("(afterblur) rho_init", rho_init);
-    displayDoubleArray("(afterblur) rho_ft", rho_ft);
+    displayDoubleArray(logging, "(afterblur) rho_init", rho_init);
+    displayDoubleArray(logging, "(afterblur) rho_ft", rho_ft);
 
-    return new CartogramContext(mapGrid, regionData, false);
+    return new CartogramContext(logging, mapGrid, regionData, false);
   }
 
   void fill_with_density2() {
@@ -354,7 +355,7 @@ public class Density {
     dens = new double[n_reg];
     tmp_area = new double[n_reg];
 
-    interior(mapGrid, regionData);
+    interior(context.getLogging(), mapGrid, regionData);
 
     for (i = 0; i < n_reg; i++) {
       int[] polyI = polyinreg[i];
@@ -380,7 +381,7 @@ public class Density {
     mapGrid.getPlan_fwd().execute();
   }
 
-  private static void interior(MapGrid mapGrid, RegionData regionData) {
+  private static void interior(Logging logging, MapGrid mapGrid, RegionData regionData) {
     int i, j, poly;
 
     int lx = mapGrid.getLx();
@@ -394,7 +395,7 @@ public class Density {
         xyhalfshift2reg[i][j] = -1;
       }
     }
-    displayIntArray("xyhalfshift2reg[0] before init", xyhalfshift2reg[0]);
+    displayIntArray(logging, "xyhalfshift2reg[0] before init", xyhalfshift2reg[0]);
 
     for (i = 0; i < n_reg; i++) {
       int[] polyI = polyinreg[i];
@@ -404,7 +405,7 @@ public class Density {
           xyhalfshift2reg);
       }
     }
-    displayIntArray("xyhalfshift2reg[0]", xyhalfshift2reg[0]);
+    displayIntArray(logging, "xyhalfshift2reg[0]", xyhalfshift2reg[0]);
   }
 
   private static void gaussian_blur(MapGrid mapGrid, double tot_init_area, double avg_dens) {

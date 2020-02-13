@@ -1,4 +1,4 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core.context;
 
 import java.util.HashMap;
 import java.util.List;

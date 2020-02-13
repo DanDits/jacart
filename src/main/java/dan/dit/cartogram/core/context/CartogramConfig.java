@@ -1,4 +1,6 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core.context;
+
+import dan.dit.cartogram.core.pub.Logging;
 
 /**
  * Describes configuration for the cartogram creation like
@@ -16,10 +18,12 @@ public class CartogramConfig {
    * If true then extremely small regions are scaled up
    */
   private final boolean usePerimeterThreshold;
+  private final Logging logging;
 
-  public CartogramConfig(boolean diff, boolean usePerimeterThreshold) {
+  public CartogramConfig(boolean diff, boolean usePerimeterThreshold, Logging logging) {
     this.usePerimeterThreshold = usePerimeterThreshold;
     this.diff = diff;
+    this.logging = logging;
   }
 
   public boolean isDiff() {
@@ -28,5 +32,9 @@ public class CartogramConfig {
 
   public boolean isUsePerimeterThreshold() {
     return usePerimeterThreshold;
+  }
+
+  public Logging getLogging() {
+    return logging;
   }
 }

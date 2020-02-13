@@ -1,13 +1,17 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core;
 
-import java.text.MessageFormat;
+import dan.dit.cartogram.core.context.MapFeatureData;
+import dan.dit.cartogram.core.context.Point;
+import dan.dit.cartogram.core.context.PolygonData;
+import dan.dit.cartogram.core.context.RegionData;
+import dan.dit.cartogram.core.pub.Logging;
 
 
 public class Polygon {
   private static final double AREA_THRESHOLD = 1e-12;
 
-  public static RegionData processMap(MapFeatureData mapData, PolygonData polygonData) {
-    polygonData = remove_tiny_polygons_in_nonLSpace(mapData, polygonData);
+  public static RegionData processMap(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
+    polygonData = remove_tiny_polygons_in_nonLSpace(logging, mapData, polygonData);
     return make_region(mapData, polygonData);
   }
 
@@ -37,7 +41,7 @@ public class Polygon {
     return new RegionData(mapData.getRegions(), polygonData.getPolygonId(), polygonData.getPolycorn());
   }
 
-  public static PolygonData remove_tiny_polygons_in_nonLSpace(MapFeatureData mapData, PolygonData polygonData) {
+  public static PolygonData remove_tiny_polygons_in_nonLSpace(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
 
     Point[][] polycorn = polygonData.getPolycorn();
     int n_poly = polycorn.length;
@@ -49,11 +53,11 @@ public class Polygon {
 
     boolean[] poly_has_tiny_area = new boolean[n_poly];
     double relativeTinyAreaThreshold = AREA_THRESHOLD * (map_maxx - map_minx) * (map_maxy - map_miny);
-    Logging.debug("Amount of polygons: {0}", n_poly);
-    Logging.debug("Relative area threshold: {0}", relativeTinyAreaThreshold);
+    logging.debug("Amount of polygons: {0}", n_poly);
+    logging.debug("Relative area threshold: {0}", relativeTinyAreaThreshold);
     for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
       double current_area = Math.abs(polygon_area(polycorn[poly_indx]));
-      Logging.debug("Polygon {3} (id= {0}) with {1} points has area {2,number,#.######E0}",
+      logging.debug("Polygon {3} (id= {0}) with {1} points has area {2,number,#.######E0}",
         polygonData.getPolygonId()[poly_indx], polycorn[poly_indx].length, current_area, poly_indx);
       poly_has_tiny_area[poly_indx] =
         (current_area <
@@ -67,7 +71,7 @@ public class Polygon {
       }
     }
     if (n_non_tiny_poly < n_poly) {
-      Logging.debug("Removing tiny polygons.");
+      logging.debug("Removing tiny polygons.");
 
       int[] n_non_tiny_polycorn = new int[n_non_tiny_poly];
       int[] non_tiny_polygon_id = new int[n_non_tiny_poly];

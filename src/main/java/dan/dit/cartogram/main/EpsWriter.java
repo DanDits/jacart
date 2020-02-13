@@ -1,4 +1,6 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.main;
+
+import dan.dit.cartogram.core.context.Point;
 
 import java.io.*;
 import java.text.MessageFormat;

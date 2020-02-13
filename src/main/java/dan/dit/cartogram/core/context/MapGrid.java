@@ -1,4 +1,4 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core.context;
 
 import dan.dit.cartogram.dft.FftPlan2D;
 import dan.dit.cartogram.dft.FftPlanFactory;

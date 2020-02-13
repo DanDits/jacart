@@ -1,5 +1,9 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core;
 
+import dan.dit.cartogram.core.context.CartogramContext;
+import dan.dit.cartogram.core.pub.Logging;
+import dan.dit.cartogram.core.context.MapGrid;
+import dan.dit.cartogram.core.context.Point;
 import dan.dit.cartogram.dft.FftPlan2D;
 
 import java.text.MessageFormat;
@@ -160,7 +164,7 @@ public class DiffIntegrate {
             (mid[k].y - proj[k].y) * (mid[k].y - proj[k].y),
           max_change);
       if (iter % 10 == 0)
-        Logging.error("iter = {0}, t = {1}, delta_t = {2}, max_change = {3}",
+        context.getLogging().debug("iter = {0}, t = {1}, delta_t = {2}, max_change = {3}",
           iter, t, delta_t, max_change);
 
       t += delta_t;
@@ -172,8 +176,7 @@ public class DiffIntegrate {
       delta_t *= INC_AFTER_ACC;
     } while ((max_change > mapGrid.getConvergenceMaxChangeThreshold() && t < MAX_T && iter < MAX_ITER)
       || t < MIN_T);
-    Logging.error("Stopped after t = {0} with max_change = {1} and iterations = {2}", t, max_change, iter);
-
+    context.getLogging().debug("Stopped after t = {0} with max_change = {1} and iterations = {2}", t, max_change, iter);
   }
 
   private void eulerStep(double delta_t, double[] vx_intp, double[] vy_intp, Point[] eul, int lx, int ly, Point[] proj) {

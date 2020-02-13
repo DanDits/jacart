@@ -1,8 +1,11 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core;
 
+import dan.dit.cartogram.core.context.CartogramContext;
+import dan.dit.cartogram.core.context.MapGrid;
+import dan.dit.cartogram.core.context.Point;
+import dan.dit.cartogram.core.pub.Logging;
 import dan.dit.cartogram.dft.FftPlan2D;
 
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -171,7 +174,7 @@ public class Integrate {
     double di;
     int i, j;
 
-    displayDoubleArray("rho_ft", rho_ft);
+    displayDoubleArray(context.getLogging(), "rho_ft", rho_ft);
     int rho_ft_initial = 4 * lx * ly;
     for (i = 0; i < lx * ly; i++) {
       rho_ft[i] /= rho_ft_initial;
@@ -204,23 +207,23 @@ public class Integrate {
       grid_fluxy_init[i * ly + ly - 1] = 0.0;
 
 
-    displayDoubleArray("rho_ft", rho_ft);
-    displayDoubleArray("grid_fluxx_init before plan execution", grid_fluxy_init);
+    displayDoubleArray(context.getLogging(), "rho_ft", rho_ft);
+    displayDoubleArray(context.getLogging(), "grid_fluxx_init before plan execution", grid_fluxy_init);
     grid_fluxx_init_plan.execute();
     grid_fluxy_init_plan.execute();
   }
 
-  public static void displayIntArray(String text, int[] data) {
-    Logging.debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
-    Logging.debug(Arrays.stream(data)
+  public static void displayIntArray(Logging logging, String text, int[] data) {
+    logging.debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
+    logging.debug(Arrays.stream(data)
       .limit(10L)
       .mapToObj(Integer::toString)
       .collect(Collectors.joining(", ")));
   }
 
-  public static void displayDoubleArray(String text, double[] data) {
-    Logging.debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
-    Logging.debug(Arrays.stream(data)
+  public static void displayDoubleArray(Logging logging, String text, double[] data) {
+    logging.debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
+    logging.debug(Arrays.stream(data)
       .limit(10L)
       .mapToObj(Double::toString)
       .collect(Collectors.joining(", ")));
@@ -282,13 +285,13 @@ public class Integrate {
             proj[k].y + 0.5 * delta_t * vy_intp[k] < 0.0 ||
             proj[k].y + 0.5 * delta_t * vy_intp[k] > ly) {
             accept = false;
-            Logging.error("NOT ACCEPTED_A: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
+            context.getLogging().debug("NOT ACCEPTED_A: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
             delta_t *= DEC_AFTER_NOT_ACC;
             break;
           }
         }
         if (accept) {
-          Logging.error("ACCEPTED_A: {0}", delta_t);
+          context.getLogging().debug("ACCEPTED_A: {0}", delta_t);
           accept = integrateAcceptedTimestep(
             delta_t,
             vx_intp,
@@ -306,13 +309,13 @@ public class Integrate {
         }
         if (!accept) {
           non_accepted_dts_count++;
-          Logging.error("NOT ACCEPTED_B: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
+          context.getLogging().debug("NOT ACCEPTED_B: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
           delta_t *= DEC_AFTER_NOT_ACC;
         }
       }
 
-      if (iter % 1 == 0) {
-        Logging.error("iter = {0}, t = {1}, delta_t = {2}", iter, t, delta_t);
+      if (iter % 10 == 0) {
+        context.getLogging().debug("iter = {0}, t = {1}, delta_t = {2}", iter, t, delta_t);
       }
       t += delta_t;
       iter++;
@@ -323,7 +326,7 @@ public class Integrate {
       delta_t *= INC_AFTER_ACC;
 
     } while (t < 1.0);
-    Logging.error(
+    context.getLogging().debug(
       "Finished integration with iter = {0}, t = {1}, delta_t = {2}, non accepted dts= {3}",
       iter,
       t,

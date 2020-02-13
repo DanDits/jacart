@@ -1,4 +1,4 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core.context;
 
 public class PolygonData {
   private final Point[][] polycorn;

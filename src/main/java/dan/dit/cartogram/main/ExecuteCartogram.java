@@ -1,7 +1,10 @@
 package dan.dit.cartogram.main;
 
-import dan.dit.cartogram.*;
-import dan.dit.cartogram.Point;
+import dan.dit.cartogram.core.context.*;
+import dan.dit.cartogram.core.Cartogram;
+import dan.dit.cartogram.core.Density;
+import dan.dit.cartogram.core.context.Point;
+import dan.dit.cartogram.core.pub.Logging;
 import dan.dit.cartogram.data.CsvData;
 import dan.dit.cartogram.data.CsvDataImport;
 import dan.dit.cartogram.data.GeoJsonIO;
@@ -70,7 +73,7 @@ public class ExecuteCartogram {
       bounds.getMaxY(),
       regions,
       targetAreaPerRegion);
-    CartogramConfig config = new CartogramConfig(false, true);
+    CartogramConfig config = new CartogramConfig(false, true, Logging.ofStandardOutput());
     CartogramContext cartogramContext = Density.fill_with_density1(mapFeatureData, config);
     CartogramContext context = new Cartogram(cartogramContext, config)
       .calculate();

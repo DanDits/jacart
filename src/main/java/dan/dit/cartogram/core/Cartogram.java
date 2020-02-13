@@ -1,11 +1,16 @@
-package dan.dit.cartogram;
+package dan.dit.cartogram.core;
+
+import dan.dit.cartogram.core.context.*;
+import dan.dit.cartogram.core.pub.Logging;
+import dan.dit.cartogram.main.EpsWriter;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.Arrays;
+import java.util.Objects;
 
-import static dan.dit.cartogram.Density.MAX_PERMITTED_AREA_ERROR;
+import static dan.dit.cartogram.core.Density.MAX_PERMITTED_AREA_ERROR;
 
 public class Cartogram {
   private final Integrate integrate;
@@ -15,17 +20,17 @@ public class Cartogram {
   private final CartogramContext context;
 
   public Cartogram(CartogramContext context, CartogramConfig config) {
-    this.context = context;
+    this.context = Objects.requireNonNull(context);
+    this.config = Objects.requireNonNull(config);
     this.integrate = new Integrate(context);
     this.diffIntegrate = new DiffIntegrate(context);
     this.density = new Density(context);
-    this.config = config;
   }
 
   public CartogramContext calculate() throws FileNotFoundException {
     boolean onlyOneRegionExists = context.isSingleRegion();
     if (onlyOneRegionExists) {
-      Logging.debug("Hint: Only one region exists, output will only be an affine transformation.");
+      context.getLogging().debug("Hint: Only one region exists, output will only be an affine transformation.");
     }
     MapGrid mapGrid = context.getMapGrid();
     RegionData regionData = context.getRegionData();
@@ -34,7 +39,7 @@ public class Cartogram {
     double[] init_tot_area = new double[1];
     // also initializes init_tot_area...
     if (max_area_err(area_err, cart_area, regionData.getPolycorn(), init_tot_area) <= MAX_PERMITTED_AREA_ERROR) {
-      Logging.debug("Nothing to do, area already correct.");
+      context.getLogging().debug("Nothing to do, area already correct.");
       Point[][] cartcorn = context.getRegionData().getCartcorn();
       Point[][] polycorn = context.getRegionData().getPolycorn();
       for (int i = 0; i < polycorn.length; i++) {
@@ -46,7 +51,7 @@ public class Cartogram {
     int ly = mapGrid.getLy();
     Point[] proj = mapGrid.getProj();
 
-    Logging.debug("Starting integration 1\n");
+    context.getLogging().debug("Starting integration 1\n");
     boolean diff = config.isDiff();
     if (!diff) {
       integrate.ffb_integrate();
@@ -69,7 +74,7 @@ public class Cartogram {
     Point[][] cartcorn = regionData.getCartcorn();
     double[] cartogramTotalArea = new double[1];
     double mae = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);
-    Logging.debug("max. abs. area error: {0}", mae);
+    context.getLogging().debug("max. abs. area error: {0}", mae);
 
     Point[] proj2 = mapGrid.getProj2();
     int integration = 0;
@@ -89,7 +94,7 @@ public class Cartogram {
         }
       }
       integration++;
-      Logging.debug("Starting integration {0}", integration);
+      context.getLogging().debug("Starting integration {0}", integration);
       if (!diff) {
         integrate.ffb_integrate();
       } else {
@@ -104,19 +109,19 @@ public class Cartogram {
         }
       }
       mae = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);
-      Logging.debug("max. abs. area error: {0}", mae);
+      context.getLogging().debug("max. abs. area error: {0}", mae);
     }
 
 
     scalePolygonsToMatchInitialTotalArea(Math.sqrt(init_tot_area[0] / cartogramTotalArea[0]), lx, ly, cartcorn);
 
     double final_max_area_error = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);
-    Logging.debug("Final error: {0}", final_max_area_error);
+    context.getLogging().debug("Final error: {0}", final_max_area_error);
     return this.context;
   }
 
   private void scalePolygonsToMatchInitialTotalArea(double correction_factor, int lx, int ly, Point[][] cartcorn) {
-    Logging.debug("correction_factor = {0}", correction_factor);
+    context.getLogging().debug("correction_factor = {0}", correction_factor);
     for (Point[] cartI : cartcorn) {
       for (Point point : cartI) {
         point.x = correction_factor * (point.x - 0.5 * lx) + 0.5 * lx;
