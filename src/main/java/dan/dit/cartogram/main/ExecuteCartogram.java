@@ -56,6 +56,9 @@ public class ExecuteCartogram {
       for (int i = 0; i < data.getData().size(); i++) {
         Object[] csvValues = data.getData().get(i);
         if (csvValues[regionIdColumnIndex].equals(id)) {
+          if (csvValues[regionDataColumnIndex] == null) {
+            return Double.NaN;
+          }
           return (Double) csvValues[regionDataColumnIndex];
         }
       }

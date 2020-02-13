@@ -161,14 +161,15 @@ public class Density {
 
     for (i = 0; i < n_reg; i++) {
       target_area[i] = featureTargetArea[i];
-      if (target_area[i] == -2.0) {
+      if (Double.isNaN(target_area[i])) {
         region_na[i] = true;
+        target_area[i] = 0.;
       }
     }
 
     int[] region_id = regionData.getRegionId();
     for (i = 0; i < n_reg; i++) {
-      if (target_area[i] < 0.0 && target_area[i] != -2.0) {
+      if (target_area[i] < 0.0 && !Double.isNaN(target_area[i])) {
         throw new IllegalArgumentException(
           MessageFormat.format("ERROR: No target area for region {0}", region_id[i]));
       }
@@ -218,15 +219,13 @@ public class Density {
     for (i = 0; i < n_reg; i++) {
       if (region_na[i]) {
         if (first_region == 1) {
-          logging.error("\nSetting area for NA regions:\n");
+          logging.debug("Setting area for NaN regions:");
           first_region = 0;
         }
         target_area[i] = (init_area[i] / tot_init_area) / total_NA_ratio * total_NA_area;
-        logging.error("{0}: {1}", region_id[i], target_area[i]);
+        logging.debug("\tRegion id {0}: {1}", region_id[i], target_area[i]);
       }
     }
-
-    logging.error("\n");
 
     if (config.isUsePerimeterThreshold()) {
       logging.debug("Note: Enlarging extremely small regions using scaled perimeter threshold.");
@@ -241,7 +240,7 @@ public class Density {
       }
       for (i = 0; i < n_reg; i++) {
         region_threshold[i] = Math.max((region_perimeter[i] / total_perimeter) * MIN_PERIMETER_FAC, 0.00025);
-        if ((target_area[i] / tmp_tot_target_area < region_threshold[i])) {
+        if (!region_na[i] && (target_area[i] / tmp_tot_target_area < region_threshold[i])) {
           region_small[i] = true;
           region_small_ctr++;
           tot_region_small_area += target_area[i];
@@ -255,7 +254,7 @@ public class Density {
       double total_threshold_area = (total_threshold * (tmp_tot_target_area - tot_region_small_area)) / (1 - total_threshold);
 
       if (region_small_ctr > 0) {
-        logging.debug("Enlarging small regions:\n");
+        logging.debug("Enlarging small regions:");
       }
 
       for (i = 0; i < n_reg; i++) {
@@ -273,7 +272,7 @@ public class Density {
       }
     } else {
       logging.debug("Note: Not using scaled perimeter threshold.");
-      double min_area = target_area[0];
+      double min_area = Double.MAX_VALUE;
       for (i = 1; i < n_reg; i++) {
         if (target_area[i] > 0.0) {
           if (min_area <= 0.0) {

@@ -23,7 +23,7 @@ public class MapFeatureData {
   private final double map_maxx;
   private final double map_maxy;
 
-  private final double[] targetAreaPerRegion; // use -1.0 for invalid areas, use -2.0 for explicitly set not available value, see region_na
+  private final double[] targetAreaPerRegion; // use negative for invalid areas, use NaN for explicitly set not available value, see region_na
   private final List<Region> regions;
 
   /* The feature data describing a value belonging to each region that will define the target area
