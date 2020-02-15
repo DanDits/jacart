@@ -8,8 +8,8 @@ public class MapGrid {
   private final int ly;
   private final double absoluteTolerance;
   private final double convergenceMaxChangeThreshold;
-  private final FftPlan2D gridvx;
-  private final FftPlan2D gridvy;
+  private final double[] gridvx;
+  private final double[] gridvy;
   private final Point[] proj;
   private final Point[] proj2;
   private final double[] rho_ft;
@@ -25,8 +25,8 @@ public class MapGrid {
     this.ly = ly;
     this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
     this.convergenceMaxChangeThreshold = Math.min(lx, ly) * 1e-9;
-    this.gridvx = fftPlanFactory.createDCT3_2D(lx, ly);
-    this.gridvy = fftPlanFactory.createDCT3_2D(lx, ly);
+    this.gridvx = new double[lx * ly];
+    this.gridvy = new double[lx * ly];
     this.proj = initProjectionOnGrid(lx, ly);
     this.proj2 = initEmptyProjection(lx, ly);
     this.rho_init = new double[lx * ly];
@@ -56,11 +56,11 @@ public class MapGrid {
     return proj;
   }
 
-  public FftPlan2D getGridvx() {
+  public double[] getGridvx() {
     return gridvx;
   }
 
-  public FftPlan2D getGridvy() {
+  public double[] getGridvy() {
     return gridvy;
   }
 

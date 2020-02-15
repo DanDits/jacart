@@ -221,8 +221,8 @@ public class Integrate {
     int ly = mapGrid.getLy();
     Point[] proj = mapGrid.getProj();
 
-    double[] gridvx = mapGrid.getGridvx().getOutputData();
-    double[] gridvy = mapGrid.getGridvy().getOutputData();
+    double[] gridvx = mapGrid.getGridvx();
+    double[] gridvy = mapGrid.getGridvy();
 
     eul = new Point[lx * ly];
     for (int i = 0; i < eul.length; i++) {
@@ -382,8 +382,8 @@ public class Integrate {
     MapGrid mapGrid = context.getMapGrid();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    double[] gridvx = mapGrid.getGridvx().getOutputData();
-    double[] gridvy = mapGrid.getGridvy().getOutputData();
+    double[] gridvx = mapGrid.getGridvx();
+    double[] gridvy = mapGrid.getGridvy();
     double[] rho_ft = mapGrid.getRho_ft();
     double[] rho_init = mapGrid.getRho_init();
     double[] grid_fluxx_init = mapGrid.getGrid_fluxx_init().getOutputData();
