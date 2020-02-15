@@ -32,8 +32,8 @@ public class MapGrid {
     this.rho_init = new double[lx * ly];
     this.rho_ft = new double[lx * ly];
     this.xyhalfshift2reg = new int[lx][ly];
-    this.grid_fluxx_init = fftPlanFactory.createDCT3_2D(lx, ly);
-    this.grid_fluxy_init = fftPlanFactory.createDCT3_2D(lx, ly);
+    this.grid_fluxx_init = fftPlanFactory.createDCT3_2D(lx, ly); // TODO fix: use FFTW_RODFT01 and FFTW_REDFT01
+    this.grid_fluxy_init = fftPlanFactory.createDCT3_2D(lx, ly); // TODO fix: use FFTW_REDFT01, FFTW_RODFT01
     this.plan_fwd = fftPlanFactory.createDCT2_2D(lx, ly, rho_init, rho_ft);
     this.rho = fftPlanFactory.createDCT3_2D(lx, ly);
   }

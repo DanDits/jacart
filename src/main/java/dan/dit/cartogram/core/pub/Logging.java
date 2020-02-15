@@ -44,19 +44,23 @@ public class Logging {
   }
 
   public void displayIntArray(String text, int[] data) {
-    debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
-    debug(Arrays.stream(data)
+    debug(text + " (length={0}, sum={1,number,#.#########}) First entries: {2}",
+        data.length,
+        Arrays.stream(data).sum(),
+        Arrays.stream(data)
         .limit(10L)
         .mapToObj(Integer::toString)
         .collect(Collectors.joining(", ")));
   }
 
   public void displayDoubleArray(String text, double[] data) {
-    debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
-    debug(Arrays.stream(data)
-        .limit(10L)
-        .mapToObj(Double::toString)
-        .collect(Collectors.joining(", ")));
+    debug(text + " (length={0}, sum={1,number,#.########}) First entries: {2}",
+        data.length,
+        Arrays.stream(data).sum(),
+        Arrays.stream(data)
+            .limit(10L)
+            .mapToObj(Double::toString)
+            .collect(Collectors.joining(", ")));
   }
 
   private static String getFormattedText(String text, Object[] args) {

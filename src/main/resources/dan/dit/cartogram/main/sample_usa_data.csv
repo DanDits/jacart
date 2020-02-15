@@ -2,7 +2,7 @@ Region.Id:Integer,Region.Data:Double,Region.Name:String
 1,9,Alabama
 2,11,Arizona
 3,6,Arkansas
-4,0,California
+4,55,California
 5,9,Colorado
 6,7,Connecticut
 7,3,Delaware

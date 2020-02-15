@@ -5,6 +5,7 @@ import java.util.stream.IntStream;
 import dan.dit.cartogram.core.context.CartogramContext;
 import dan.dit.cartogram.core.context.MapGrid;
 import dan.dit.cartogram.core.context.Point;
+import dan.dit.cartogram.core.pub.Logging;
 import dan.dit.cartogram.dft.FftPlan2D;
 
 public class Integrate {
@@ -202,9 +203,10 @@ public class Integrate {
 
 
     context.getLogging().displayDoubleArray( "rho_ft", rho_ft);
-    context.getLogging().displayDoubleArray("grid_fluxx_init before plan execution", grid_fluxy_init);
+    context.getLogging().displayDoubleArray("grid_fluxy_init before plan execution", grid_fluxy_init);
     grid_fluxx_init_plan.execute();
     grid_fluxy_init_plan.execute();
+    context.getLogging().displayDoubleArray("grid_fluxy_init after plan execution", grid_fluxy_init);
   }
 
   void ffb_integrate() {
@@ -243,8 +245,10 @@ public class Integrate {
     iter = 0;
     int non_accepted_dts_count = 0;
     delta_t = 1E-2;
+    Logging logging = context.getLogging();
     do {
       calculateSpeedOnGrid(t);
+      logging.displayDoubleArray("gridvx", gridvx);
       interpolateSpeed(vx_intp, vy_intp, lx, ly, proj, gridvx, gridvy);
       accept = false;
       while (!accept) {
@@ -265,11 +269,13 @@ public class Integrate {
             proj[k].y + 0.5 * delta_t * vy_intp[k] > ly) {
             accept = false;
             non_accepted_dts_count++;
+            logging.debug("NOT ACCEPTED_A: {0,number,#.########}, trying {1,number,#.########}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
             delta_t *= DEC_AFTER_NOT_ACC;
             break;
           }
         }
         if (accept) {
+          logging.debug("ACCEPTED_A: {0,number,#.########}", delta_t);
           accept = integrateAcceptedTimestep(
             delta_t,
             vx_intp,
@@ -286,13 +292,14 @@ public class Integrate {
             mapGrid.getAbsoluteTolerance());
           if (!accept) {
             non_accepted_dts_count++;
+            logging.debug("NOT ACCEPTED_B: {0,number,#.########}, trying {1,number,#.########}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
             delta_t *= DEC_AFTER_NOT_ACC;
           }
         }
       }
 
-      if (iter % 10 == 0) {
-        context.getLogging().debug("iter = {0}, t = {1}, delta_t = {2}", iter, t, delta_t);
+      if (iter % 1 == 0) {
+        logging.debug("iter = {0}, t = {1,number,#.########}, delta_t = {2,number,#.##########}", iter, t, delta_t);
       }
       t += delta_t;
       iter++;
@@ -303,7 +310,7 @@ public class Integrate {
       delta_t *= INC_AFTER_ACC;
 
     } while (t < 1.0);
-    context.getLogging().debug(
+    logging.debug(
       "Finished integration with iter = {0}, t = {1}, delta_t = {2}, non accepted dts= {3}",
       iter,
       t,
@@ -382,6 +389,9 @@ public class Integrate {
     double[] grid_fluxx_init = mapGrid.getGrid_fluxx_init().getOutputData();
     double[] grid_fluxy_init = mapGrid.getGrid_fluxy_init().getOutputData();
 
+    context.getLogging().displayDoubleArray("calculateSpeedOnGrid: rho_init", rho_init);
+    context.getLogging().displayDoubleArray("calculateSpeedOnGrid: grid_fluxy_init", grid_fluxy_init);
+    context.getLogging().debug("calculateSpeedOnGrid: rho_ft[0]:  {0,number,#.##########}", rho_ft[0]);
     IntStream.range(0, lx * ly)
       .parallel()
       .forEach(k -> {

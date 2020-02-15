@@ -39,14 +39,15 @@ public class DefaultFftPlanner implements Fft2DPlanner {
 
     logging.debug("DCT2_2D:");
 
-    for (int i = 2; i <= 1024; i *= 2) {
+    int i = 2;
+    for (int j = 0; j < i * i; j++) {
       double[] test = new double[i * i];
       double[] target = new double[i * i];
-      Arrays.fill(test, 1.);
-      logging.displayDoubleArray( i + " test (before)", test);
-      var plan_bwd = new DefaultFftPlanner().createDCT2_2D(i, i, test, target);
+      test[j] = 2;
+      logging.displayDoubleArray(i + " test (before)", test);
+      var plan_bwd = new DefaultFftPlanner().createDCT3_2D(i, i, test, target);
       plan_bwd.execute();
-      logging.displayDoubleArray( i + " target (after)", target);
+      logging.displayDoubleArray(i + " target (after)", target);
       logging.debug("");
     }
   }
