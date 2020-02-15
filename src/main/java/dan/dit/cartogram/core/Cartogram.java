@@ -27,7 +27,7 @@ public class Cartogram {
     this.density = new Density(context);
   }
 
-  public CartogramContext calculate() throws FileNotFoundException {
+  public CartogramContext calculate() {
     boolean onlyOneRegionExists = context.isSingleRegion();
     if (onlyOneRegionExists) {
       context.getLogging().debug("Hint: Only one region exists, output will only be an affine transformation.");
@@ -59,17 +59,6 @@ public class Cartogram {
       diffIntegrate.diff_integrate();
     }
     project(false);
-
-    FileOutputStream epsOut = new FileOutputStream(new File("/home/daniel/cartogram/java/src/main/resources/dan/dit/cartogram/main/initial.eps"));
-    new EpsWriter().ps_figure(
-      epsOut,
-      mapGrid.getLx(),
-      mapGrid.getLy(),
-      regionData.getPolyinreg(),
-      regionData.getRegion_na(),
-      regionData.getCartcorn(),
-      mapGrid.getProj(),
-      true);
 
     Point[][] cartcorn = regionData.getCartcorn();
     double[] cartogramTotalArea = new double[1];

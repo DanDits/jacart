@@ -4,6 +4,7 @@
 
 ### Eclipse ###
 .metadata
+*.iml
 bin/
 tmp/
 .idea/

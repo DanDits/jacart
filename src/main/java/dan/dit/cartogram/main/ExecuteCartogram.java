@@ -34,7 +34,7 @@ public class ExecuteCartogram {
     Point[][] examplePolygons = new Point[1][];
     examplePolygons[0] = new Point[]{new Point(-0.5, 1), new Point(0.5, 1), new Point(0.5, -1), new Point(-0.5, -1), new Point(-0.5, 1)};
 
-    outputPolycornToFile(examplePolygons, "/home/daniel/cartogram/test/example.json");
+    outputPolycornToFile(examplePolygons, new FileOutputStream(new File("/home/daniel/cartogram/test/example.json")));
 
     InputStream geoJsonResource = ExecuteCartogram.class.getResourceAsStream("reordered_geo.json");
     if (args.length > 1 && args[0].equals("-s")) {
@@ -45,10 +45,13 @@ public class ExecuteCartogram {
     InputStream dataResource = ExecuteCartogram.class.getResourceAsStream("sample_usa_data.csv");
     FileOutputStream epsOut = new FileOutputStream(new File("/home/daniel/cartogram/java/src/main/resources/dan/dit/cartogram/main/image.eps"));
 
-    createCartogramToEps(geoJsonResource, dataResource, epsOut);
+    FileOutputStream jsonOut = new FileOutputStream(new File("/home/daniel/cartogram/test/transformed.json"));
+    createCartogramToEps(geoJsonResource, dataResource, epsOut, jsonOut);
   }
 
-  public static void createCartogramToEps(InputStream geoJsonResource, InputStream dataResource, OutputStream epsOut) throws IOException {
+  public static void createCartogramToEps(InputStream geoJsonResource, InputStream dataResource,
+      OutputStream epsOut,
+      OutputStream jsonOut) throws IOException {
     FeatureCollection<SimpleFeatureType, SimpleFeature> geo = new GeoJsonIO().importData(geoJsonResource);
     CsvData data = new CsvDataImport().importCsv(dataResource);
     ReferencedEnvelope bounds = geo.getBounds();
@@ -94,10 +97,10 @@ public class ExecuteCartogram {
       regionData.getCartcorn(),
       mapGrid.getProj(),
       true);
-    outputPolycornToFile(regionData.getCartcorn(), "/home/daniel/cartogram/test/transformed.json");
+    outputPolycornToFile(regionData.getCartcorn(), jsonOut);
   }
 
-  private static void outputPolycornToFile(Point[][] polygons, String path) throws IOException {
+  private static void outputPolycornToFile(Point[][] polygons, OutputStream jsonOut) throws IOException {
     DefaultFeatureCollection resultAsGeo = new DefaultFeatureCollection();
     int dummy_id = 0;
     for (Point[] points : polygons) {
@@ -109,7 +112,7 @@ public class ExecuteCartogram {
     }
     new GeoJsonIO().exportData(
       resultAsGeo,
-      new FileOutputStream(new File(path)));
+      jsonOut);
   }
 
   private static SimpleFeature createFeature(int id, List<Point[]> points) {
