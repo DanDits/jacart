@@ -1,29 +1,23 @@
 package dan.dit.cartogram.core;
 
-import dan.dit.cartogram.core.context.*;
-import dan.dit.cartogram.core.pub.Logging;
-import dan.dit.cartogram.main.EpsWriter;
+import static dan.dit.cartogram.core.Density.MAX_PERMITTED_AREA_ERROR;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static dan.dit.cartogram.core.Density.MAX_PERMITTED_AREA_ERROR;
+import dan.dit.cartogram.core.context.CartogramContext;
+import dan.dit.cartogram.core.context.MapGrid;
+import dan.dit.cartogram.core.context.Point;
+import dan.dit.cartogram.core.context.RegionData;
 
 public class Cartogram {
   private final Integrate integrate;
-  private final DiffIntegrate diffIntegrate;
   private final Density density;
-  private final CartogramConfig config;
   private final CartogramContext context;
 
-  public Cartogram(CartogramContext context, CartogramConfig config) {
+  public Cartogram(CartogramContext context) {
     this.context = Objects.requireNonNull(context);
-    this.config = Objects.requireNonNull(config);
     this.integrate = new Integrate(context);
-    this.diffIntegrate = new DiffIntegrate(context);
     this.density = new Density(context);
   }
 
@@ -52,12 +46,7 @@ public class Cartogram {
     Point[] proj = mapGrid.getProj();
 
     context.getLogging().debug("Starting integration 1\n");
-    boolean diff = config.isDiff();
-    if (!diff) {
-      integrate.ffb_integrate();
-    } else {
-      diffIntegrate.diff_integrate();
-    }
+    integrate.ffb_integrate();
     project(false);
 
     Point[][] cartcorn = regionData.getCartcorn();
@@ -84,11 +73,7 @@ public class Cartogram {
       }
       integration++;
       context.getLogging().debug("Starting integration {0}", integration);
-      if (!diff) {
-        integrate.ffb_integrate();
-      } else {
-        diffIntegrate.diff_integrate();
-      }
+      integrate.ffb_integrate();
       project(true);
 
       for (int i = 0; i < lx; i++) {

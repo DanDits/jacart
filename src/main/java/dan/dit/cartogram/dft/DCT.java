@@ -38,7 +38,7 @@ public final class DCT {
    * @param vector the vector of numbers to transform
    * @throws NullPointerException if the array is {@code null}
    */
-  public static void transform(double[] vector) {
+  public static void transform(double[] vector, double[] cosTable, double[] sinTable) {
     Objects.requireNonNull(vector);
     int len = vector.length;
     int halfLen = len / 2;
@@ -50,7 +50,7 @@ public final class DCT {
     if (len % 2 == 1)
       real[halfLen] = vector[len - 1];
     Arrays.fill(vector, 0.0);
-    Fft.transform(real, vector);
+    Fft.transform(real, vector, cosTable, sinTable);
     for (int i = 0; i < len; i++) {
       double temp = i * Math.PI / (len * 2);
       vector[i] = real[i] * Math.cos(temp) + vector[i] * Math.sin(temp);
@@ -70,7 +70,7 @@ public final class DCT {
    * @param vector the vector of numbers to transform
    * @throws NullPointerException if the array is {@code null}
    */
-  public static void inverseTransform(double[] vector) {
+  public static void inverseTransform(double[] vector, double[] cosTable, double[] sinTable) {
     Objects.requireNonNull(vector);
     int len = vector.length;
     if (len > 0)
@@ -81,7 +81,7 @@ public final class DCT {
       real[i] = vector[i] * Math.cos(temp);
       vector[i] *= -Math.sin(temp);
     }
-    Fft.transform(real, vector);
+    Fft.transform(real, vector, cosTable, sinTable);
 
     int halfLen = len / 2;
     for (int i = 0; i < halfLen; i++) {

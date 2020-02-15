@@ -1,12 +1,11 @@
 package dan.dit.cartogram.core.pub;
 
-import dan.dit.cartogram.dft.DefaultFftPlanner;
-import dan.dit.cartogram.dft.FftPlan2D;
-
-import javax.validation.Valid;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+
+import dan.dit.cartogram.dft.DefaultFftPlanner;
+import dan.dit.cartogram.dft.FftPlan2D;
 
 public class FftPlanFactory {
   private final Fft2DPlanner planner;
@@ -79,6 +78,10 @@ public class FftPlanFactory {
 
   public static FftPlanFactory of(Fft2DPlanner planner) {
     return new FftPlanFactory(planner);
+  }
+
+  public static FftPlanFactory ofDefault() {
+    return new FftPlanFactory(new DefaultFftPlanner());
   }
 
   public FftPlan2D createDCT2_2D(int width, int height, double[] inputData, double[] outputData) {

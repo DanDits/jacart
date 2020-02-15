@@ -34,7 +34,8 @@ public class ExecuteCartogram {
     Point[][] examplePolygons = new Point[1][];
     examplePolygons[0] = new Point[]{new Point(-0.5, 1), new Point(0.5, 1), new Point(0.5, -1), new Point(-0.5, -1), new Point(-0.5, 1)};
 
-    outputPolycornToFile(examplePolygons, new FileOutputStream(new File("/home/daniel/cartogram/test/example.json")));
+    String base = "/home/dd/Cartogram/out/";
+    outputPolycornToFile(examplePolygons, new FileOutputStream(new File(base + "example.json")));
 
     InputStream geoJsonResource = ExecuteCartogram.class.getResourceAsStream("reordered_geo.json");
     if (args.length > 1 && args[0].equals("-s")) {
@@ -43,9 +44,9 @@ public class ExecuteCartogram {
       return;
     }
     InputStream dataResource = ExecuteCartogram.class.getResourceAsStream("sample_usa_data.csv");
-    FileOutputStream epsOut = new FileOutputStream(new File("/home/daniel/cartogram/java/src/main/resources/dan/dit/cartogram/main/image.eps"));
+    FileOutputStream epsOut = new FileOutputStream(new File("/home/dd/Cartogram/jacart/src/main/resources/dan/dit/cartogram/main/image.eps"));
 
-    FileOutputStream jsonOut = new FileOutputStream(new File("/home/daniel/cartogram/test/transformed.json"));
+    FileOutputStream jsonOut = new FileOutputStream(new File(base + "transformed.json"));
     createCartogramToEps(geoJsonResource, dataResource, epsOut, jsonOut);
   }
 
@@ -81,10 +82,10 @@ public class ExecuteCartogram {
       bounds.getMaxY(),
       regions,
       targetAreaPerRegion);
-    CartogramConfig config = new CartogramConfig(false, true,
+    CartogramConfig config = new CartogramConfig( true,
       Logging.ofStandardOutput(), FftPlanFactory.of(new DefaultFftPlanner()));
     CartogramContext cartogramContext = Density.fill_with_density1(mapFeatureData, config);
-    CartogramContext context = new Cartogram(cartogramContext, config)
+    CartogramContext context = new Cartogram(cartogramContext)
       .calculate();
     MapGrid mapGrid = context.getMapGrid();
     RegionData regionData = context.getRegionData();

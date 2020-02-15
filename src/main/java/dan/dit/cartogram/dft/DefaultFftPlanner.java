@@ -5,8 +5,6 @@ import dan.dit.cartogram.core.pub.Logging;
 
 import java.util.Arrays;
 
-import static dan.dit.cartogram.core.Integrate.displayDoubleArray;
-
 /**
  * For computing FFTs we have quite a range of possibilities:
  * A) https://sites.google.com/site/piotrwendykier/software/jtransforms
@@ -31,10 +29,10 @@ public class DefaultFftPlanner implements Fft2DPlanner {
       double[] test = new double[i * i];
       double[] target = new double[i * i];
       Arrays.fill(test, 1.);
-      displayDoubleArray(logging, i + " test (before)", test);
+      logging.displayDoubleArray(i + " test (before)", test);
       var plan_bwd = new DefaultFftPlanner().createDCT3_2D(i, i, test, target);
       plan_bwd.execute();
-      displayDoubleArray(logging, i + " target (after)", target);
+      logging.displayDoubleArray( i + " target (after)", target);
       logging.debug("");
     }
 
@@ -45,10 +43,10 @@ public class DefaultFftPlanner implements Fft2DPlanner {
       double[] test = new double[i * i];
       double[] target = new double[i * i];
       Arrays.fill(test, 1.);
-      displayDoubleArray(logging, i + " test (before)", test);
+      logging.displayDoubleArray( i + " test (before)", test);
       var plan_bwd = new DefaultFftPlanner().createDCT2_2D(i, i, test, target);
       plan_bwd.execute();
-      displayDoubleArray(logging, i + " target (after)", target);
+      logging.displayDoubleArray( i + " target (after)", target);
       logging.debug("");
     }
   }
@@ -58,7 +56,6 @@ public class DefaultFftPlanner implements Fft2DPlanner {
    * Defined by Y_k = 2 SUM_{j=0}^{n-1}X_j\cos[\pi j(k+1/2)/n]
    */
   public FftPlan2D createDCT2_2D(int width, int height, double[] data) {
-    // TODO make sure the sin/cos table are re-used and cached (see Fft.java)
     return new FftPlan2D(width, height, data, data, DCT::transform);
   }
 

@@ -1,6 +1,5 @@
 package dan.dit.cartogram.dft;
 
-import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 public class FftPlan2D {
@@ -9,13 +8,17 @@ public class FftPlan2D {
   private final int height;
   private final double[] inputTabularData; // row-major layout (so: first width elements are the first row)
   private final double[] outputTabularData; // row-major layout (so: first width elements are the first row)
-  private final Consumer<double[]> inplaceAlgorithm; // TODO avoid allocations and re-use the cos/sin tables in the plan!
+  private final double[] cosTableWidth;
+  private final double[] sinTableWidth;
+  private final double[] cosTableHeight;
+  private final double[] sinTableHeight;
+  private final InplaceDftAlgorithm inplaceAlgorithm;
 
   public FftPlan2D(
     int width, int height,
     double[] inputTabularData,
     double[] outputTabularData,
-    Consumer<double[]> inplaceAlgorithm) {
+      InplaceDftAlgorithm inplaceAlgorithm) {
     if (width * height != inputTabularData.length) {
       throw new IllegalArgumentException("Array size does not match width*height!");
     }
@@ -27,6 +30,26 @@ public class FftPlan2D {
     this.inputTabularData = inputTabularData;
     this.outputTabularData = outputTabularData;
     this.inplaceAlgorithm = inplaceAlgorithm;
+    this.cosTableWidth = initCosTable(width);
+    this.sinTableWidth = initSinTable(width);
+    this.cosTableHeight = width == height ? cosTableWidth : initCosTable(height);
+    this.sinTableHeight = width == height ? sinTableWidth : initSinTable(height);
+  }
+
+  private static double[] initCosTable(int n) {
+    double[] cosTable = new double[n / 2];
+    for (int i = 0; i < n / 2; i++) {
+      cosTable[i] = Math.cos(2 * Math.PI * i / n);
+    }
+    return cosTable;
+  }
+
+  private static double[] initSinTable(int n) {
+    double[] sinTable = new double[n / 2];
+    for (int i = 0; i < n / 2; i++) {
+      sinTable[i] = Math.sin(2 * Math.PI * i / n);
+    }
+    return sinTable;
   }
 
   public void execute() {
@@ -45,7 +68,7 @@ public class FftPlan2D {
         for (int row = 0; row < height; row++) {
           heightBuffer[row] = outputTabularData[row * width + col];
         }
-        inplaceAlgorithm.accept(heightBuffer);
+        inplaceAlgorithm.execute(heightBuffer, cosTableHeight, sinTableHeight);
         for (int row = 0; row < height; row++) {
           outputTabularData[row * width + col] = heightBuffer[row];
         }
@@ -59,7 +82,7 @@ public class FftPlan2D {
         double[] widthBuffer = new double[width];
         int indexOffset = row * width;
         System.arraycopy(outputTabularData, indexOffset, widthBuffer, 0, widthBuffer.length);
-        inplaceAlgorithm.accept(widthBuffer); // TODO could optimize by letting that work in place without having to copy content two times, not sure if worth it
+        inplaceAlgorithm.execute(widthBuffer, cosTableWidth, sinTableWidth); // TODO could optimize by letting that work in place without having to copy content two times, not sure if worth it
         System.arraycopy(widthBuffer, 0, outputTabularData, indexOffset, widthBuffer.length);
       });
   }

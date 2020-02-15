@@ -1,10 +1,12 @@
 package dan.dit.cartogram.core.pub;
 
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class Logging {
 
@@ -39,6 +41,22 @@ public class Logging {
 
   public void error(String text, Object... args) {
     errorConsumer.accept(getFormattedText(text, args));
+  }
+
+  public void displayIntArray(String text, int[] data) {
+    debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
+    debug(Arrays.stream(data)
+        .limit(10L)
+        .mapToObj(Integer::toString)
+        .collect(Collectors.joining(", ")));
+  }
+
+  public void displayDoubleArray(String text, double[] data) {
+    debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
+    debug(Arrays.stream(data)
+        .limit(10L)
+        .mapToObj(Double::toString)
+        .collect(Collectors.joining(", ")));
   }
 
   private static String getFormattedText(String text, Object[] args) {

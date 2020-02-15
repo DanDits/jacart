@@ -1,14 +1,11 @@
 package dan.dit.cartogram.core;
 
+import java.util.stream.IntStream;
+
 import dan.dit.cartogram.core.context.CartogramContext;
 import dan.dit.cartogram.core.context.MapGrid;
 import dan.dit.cartogram.core.context.Point;
-import dan.dit.cartogram.core.pub.Logging;
 import dan.dit.cartogram.dft.FftPlan2D;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Integrate {
   private static final double INC_AFTER_ACC = 1.1;
@@ -19,11 +16,9 @@ public class Integrate {
     this.context = context;
   }
 
-  @SuppressWarnings("squid:S1244")
-  // it is correct to compare with equality as we casted one to long before
-  public static double veryFastFloor(double value) {
-    long roundedValue = (long) value;
-    return roundedValue - ((value < 0. && value != roundedValue) ? 1. : 0.);
+  // will only work on positive values and not on special case values like NaN, Inf
+  private static double veryFastFloor(double value) {
+    return (long) value;
   }
 
   static double interpolateX(int lx, int ly, double x, double y, double[] grid) {
@@ -35,9 +30,9 @@ public class Integrate {
     final double y1 = Math.min(ly, yUp + 0.5);
     final double delta_x = (x - x0) / (x1 - x0);
     final double delta_y = (y - y0) / (y1 - y0);
-    final double fx0y0 = getFx0y0_X(x, y, grid, ly, (int) x0, (int) y0);
+    final double fx0y0 = getFx0y0_X(x, grid, ly, (int) x0, (int) y0);
     final double fx0y1 = getFx0y1_X(x, y, grid, ly, (int) x0, (int) y1);
-    final double fx1y0 = getFx1y0_X(x, y, grid, lx, ly, (int) x1, (int) y0);
+    final double fx1y0 = getFx1y0_X(x, grid, lx, ly, (int) x1, (int) y0);
     final double fx1y1 = getFx1y1_X(x, y, grid, lx, ly, (int) x1, (int) y1);
 
     return (1 - delta_x) * (1 - delta_y) * fx0y0 + (1 - delta_x) * delta_y * fx0y1
@@ -53,8 +48,8 @@ public class Integrate {
     final double y1 = Math.min(ly, yUp + 0.5);
     final double delta_x = (x - x0) / (x1 - x0);
     final double delta_y = (y - y0) / (y1 - y0);
-    final double fx0y0 = getFx0y0_Y(x, y, grid, ly, (int) x0, (int) y0);
-    final double fx0y1 = getFx0y1_Y(x, y, grid, ly, (int) x0, (int) y1);
+    final double fx0y0 = getFx0y0_Y(y, grid, ly, (int) x0, (int) y0);
+    final double fx0y1 = getFx0y1_Y(y, grid, ly, (int) x0, (int) y1);
     final double fx1y0 = getFx1y0_Y(x, y, grid, lx, ly, (int) x1, (int) y0);
     final double fx1y1 = getFx1y1_Y(x, y, grid, lx, ly, (int) x1, (int) y1);
 
@@ -82,13 +77,12 @@ public class Integrate {
   }
 
   private static double getFx1y0_X(
-    double x,
-    double y,
-    double[] grid,
-    int lx,
-    int ly,
-    int x1,
-    int y0) {
+      double x,
+      double[] grid,
+      int lx,
+      int ly,
+      int x1,
+      int y0) {
     if (x >= lx - 0.5) {
       return 0.0;
     } else {
@@ -96,7 +90,7 @@ public class Integrate {
     }
   }
 
-  private static double getFx0y0_X(double x, double y, double[] grid, int ly, int x0, int y0) {
+  private static double getFx0y0_X(double x, double[] grid, int ly, int x0, int y0) {
     if (x < 0.5) {
       return 0.0;
     } else {
@@ -150,7 +144,7 @@ public class Integrate {
     }
   }
 
-  private static double getFx0y0_Y(double x, double y, double[] grid, int ly, int x0, int y0) {
+  private static double getFx0y0_Y(double y, double[] grid, int ly, int x0, int y0) {
     if (y < 0.5) {
       return 0.0;
     } else {
@@ -158,7 +152,7 @@ public class Integrate {
     }
   }
 
-  private static double getFx0y1_Y(double x, double y, double[] grid, int ly, int x0, int y1) {
+  private static double getFx0y1_Y(double y, double[] grid, int ly, int x0, int y1) {
     if (y >= ly - 0.5) {
       return 0.0;
     } else {
@@ -174,7 +168,7 @@ public class Integrate {
     double di;
     int i, j;
 
-    displayDoubleArray(context.getLogging(), "rho_ft", rho_ft);
+    context.getLogging().displayDoubleArray( "rho_ft", rho_ft);
     int rho_ft_initial = 4 * lx * ly;
     for (i = 0; i < lx * ly; i++) {
       rho_ft[i] /= rho_ft_initial;
@@ -207,33 +201,17 @@ public class Integrate {
       grid_fluxy_init[i * ly + ly - 1] = 0.0;
 
 
-    displayDoubleArray(context.getLogging(), "rho_ft", rho_ft);
-    displayDoubleArray(context.getLogging(), "grid_fluxx_init before plan execution", grid_fluxy_init);
+    context.getLogging().displayDoubleArray( "rho_ft", rho_ft);
+    context.getLogging().displayDoubleArray("grid_fluxx_init before plan execution", grid_fluxy_init);
     grid_fluxx_init_plan.execute();
     grid_fluxy_init_plan.execute();
-  }
-
-  public static void displayIntArray(Logging logging, String text, int[] data) {
-    logging.debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
-    logging.debug(Arrays.stream(data)
-      .limit(10L)
-      .mapToObj(Integer::toString)
-      .collect(Collectors.joining(", ")));
-  }
-
-  public static void displayDoubleArray(Logging logging, String text, double[] data) {
-    logging.debug(text + " (length=" + data.length + ", sum=" + Arrays.stream(data).sum() + ") First entries= ");
-    logging.debug(Arrays.stream(data)
-      .limit(10L)
-      .mapToObj(Double::toString)
-      .collect(Collectors.joining(", ")));
   }
 
   void ffb_integrate() {
     boolean accept;
     double delta_t, t;
     double[] vx_intp, vx_intp_half, vy_intp, vy_intp_half;
-    int iter, k;
+    int iter;
     Point[] eul, mid;
 
     MapGrid mapGrid = context.getMapGrid();
@@ -262,30 +240,31 @@ public class Integrate {
 
     init_gridv();
     t = 0.0;
-    delta_t = 1E-2;
     iter = 0;
     int non_accepted_dts_count = 0;
+    delta_t = 1E-2;
     do {
-      ffb_calcv(t);
+      calculateSpeedOnGrid(t);
       interpolateSpeed(vx_intp, vy_intp, lx, ly, proj, gridvx, gridvy);
       accept = false;
       while (!accept) {
-        // TODO candidate for parallelization
-        for (k = 0; k < lx * ly; k++) {
-          eul[k].x = proj[k].x + vx_intp[k] * delta_t;
-          eul[k].y = proj[k].y + vy_intp[k] * delta_t;
-        }
+        double currentTimeStep = delta_t;
+        IntStream.range(0, lx * ly)
+            .forEach(k -> {
+              eul[k].x = proj[k].x + vx_intp[k] * currentTimeStep;
+              eul[k].y = proj[k].y + vy_intp[k] * currentTimeStep;
+            });
 
-        ffb_calcv(t + 0.5 * delta_t);
+        calculateSpeedOnGrid(t + 0.5 * delta_t);
 
         accept = true;
-        for (k = 0; k < lx * ly; k++) {
+        for (int k = 0; k < lx * ly; k++) {
           if (proj[k].x + 0.5 * delta_t * vx_intp[k] < 0.0 ||
             proj[k].x + 0.5 * delta_t * vx_intp[k] > lx ||
             proj[k].y + 0.5 * delta_t * vy_intp[k] < 0.0 ||
             proj[k].y + 0.5 * delta_t * vy_intp[k] > ly) {
             accept = false;
-            context.getLogging().debug("NOT ACCEPTED_A: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
+            non_accepted_dts_count++;
             delta_t *= DEC_AFTER_NOT_ACC;
             break;
           }
@@ -305,11 +284,10 @@ public class Integrate {
             gridvx,
             gridvy,
             mapGrid.getAbsoluteTolerance());
-        }
-        if (!accept) {
-          non_accepted_dts_count++;
-          context.getLogging().debug("NOT ACCEPTED_B: {0}, trying {1}", delta_t, delta_t * DEC_AFTER_NOT_ACC);
-          delta_t *= DEC_AFTER_NOT_ACC;
+          if (!accept) {
+            non_accepted_dts_count++;
+            delta_t *= DEC_AFTER_NOT_ACC;
+          }
         }
       }
 
@@ -318,7 +296,7 @@ public class Integrate {
       }
       t += delta_t;
       iter++;
-      for (k = 0; k < lx * ly; k++) {
+      for (int k = 0; k < lx * ly; k++) {
         proj[k].x = mid[k].x;
         proj[k].y = mid[k].y;
       }
@@ -347,7 +325,6 @@ public class Integrate {
     double[] gridvx,
     double[] gridvy,
     double absTol) {
-    // TODO candidate for parallelization
     return IntStream.range(0, lx * ly)
       .parallel()
       .allMatch(k -> {
@@ -394,7 +371,7 @@ public class Integrate {
       });
   }
 
-  void ffb_calcv(double t) {
+  void calculateSpeedOnGrid(double t) {
     MapGrid mapGrid = context.getMapGrid();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
