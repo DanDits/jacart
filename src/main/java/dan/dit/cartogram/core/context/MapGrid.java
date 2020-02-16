@@ -7,7 +7,6 @@ public class MapGrid {
   private final int lx;
   private final int ly;
   private final double absoluteTolerance;
-  private final double convergenceMaxChangeThreshold;
   private final double[] gridvx;
   private final double[] gridvy;
   private final Point[] proj;
@@ -24,7 +23,6 @@ public class MapGrid {
     this.lx = lx;
     this.ly = ly;
     this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
-    this.convergenceMaxChangeThreshold = Math.min(lx, ly) * 1e-9;
     this.gridvx = new double[lx * ly];
     this.gridvy = new double[lx * ly];
     this.proj = initProjectionOnGrid(lx, ly);
@@ -74,10 +72,6 @@ public class MapGrid {
 
   public double getAbsoluteTolerance() {
     return absoluteTolerance;
-  }
-
-  public double getConvergenceMaxChangeThreshold() {
-    return convergenceMaxChangeThreshold;
   }
 
   public Point[] getProj() {
