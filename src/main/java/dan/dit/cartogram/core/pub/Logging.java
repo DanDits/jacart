@@ -14,12 +14,12 @@ public class Logging {
   private final Consumer<String> errorConsumer;
 
   private Logging(Consumer<String> debugConsumer, Consumer<String> errorConsumer) {
-    this.debugConsumer = Objects.requireNonNull(debugConsumer);
-    this.errorConsumer = Objects.requireNonNull(errorConsumer);
+    this.debugConsumer = debugConsumer;
+    this.errorConsumer = errorConsumer;
   }
 
   public static Logging disabled() {
-    return new Logging(ignored -> {}, ignored -> {});
+    return new Logging(null, null);
   }
 
   public static Logging of(Logger logger) {
@@ -36,15 +36,21 @@ public class Logging {
   }
 
   public void debug(String text, Object... args) {
+    if (debugConsumer == null) {
+      return;
+    }
     debugConsumer.accept(getFormattedText(text, args));
   }
 
   public void error(String text, Object... args) {
+    if (errorConsumer == null) {
+      return;
+    }
     errorConsumer.accept(getFormattedText(text, args));
   }
 
   public void displayIntArray(String text, int[] data) {
-    debug(text + " (length={0}, sum={1,number,#.#########}) First entries: {2}",
+    debug(text + " (length={0}, sum={1}) First entries: {2}",
         data.length,
         Arrays.stream(data).sum(),
         Arrays.stream(data)
