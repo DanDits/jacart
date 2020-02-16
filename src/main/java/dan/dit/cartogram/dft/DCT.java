@@ -71,6 +71,8 @@ public final class DCT {
    * @throws NullPointerException if the array is {@code null}
    */
   public static void inverseTransform(double[] vector, double[] cosTable, double[] sinTable) {
+    // Compute for k=0..vector.length and store in vector[k]: (input X, output Y)
+    // Y_k = X_0 + 2 * \sum_{j=1}^{n-1}X_j\cos[\pi j(k+1/2)/n]
     Objects.requireNonNull(vector);
     int len = vector.length;
     if (len > 0)

@@ -18,4 +18,14 @@ public interface Fft2DPlanner {
    * Up to a scale factor of N=2n this is the inverse of REDFT10, so this is also called IDCT.
    */
   FftPlan2D createDCT3_2D(int width, int height, double[] input, double[] output);
+
+  /*
+   * RODFT01 (DST-III) -> REDFT01 (DCT-III)
+   */
+  FftPlan2D createDCT3_DST3_2D(int width, int height, double[] input, double[] output);
+
+  /*
+   * REDFT01 (DCT-III) -> RODFT01 (DST-III)
+   */
+  FftPlan2D createDST3_DCT3_2D(int width, int height, double[] input, double[] output);
 }

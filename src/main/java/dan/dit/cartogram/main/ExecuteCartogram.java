@@ -83,7 +83,7 @@ public class ExecuteCartogram {
       regions,
       targetAreaPerRegion);
     CartogramConfig config = new CartogramConfig( true,
-      Logging.ofStandardOutput(), FftPlanFactory.of(new DefaultFftPlanner()));
+      Logging.ofStandardOutput(), FftPlanFactory.ofDefault());
     CartogramContext cartogramContext = Density.fill_with_density1(mapFeatureData, config);
     CartogramContext context = new Cartogram(cartogramContext)
       .calculate();

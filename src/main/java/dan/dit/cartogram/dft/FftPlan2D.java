@@ -12,13 +12,15 @@ public class FftPlan2D {
   private final double[] sinTableWidth;
   private final double[] cosTableHeight;
   private final double[] sinTableHeight;
-  private final InplaceDftAlgorithm inplaceAlgorithm;
+  private final InplaceDftAlgorithm inplaceAlgorithmRows;
+  private final InplaceDftAlgorithm inplaceAlgorithmColumns;
 
   public FftPlan2D(
-    int width, int height,
-    double[] inputTabularData,
-    double[] outputTabularData,
-      InplaceDftAlgorithm inplaceAlgorithm) {
+      int width, int height,
+      double[] inputTabularData,
+      double[] outputTabularData,
+      InplaceDftAlgorithm inplaceAlgorithmRows,
+      InplaceDftAlgorithm inplaceAlgorithmColumns) {
     if (width * height != inputTabularData.length) {
       throw new IllegalArgumentException("Array size does not match width*height!");
     }
@@ -29,7 +31,8 @@ public class FftPlan2D {
     this.height = height;
     this.inputTabularData = inputTabularData;
     this.outputTabularData = outputTabularData;
-    this.inplaceAlgorithm = inplaceAlgorithm;
+    this.inplaceAlgorithmRows = inplaceAlgorithmRows;
+    this.inplaceAlgorithmColumns = inplaceAlgorithmColumns;
     this.cosTableWidth = initCosTable(width);
     this.sinTableWidth = initSinTable(width);
     this.cosTableHeight = width == height ? cosTableWidth : initCosTable(height);
@@ -62,29 +65,32 @@ public class FftPlan2D {
 
   private void executePerColumn() {
     IntStream.range(0, width)
-      .parallel()
-      .forEach(col -> {
-        double[] heightBuffer = new double[height];
-        for (int row = 0; row < height; row++) {
-          heightBuffer[row] = outputTabularData[row * width + col];
-        }
-        inplaceAlgorithm.execute(heightBuffer, cosTableHeight, sinTableHeight);
-        for (int row = 0; row < height; row++) {
-          outputTabularData[row * width + col] = heightBuffer[row];
-        }
-      });
+        .parallel()
+        .forEach(col -> {
+          double[] heightBuffer = new double[height];
+          for (int row = 0; row < height; row++) {
+            heightBuffer[row] = outputTabularData[row * width + col];
+          }
+          inplaceAlgorithmColumns.execute(heightBuffer, cosTableHeight, sinTableHeight);
+          for (int row = 0; row < height; row++) {
+            outputTabularData[row * width + col] = heightBuffer[row];
+          }
+        });
   }
 
   private void executePerRow() {
     IntStream.range(0, height)
-      .parallel()
-      .forEach(row -> {
-        double[] widthBuffer = new double[width];
-        int indexOffset = row * width;
-        System.arraycopy(outputTabularData, indexOffset, widthBuffer, 0, widthBuffer.length);
-        inplaceAlgorithm.execute(widthBuffer, cosTableWidth, sinTableWidth); // TODO could optimize by letting that work in place without having to copy content two times, not sure if worth it
-        System.arraycopy(widthBuffer, 0, outputTabularData, indexOffset, widthBuffer.length);
-      });
+        .parallel()
+        .forEach(row -> {
+          double[] widthBuffer = new double[width];
+          int indexOffset = row * width;
+          System.arraycopy(outputTabularData, indexOffset, widthBuffer, 0, widthBuffer.length);
+          inplaceAlgorithmRows.execute(
+              widthBuffer,
+              cosTableWidth,
+              sinTableWidth);
+          System.arraycopy(widthBuffer, 0, outputTabularData, indexOffset, widthBuffer.length);
+        });
   }
 
   public double[] getOutputData() {

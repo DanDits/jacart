@@ -105,6 +105,20 @@ public class FftPlanFactory {
     return planner.createDCT3_2D(width, height, inputData, outputData);
   }
 
+  /* Corresponds to FFTW's RODFT01 -> REDFT01:
+   */
+  public FftPlan2D createDCT3_DST3_2D(int width, int height) {
+    double[] data = new double[width * height];
+    return planner.createDCT3_DST3_2D(width, height, data, data);
+  }
+
+  /* Corresponds to FFTW's REDFT01 -> RODFT01:
+   */
+  public FftPlan2D createDST3_DCT3_2D(int width, int height) {
+    double[] data = new double[width * height];
+    return planner.createDST3_DCT3_2D(width, height, data, data);
+  }
+
   private void validateIOLength(double[] inputData, double[] outputData, int width, int height) {
     if (inputData.length != width * height) {
       throw new IllegalArgumentException(
