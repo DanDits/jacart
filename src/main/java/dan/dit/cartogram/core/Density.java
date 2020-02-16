@@ -308,7 +308,6 @@ public class Density {
     int ly = mapGrid.getLy();
     int[][] xyhalfshift2reg = mapGrid.getXyhalfshift2reg();
     double[] rho_init = mapGrid.getRho_init();
-    double[] rho_ft = mapGrid.getRho_ft();
     for (i = 0; i < lx; i++) {
       for (j = 0; j < ly; j++) {
         if (xyhalfshift2reg[i][j] == -1)
@@ -317,15 +316,10 @@ public class Density {
           rho_init[i * ly + j] = dens[xyhalfshift2reg[i][j]];
       }
     }
-    logging.displayIntArray( "xyhalfshift2reg[0]", xyhalfshift2reg[0]);
-    logging.displayDoubleArray( "(beforeblur) rho_init", rho_init);
-    logging.displayDoubleArray( "(beforeblur) rho_ft", rho_ft);
 
     gaussian_blur(config.getFftPlanFactory(), mapGrid, tot_init_area, avg_dens);
 
     mapGrid.getPlan_fwd().execute();
-    logging.displayDoubleArray( "(afterblur) rho_init", rho_init);
-    logging.displayDoubleArray( "(afterblur) rho_ft", rho_ft);
 
     return new CartogramContext(logging, mapGrid, regionData, false);
   }

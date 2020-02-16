@@ -56,7 +56,8 @@ public class Cartogram {
 
     Point[] proj2 = mapGrid.getProj2();
     int integration = 0;
-    while (mae > MAX_PERMITTED_AREA_ERROR) {
+    double lastMae = Double.POSITIVE_INFINITY;
+    while (mae > MAX_PERMITTED_AREA_ERROR && mae < lastMae) {
       density.fill_with_density2();
 
       for (int i = 0; i < lx; i++) {
@@ -82,8 +83,13 @@ public class Cartogram {
           proj[i * ly + j].y = proj2[i * ly + j].y;
         }
       }
+      lastMae = mae;
       mae = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);
       context.getLogging().debug("max. abs. area error: {0}", mae);
+    }
+
+    if (mae > MAX_PERMITTED_AREA_ERROR) {
+      context.getLogging().error("Did not converge, aborted! Error is: {0}", mae);
     }
 
 
