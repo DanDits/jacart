@@ -268,7 +268,7 @@ public class Density {
           target_area[i] = region_threshold_area[i];
           tmp_tot_target_area += target_area[i];
           tmp_tot_target_area -= old_target_area;
-          logging.debug("{0}: {1}", region_id[i], target_area[i]);
+          logging.debug("Enlarging region id {0}: {1}", region_id[i], target_area[i]);
         }
       }
       if (region_small_ctr <= 0) {
@@ -292,12 +292,11 @@ public class Density {
         }
       }
     }
-    logging.displayDoubleArray( "target_area ___!___", target_area);
+    logging.displayDoubleArray( "target_area", target_area);
 
     for (i = 0; i < n_reg; i++) {
       dens[i] = target_area[i] / init_area[i];
     }
-    logging.displayDoubleArray( "dens", dens);
 
     for (i = 0, tot_target_area = 0.0; i < n_reg; i++) {
       tot_target_area += target_area[i];

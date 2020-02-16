@@ -24,7 +24,7 @@ public class ExecuteCartogramTest {
       "sample6_geo.json, sample7_data.csv, result7.eps", // testing handling of single missing value
       "sample8_geo.json, sample8_data.csv, result8.eps", // portrait mode, testing non square mode with lx!=ly, does not converge // TODO test 8+9 in gocart and see how the eps file looks like
       "sample8_geo.json, sample9_data.csv, result9.eps", // portrait mode, testing non square mode with lx!=ly
-      // TODO regions with small areas
+      "sample10_geo.json, sample10_data.csv, result10.eps" // regions with very small areas that should be enhanced
   })
   public void createCartogramAndWriteToEps(
       String geoJsonResource,
