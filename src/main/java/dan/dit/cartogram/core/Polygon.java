@@ -1,6 +1,6 @@
 package dan.dit.cartogram.core;
 
-import dan.dit.cartogram.core.context.MapFeatureData;
+import dan.dit.cartogram.core.pub.MapFeatureData;
 import dan.dit.cartogram.core.context.Point;
 import dan.dit.cartogram.core.context.PolygonData;
 import dan.dit.cartogram.core.context.RegionData;

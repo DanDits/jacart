@@ -1,15 +1,11 @@
 package dan.dit.cartogram.main;
 
 import dan.dit.cartogram.core.context.*;
-import dan.dit.cartogram.core.Cartogram;
-import dan.dit.cartogram.core.Density;
 import dan.dit.cartogram.core.context.Point;
-import dan.dit.cartogram.core.pub.FftPlanFactory;
-import dan.dit.cartogram.core.pub.Logging;
+import dan.dit.cartogram.core.pub.*;
 import dan.dit.cartogram.data.CsvData;
 import dan.dit.cartogram.data.CsvDataImport;
 import dan.dit.cartogram.data.GeoJsonIO;
-import dan.dit.cartogram.dft.DefaultFftPlanner;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -35,7 +31,8 @@ public class ExecuteCartogram {
     examplePolygons[0] = new Point[]{new Point(-0.5, 1), new Point(0.5, 1), new Point(0.5, -1), new Point(-0.5, -1), new Point(-0.5, 1)};
 
     String base = "/home/dd/Cartogram/out/";
-    outputPolycornToFile(examplePolygons, new FileOutputStream(new File(base + "example.json")));
+    List<Point[]> polygons = new ArrayList<>(Arrays.asList(examplePolygons));
+    outputPolycornToFile(List.of(new ResultRegion(polygons, false)), new FileOutputStream(new File(base + "example.json")));
 
     InputStream geoJsonResource = ExecuteCartogram.class.getResourceAsStream("reordered_geo.json");
     if (args.length > 1 && args[0].equals("-s")) {
@@ -50,6 +47,7 @@ public class ExecuteCartogram {
     createCartogramToEps(geoJsonResource, dataResource, epsOut, jsonOut);
   }
 
+  // TODO create a separate project which is the only one having dependencies on geotools to perform geotools IO
   public static void createCartogramToEps(InputStream geoJsonResource, InputStream dataResource,
       OutputStream epsOut,
       OutputStream jsonOut) throws IOException {
@@ -82,32 +80,27 @@ public class ExecuteCartogram {
       bounds.getMaxY(),
       regions,
       targetAreaPerRegion);
-    CartogramConfig config = new CartogramConfig( true,
-      Logging.ofStandardOutput(), FftPlanFactory.ofDefault());
-    CartogramContext cartogramContext = Density.fill_with_density1(mapFeatureData, config);
-    CartogramContext context = new Cartogram(cartogramContext)
-      .calculate();
-    MapGrid mapGrid = context.getMapGrid();
-    RegionData regionData = context.getRegionData();
+    CartogramConfig config = new CartogramConfig(
+      // TODO make max area error configurable
+      true,
+      Logging.ofStandardOutput(),
+      FftPlanFactory.ofDefault());
+    CartogramResult result = new CartogramApi().execute(mapFeatureData, config);
     new EpsWriter().ps_figure(
       epsOut,
-      mapGrid.getLx(),
-      mapGrid.getLy(),
-      regionData.getPolyinreg(),
-      regionData.getRegion_na(),
-      regionData.getCartcorn(),
-      mapGrid.getProj(),
+      result.getGridSizeX(),
+      result.getGridSizeY(),
+      result.getResultRegions(),
+      result.getGridProjection(),
       true);
-    outputPolycornToFile(regionData.getCartcorn(), jsonOut);
+    outputPolycornToFile(result.getResultRegions(), jsonOut);
   }
 
-  private static void outputPolycornToFile(Point[][] polygons, OutputStream jsonOut) throws IOException {
+  private static void outputPolycornToFile(List<ResultRegion> polygons, OutputStream jsonOut) throws IOException {
     DefaultFeatureCollection resultAsGeo = new DefaultFeatureCollection();
     int dummy_id = 0;
-    for (Point[] points : polygons) {
-      List<Point[]> allPoints = new ArrayList<>();
-      allPoints.add(points);
-      SimpleFeature feature = createFeature(dummy_id, allPoints);
+    for (ResultRegion region : polygons) {
+      SimpleFeature feature = createFeature(dummy_id, region.getHullCoordinates());
       resultAsGeo.add(feature);
       dummy_id++;
     }
@@ -119,6 +112,7 @@ public class ExecuteCartogram {
   private static SimpleFeature createFeature(int id, List<Point[]> points) {
     SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
     b.setName("CartPoly");
+    // TODO output in input CRS and make sure that they are transformed back from Lspace to normal space!
     b.setCRS(DefaultGeographicCRS.WGS84); // set crs first
     b.add("geo", Polygon.class); // then add geometry
 

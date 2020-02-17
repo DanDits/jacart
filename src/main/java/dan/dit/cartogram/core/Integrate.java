@@ -22,6 +22,7 @@ public class Integrate {
     return (long) value;
   }
 
+  // TODO interpolateX/Y are the current bottlenecks. How to improve them? Analyze. Maybe rather return the index and not pass grid around?
   static double interpolateX(int lx, int ly, double x, double y, double[] grid) {
     double xUp = veryFastFloor(x + 0.5);
     double yUp = veryFastFloor(y + 0.5);

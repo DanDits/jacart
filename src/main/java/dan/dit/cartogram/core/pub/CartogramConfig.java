@@ -1,7 +1,4 @@
-package dan.dit.cartogram.core.context;
-
-import dan.dit.cartogram.core.pub.FftPlanFactory;
-import dan.dit.cartogram.core.pub.Logging;
+package dan.dit.cartogram.core.pub;
 
 /**
  * Describes configuration for the cartogram creation like
@@ -9,6 +6,7 @@ import dan.dit.cartogram.core.pub.Logging;
  */
 public class CartogramConfig {
 
+  // TODO allow configuring the parallelism, maybe just by specifying a ForkJoinPool? Or just by disabling it?
   /**
    * If true then extremely small regions are scaled up
    */

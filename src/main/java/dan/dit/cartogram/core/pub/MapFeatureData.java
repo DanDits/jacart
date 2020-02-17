@@ -1,4 +1,6 @@
-package dan.dit.cartogram.core.context;
+package dan.dit.cartogram.core.pub;
+
+import dan.dit.cartogram.core.context.Region;
 
 import java.util.List;
 
@@ -23,6 +25,7 @@ public class MapFeatureData {
   private final double map_maxx;
   private final double map_maxy;
 
+  // TODO this is not really an area value, this is more of a weighting area, create a test for that statement
   private final double[] targetAreaPerRegion; // use negative for invalid areas, use NaN for explicitly set not available value, see region_na
   private final List<Region> regions;
 

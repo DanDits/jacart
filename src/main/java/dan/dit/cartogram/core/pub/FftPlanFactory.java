@@ -14,6 +14,7 @@ public class FftPlanFactory {
     this.planner = planner;
     validatePlannerPerformDCT2_2D(planner);
     validatePlannerPerformDCT3_2D(planner);
+    // TODO also validate the DCT3_DST3 (and vice versa) planners
   }
 
   private static void validatePlannerPerformDCT2_2D(Fft2DPlanner planner) {

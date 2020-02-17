@@ -1,15 +1,17 @@
 package dan.dit.cartogram.main;
 
 import dan.dit.cartogram.core.context.Point;
+import dan.dit.cartogram.core.pub.ResultRegion;
 
 import java.io.*;
 import java.text.MessageFormat;
+import java.util.List;
 import java.util.Locale;
 
 public class EpsWriter {
   public static final int GRAT_LINES = 64;
 
-  public void ps_figure(OutputStream out, int lx, int ly, int[][] polyinreg, boolean[] region_na, Point[][] corn, Point[] prj, boolean plotGraticule) throws FileNotFoundException {
+  public void ps_figure(OutputStream out, int lx, int ly, List<ResultRegion> regions, Point[] prj, boolean plotGraticule) {
 
     Locale.setDefault(Locale.US); // required for writig EPS correctly for now
     PrintWriter printWriter = new PrintWriter(out);
@@ -27,17 +29,17 @@ public class EpsWriter {
     printWriter.println("/SRGB {setrgbcolor} def");
 
     printWriter.println("0.7 SLW");
-    for (int i = 0; i < polyinreg.length; i++) {
+    for (ResultRegion resultRegion : regions) {
       printWriter.println("n");
-      for (int j = 0; j < polyinreg[i].length; j++) {
-        printWriter.println(MessageFormat.format("{0} {1} m",
-          corn[polyinreg[i][j]][0].x, corn[polyinreg[i][j]][0].y));
-        for (int k = 0; k < corn[polyinreg[i][j]].length; k++)
-          printWriter.println(MessageFormat.format("{0} {1} l",
-            corn[polyinreg[i][j]][k].x, corn[polyinreg[i][j]][k].y));
+      List<Point[]> hullCoordinates = resultRegion.getHullCoordinates();
+      for (Point[] points : hullCoordinates) {
+        printWriter.println(MessageFormat.format("{0} {1} m", points[0].x, points[0].y));
+        for (Point point : points) {
+          printWriter.println(MessageFormat.format("{0} {1} l", point.x, point.y));
+        }
         printWriter.println("c");
       }
-      if (!region_na[i]) {
+      if (!resultRegion.isNaN()) {
         printWriter.println("gsave\n0.96 0.92 0.70 SRGB f\ngrestore\n0 SGRY s");
       } else {
         printWriter.println("gsave\n0.75 SGRY f\ngrestore\n0 SGRY s");
@@ -48,14 +50,16 @@ public class EpsWriter {
       printWriter.println("0.3 SLW 0 0 1 SRGB");
       for (int j = 0; j < ly; j += Math.max(lx, ly) / GRAT_LINES) {
         printWriter.println(MessageFormat.format("{0} {1} m", prj[j].x, prj[j].y));
-        for (int i = 1; i < lx; i++)
+        for (int i = 1; i < lx; i++) {
           printWriter.println(MessageFormat.format("{0} {1} l", prj[i * ly + j].x, prj[i * ly + j].y));
+        }
         printWriter.println("s");
       }
       for (int i = 0; i < lx; i += Math.max(lx, ly) / GRAT_LINES) {
         printWriter.println(MessageFormat.format("{0} {1} m", prj[i * ly].x, prj[i * ly].y));
-        for (int j = 1; j < ly; j++)
+        for (int j = 1; j < ly; j++) {
           printWriter.println(MessageFormat.format("{0} {1} l", prj[i * ly + j].x, prj[i * ly + j].y));
+        }
         printWriter.println("s");
       }
     }

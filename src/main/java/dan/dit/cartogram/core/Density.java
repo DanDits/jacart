@@ -3,9 +3,9 @@ package dan.dit.cartogram.core;
 import java.text.MessageFormat;
 import java.util.List;
 
-import dan.dit.cartogram.core.context.CartogramConfig;
+import dan.dit.cartogram.core.pub.CartogramConfig;
 import dan.dit.cartogram.core.context.CartogramContext;
-import dan.dit.cartogram.core.context.MapFeatureData;
+import dan.dit.cartogram.core.pub.MapFeatureData;
 import dan.dit.cartogram.core.context.MapGrid;
 import dan.dit.cartogram.core.context.Point;
 import dan.dit.cartogram.core.context.PolygonData;
