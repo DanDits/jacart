@@ -339,7 +339,7 @@ public class Density {
 
     for (i = 0; i < n_poly; i++) {
       for (j = 0; j < polycorn[i].length; j++) {
-        polycorn[i][j] = cartcorn[i][j];
+        polycorn[i][j] = cartcorn[i][j].createCopy();
       }
     }
 

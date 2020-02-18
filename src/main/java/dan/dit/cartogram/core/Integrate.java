@@ -17,150 +17,47 @@ public class Integrate {
     this.context = context;
   }
 
-  // will only work on positive values and not on special case values like NaN, Inf
-  private static double veryFastFloor(double value) {
-    return (long) value;
-  }
-
-  // TODO interpolateX/Y are the current bottlenecks. How to improve them? Analyze. Maybe rather return the index and not pass grid around?
-  static double interpolateX(int lx, int ly, double x, double y, double[] grid) {
-    double xUp = veryFastFloor(x + 0.5);
-    double yUp = veryFastFloor(y + 0.5);
-    final double x0 = Math.max(0.0, xUp - 0.5);
-    final double x1 = Math.min(lx, xUp + 0.5);
-    final double y0 = Math.max(0.0, yUp - 0.5);
-    final double y1 = Math.min(ly, yUp + 0.5);
+  static void interpolate(int lx, int ly, double x, double y, double[] gridX, double[] gridY, double[] outX, double[] outY, int outIndex) {
+    double xRounded = (long) (x + 0.5);
+    double yRounded = (long) (y + 0.5);
+    final double x0 = Math.max(0.0, xRounded - 0.5);
+    final double x1 = Math.min(lx, xRounded + 0.5);
+    final double y0 = Math.max(0.0, yRounded - 0.5);
+    final double y1 = Math.min(ly, yRounded + 0.5);
     final double delta_x = (x - x0) / (x1 - x0);
     final double delta_y = (y - y0) / (y1 - y0);
-    final double fx0y0 = getFx0y0_X(x, grid, ly, (int) x0, (int) y0);
-    final double fx0y1 = getFx0y1_X(x, y, grid, ly, (int) x0, (int) y1);
-    final double fx1y0 = getFx1y0_X(x, grid, lx, ly, (int) x1, (int) y0);
-    final double fx1y1 = getFx1y1_X(x, y, grid, lx, ly, (int) x1, (int) y1);
+    final int x0I = xRounded - 0.5 >= lx ? (lx - 1) : (int) x0;
+    final int x1I = xRounded >= lx ? (lx - 1) : (int) x1;
+    final int y0I = yRounded - 0.5 >= ly ? (ly - 1) : (int) y0;
+    final int y1I = yRounded >= ly ? (ly - 1) : (int) y1;
 
-    return (1 - delta_x) * (1 - delta_y) * fx0y0 + (1 - delta_x) * delta_y * fx0y1
-      + delta_x * (1 - delta_y) * fx1y0 + delta_x * delta_y * fx1y1;
+    outX[outIndex] = (1 - delta_x) * (1 - delta_y) * gridX[x0I * lx + y0I] + (1 - delta_x) * delta_y * gridX[x0I * lx + y1I]
+      + delta_x * (1 - delta_y) * gridX[x1I * lx + y0I] + delta_x * delta_y * gridX[x1I * lx + y1I];
+    outY[outIndex] = (1 - delta_x) * (1 - delta_y) * gridY[x0I * lx + y0I] + (1 - delta_x) * delta_y * gridY[x0I * lx + y1I]
+      + delta_x * (1 - delta_y) * gridY[x1I * lx + y0I] + delta_x * delta_y * gridY[x1I * lx + y1I];
   }
 
-  static double interpolateY(int lx, int ly, double x, double y, double[] grid) {
-    double xUp = veryFastFloor(x + 0.5);
-    double yUp = veryFastFloor(y + 0.5);
-    final double x0 = Math.max(0.0, xUp - 0.5);
-    final double x1 = Math.min(lx, xUp + 0.5);
-    final double y0 = Math.max(0.0, yUp - 0.5);
-    final double y1 = Math.min(ly, yUp + 0.5);
+  static void interpolate(int lx, int ly, double x, double y, double[] gridX, double[] gridY, Point result) {
+    double xRounded = (long) (x + 0.5);
+    double yRounded = (long) (y + 0.5);
+    final double x0 = Math.max(0.0, xRounded - 0.5);
+    final double x1 = Math.min(lx, xRounded + 0.5);
+    final double y0 = Math.max(0.0, yRounded - 0.5);
+    final double y1 = Math.min(ly, yRounded + 0.5);
     final double delta_x = (x - x0) / (x1 - x0);
     final double delta_y = (y - y0) / (y1 - y0);
-    final double fx0y0 = getFx0y0_Y(y, grid, ly, (int) x0, (int) y0);
-    final double fx0y1 = getFx0y1_Y(y, grid, ly, (int) x0, (int) y1);
-    final double fx1y0 = getFx1y0_Y(x, y, grid, lx, ly, (int) x1, (int) y0);
-    final double fx1y1 = getFx1y1_Y(x, y, grid, lx, ly, (int) x1, (int) y1);
+    final int x0I = xRounded - 0.5 >= lx ? (lx - 1) : (int) x0;
+    final int x1I = xRounded >= lx ? (lx - 1) : (int) x1;
+    final int y0I = yRounded - 0.5 >= ly ? (ly - 1) : (int) y0;
+    final int y1I = yRounded >= ly ? (ly - 1) : (int) y1;
 
-    return (1 - delta_x) * (1 - delta_y) * fx0y0 + (1 - delta_x) * delta_y * fx0y1
-      + delta_x * (1 - delta_y) * fx1y0 + delta_x * delta_y * fx1y1;
+    result.x = (1 - delta_x) * (1 - delta_y) * gridX[x0I * lx + y0I] + (1 - delta_x) * delta_y * gridX[x0I * lx + y1I]
+      + delta_x * (1 - delta_y) * gridX[x1I * lx + y0I] + delta_x * delta_y * gridX[x1I * lx + y1I];
+    result.y = (1 - delta_x) * (1 - delta_y) * gridY[x0I * lx + y0I] + (1 - delta_x) * delta_y * gridY[x0I * lx + y1I]
+      + delta_x * (1 - delta_y) * gridY[x1I * lx + y0I] + delta_x * delta_y * gridY[x1I * lx + y1I];
   }
 
-  private static double getFx1y1_X(
-    double x,
-    double y,
-    double[] grid,
-    int lx,
-    int ly,
-    int x1,
-    int y1) {
-    double lxM = lx - 0.5;
-    double lyM = ly - 0.5;
-    if (x >= lxM) {
-      return 0.0;
-    } else if (y >= lyM) {
-      return grid[x1 * ly + ly - 1];
-    } else {
-      return grid[x1 * ly + y1];
-    }
-  }
 
-  private static double getFx1y0_X(
-      double x,
-      double[] grid,
-      int lx,
-      int ly,
-      int x1,
-      int y0) {
-    if (x >= lx - 0.5) {
-      return 0.0;
-    } else {
-      return grid[x1 * ly + y0];
-    }
-  }
-
-  private static double getFx0y0_X(double x, double[] grid, int ly, int x0, int y0) {
-    if (x < 0.5) {
-      return 0.0;
-    } else {
-      return grid[x0 * ly + y0];
-    }
-  }
-
-  private static double getFx0y1_X(double x, double y, double[] grid, int ly, int x0, int y1) {
-    if (x < 0.5) {
-      return 0.0;
-    } else if (y >= ly - 0.5) {
-      return grid[x0 * ly + ly - 1];
-    } else {
-      return grid[x0 * ly + y1];
-    }
-  }
-
-  private static double getFx1y1_Y(
-    double x,
-    double y,
-    double[] grid,
-    int lx,
-    int ly,
-    int x1,
-    int y1) {
-    double lxM = lx - 0.5;
-    double lyM = ly - 0.5;
-    if (y >= lyM) {
-      return 0.0;
-    } else if (x >= lxM) {
-      return grid[(lx - 1) * ly + y1];
-    } else {
-      return grid[x1 * ly + y1];
-    }
-  }
-
-  private static double getFx1y0_Y(
-    double x,
-    double y,
-    double[] grid,
-    int lx,
-    int ly,
-    int x1,
-    int y0) {
-    if (y < 0.5) {
-      return 0.0;
-    } else if (x >= lx - 0.5) {
-      return grid[(lx - 1) * ly + y0];
-    } else {
-      return grid[x1 * ly + y0];
-    }
-  }
-
-  private static double getFx0y0_Y(double y, double[] grid, int ly, int x0, int y0) {
-    if (y < 0.5) {
-      return 0.0;
-    } else {
-      return grid[x0 * ly + y0];
-    }
-  }
-
-  private static double getFx0y1_Y(double y, double[] grid, int ly, int x0, int y1) {
-    if (y >= ly - 0.5) {
-      return 0.0;
-    } else {
-      return grid[x0 * ly + y1];
-    }
-  }
 
   void init_gridv() {
     MapGrid mapGrid = context.getMapGrid();
@@ -328,18 +225,16 @@ public class Integrate {
     return IntStream.range(0, lx * ly)
       .parallel()
       .allMatch(k -> {
-        vx_intp_half[k] = interpolateX(
+        interpolate(
           lx,
           ly,
           proj[k].x + 0.5 * delta_t * vx_intp[k],
           proj[k].y + 0.5 * delta_t * vy_intp[k],
-          gridvx);
-        vy_intp_half[k] = interpolateY(
-          lx,
-          ly,
-          proj[k].x + 0.5 * delta_t * vx_intp[k],
-          proj[k].y + 0.5 * delta_t * vy_intp[k],
-          gridvy);
+          gridvx,
+          gridvy,
+          vx_intp_half,
+          vy_intp_half,
+          k);
         mid[k].x = proj[k].x + vx_intp_half[k] * delta_t;
         mid[k].y = proj[k].y + vy_intp_half[k] * delta_t;
 
@@ -365,9 +260,8 @@ public class Integrate {
     double[] gridvy) {
     IntStream.range(0, lx * ly)
       .parallel()
-      .forEach(k -> {
-        vx_intp[k] = interpolateX(lx, ly, proj[k].x, proj[k].y, gridvx);
-        vy_intp[k] = interpolateY(lx, ly, proj[k].x, proj[k].y, gridvy);
+      .forEach(k -> { // FIXME seems fine here
+        interpolate(lx, ly, proj[k].x, proj[k].y, gridvx, gridvy, vx_intp, vy_intp, k);
       });
   }
 

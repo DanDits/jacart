@@ -138,12 +138,10 @@ public class Cartogram {
       Point[] polyI = polycorn[i];
       for (j = 0; j < polyI.length; j++) {
         Point pointIJ = polyI[j];
-        cartcorn[i][j].x =
-          Integrate.interpolateX(lx, ly, pointIJ.x, pointIJ.y, xdisp)
-            + pointIJ.x;
-        cartcorn[i][j].y =
-          Integrate.interpolateY(lx, ly, pointIJ.x, pointIJ.y, ydisp)
-            + pointIJ.y;
+        Point p = cartcorn[i][j];
+        Integrate.interpolate(lx, ly, pointIJ.x, pointIJ.y, xdisp, ydisp, p);
+        p.x += pointIJ.x;
+        p.y += pointIJ.y;
       }
     }
     if (proj_graticule) {
@@ -151,8 +149,9 @@ public class Cartogram {
       for (i = 0; i < lx * ly; i++) {
         x2 = proj2[i].x;
         y2 = proj2[i].y;
-        proj2[i].x = Integrate.interpolateX(lx, ly, x2, y2, xdisp) + x2;
-        proj2[i].y = Integrate.interpolateY(lx, ly, x2, y2, ydisp) + y2;
+        Integrate.interpolate(lx, ly, x2, y2, xdisp, ydisp, proj2[i]);
+        proj2[i].x += x2;
+        proj2[i].y += y2;
       }
     }
   }
@@ -321,8 +320,9 @@ public class Cartogram {
 
     for (i = 0; i <= lx; i++) {
       for (j = 0; j <= ly; j++) {
-        projgrid[i][j].x = Integrate.interpolateX(lx, ly, i, j, xdisp) + i;
-        projgrid[i][j].y = Integrate.interpolateY(lx, ly, i, j, ydisp) + j;
+        Integrate.interpolate(lx, ly, i, j, xdisp, ydisp, projgrid[i][j]);
+        projgrid[i][j].x += i;
+        projgrid[i][j].y += j;
       }
     }
 
