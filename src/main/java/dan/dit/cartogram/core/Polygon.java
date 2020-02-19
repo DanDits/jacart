@@ -26,7 +26,7 @@ public class Polygon {
     return area;
   }
 
-  public static double polygon_perimeter(Point[] polygon) {
+  public static double calculatePolygonPerimeter(Point[] polygon) {
     int ncrns = polygon.length;
     double perimeter = 0.0;
     for (int i = 0; i < ncrns - 1; i++) {

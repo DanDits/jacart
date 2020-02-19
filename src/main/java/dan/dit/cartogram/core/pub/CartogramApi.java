@@ -12,7 +12,7 @@ import java.util.List;
 public class CartogramApi {
 
   public CartogramResult execute(MapFeatureData mapFeatureData, CartogramConfig config) throws ConvergenceGoalFailedException {
-    CartogramContext cartogramContext = Density.fill_with_density1(mapFeatureData, config);
+    CartogramContext cartogramContext = Density.initializeContext(mapFeatureData, config);
     CartogramContext context = new Cartogram(cartogramContext)
       .calculate();
     // TODO also allow the input+ouput regions to have polygons with holes

@@ -137,186 +137,179 @@ public class Density {
     }
   }
 
-  public static CartogramContext fill_with_density1(MapFeatureData featureData, CartogramConfig config) {
-    double avg_dens, tot_init_area, tot_target_area;
-    double[] dens, init_area;
-    int i, j;
-
+  public static CartogramContext initializeContext(MapFeatureData featureData, CartogramConfig config) {
     PolygonData polygonData = initPolycornAndPolygonId(featureData);
-    RegionData regionData = Polygon.processMap(config.getLogging(), featureData, polygonData);
     Logging logging = config.getLogging();
+    RegionData regionData = Polygon.processMap(logging, featureData, polygonData);
     logging.debug("Amount of regions: {0}", regionData.getRegionId().length);
     MapGrid mapGrid = transformMapToLSpace(config.getFftPlanFactory(), logging, featureData, regionData.getPolycorn());
 
-    int n_reg = regionData.getPolyinreg().length;
-    double[] target_area = regionData.getTarget_area();
-    boolean[] region_na = regionData.getRegion_na();
-    if (n_reg == 1) {
-      target_area[0] = 1.0;
+    int regionCount = regionData.getPolyinreg().length;
+    double[] targetArea = regionData.getTarget_area();
+    boolean[] regionHasNaN = regionData.getRegion_na();
+    if (regionCount == 1) {
+      targetArea[0] = 1.0;
       return new CartogramContext(logging, mapGrid, regionData, true);
     }
 
-    dens = new double[n_reg];
-    init_area = new double[n_reg];
+    double[] density = new double[regionCount];
+    double[] initialArea = new double[regionCount];
 
     interior(mapGrid, regionData);
 
     double[] featureTargetArea = featureData.getTargetAreaPerRegion();
 
-    for (i = 0; i < n_reg; i++) {
-      target_area[i] = featureTargetArea[i];
-      if (Double.isNaN(target_area[i])) {
-        region_na[i] = true;
-        target_area[i] = 0.;
+    for (int i = 0; i < regionCount; i++) {
+      targetArea[i] = featureTargetArea[i];
+      if (Double.isNaN(targetArea[i])) {
+        regionHasNaN[i] = true;
+        targetArea[i] = 0.;
       }
     }
 
     int[] region_id = regionData.getRegionId();
-    for (i = 0; i < n_reg; i++) {
-      if (target_area[i] < 0.0 && !Double.isNaN(target_area[i])) {
+    for (int i = 0; i < regionCount; i++) {
+      if (targetArea[i] < 0.0 && !Double.isNaN(targetArea[i])) {
         throw new IllegalArgumentException(
           MessageFormat.format("ERROR: No target area for region {0}", region_id[i]));
       }
     }
-    logging.displayDoubleArray( "target_area", target_area);
+    logging.displayDoubleArray( "target_area", targetArea);
 
-    int na_ctr = 0;
-    double tmp_tot_target_area = 0.0;
-    tot_init_area = 0.0;
+    double tempTotalTargetArea = 0.0;
+    double totalInitialArea = 0.0;
     int[][] polyinreg = regionData.getPolyinreg();
     Point[][] polycorn = regionData.getPolycorn();
-    double[] region_perimeter = regionData.getRegion_perimeter();
-    for (i = 0; i < n_reg; i++) {
+    double[] regionPerimeter = regionData.getRegion_perimeter();
+    for (int i = 0; i < regionCount; i++) {
       int[] polyI = polyinreg[i];
-      if (region_na[i]) {
-        na_ctr++;
-      } else {
-        tmp_tot_target_area += target_area[i];
+      if (!regionHasNaN[i]) {
+        tempTotalTargetArea += targetArea[i];
       }
-      for (j = 0; j < polyI.length; j++) {
-        init_area[i] += Polygon.polygon_area(polycorn[polyI[j]]);
+      for (int j = 0; j < polyI.length; j++) {
+        initialArea[i] += Polygon.polygon_area(polycorn[polyI[j]]);
       }
-      tot_init_area += init_area[i];
+      totalInitialArea += initialArea[i];
     }
-    logging.debug("Total init area= {0}", tot_init_area);
-    logging.displayDoubleArray( "init_area", init_area);
+    logging.debug("Total init area= {0}", totalInitialArea);
+    logging.displayDoubleArray( "init_area", initialArea);
 
-    for (i = 0; i < n_reg; i++) {
+    for (int i = 0; i < regionCount; i++) {
       int[] polyI = polyinreg[i];
-      for (j = 0; j < polyI.length; j++) {
-        region_perimeter[i] += Polygon.polygon_perimeter(polycorn[polyI[j]]);
+      for (int j = 0; j < polyI.length; j++) {
+        regionPerimeter[i] += Polygon.calculatePolygonPerimeter(polycorn[polyI[j]]);
       }
     }
-    logging.displayDoubleArray( "region perimeter", region_perimeter);
-    int first_region = 1;
-    double total_NA_ratio = 0;
+    logging.displayDoubleArray( "region perimeter", regionPerimeter);
+    boolean firstRegion = true;
+    double totalNaNRatio = 0;
 
-    for (i = 0; i < n_reg; i++) {
-      if (region_na[i]) {
-        total_NA_ratio += init_area[i] / tot_init_area;
+    for (int i = 0; i < regionCount; i++) {
+      if (regionHasNaN[i]) {
+        totalNaNRatio += initialArea[i] / totalInitialArea;
       }
     }
 
-    double total_NA_area = (total_NA_ratio * tmp_tot_target_area) / (1 - total_NA_ratio);
-    tmp_tot_target_area += total_NA_area;
+    double total_NA_area = (totalNaNRatio * tempTotalTargetArea) / (1 - totalNaNRatio);
+    tempTotalTargetArea += total_NA_area;
 
-    for (i = 0; i < n_reg; i++) {
-      if (region_na[i]) {
-        if (first_region == 1) {
+    for (int i = 0; i < regionCount; i++) {
+      if (regionHasNaN[i]) {
+        if (firstRegion) {
           logging.debug("Setting area for NaN regions:");
-          first_region = 0;
+          firstRegion = false;
         }
-        target_area[i] = (init_area[i] / tot_init_area) / total_NA_ratio * total_NA_area;
-        logging.debug("\tRegion id {0}: {1}", region_id[i], target_area[i]);
+        targetArea[i] = (initialArea[i] / totalInitialArea) / totalNaNRatio * total_NA_area;
+        logging.debug("\tRegion id {0}: {1}", region_id[i], targetArea[i]);
       }
     }
 
     if (config.isUsePerimeterThreshold()) {
       logging.debug("Note: Enlarging extremely small regions using scaled perimeter threshold.");
-      boolean[] region_small = new boolean[n_reg];
-      int region_small_ctr = 0;
-      double[] region_threshold, region_threshold_area;
-      double tot_region_small_area = 0, total_perimeter = 0, total_threshold = 0;
-      region_threshold = new double[n_reg];
-      region_threshold_area = new double[n_reg];
-      for (i = 0; i < n_reg; i++) {
-        total_perimeter += region_perimeter[i];
+      boolean[] regionIsSmall = new boolean[regionCount];
+      int smallRegionCounter = 0;
+      double tot_region_small_area = 0, total_perimeter = 0, totalThreshold = 0;
+      double[] region_threshold = new double[regionCount];
+      double[] region_threshold_area = new double[regionCount];
+      for (int i = 0; i < regionCount; i++) {
+        total_perimeter += regionPerimeter[i];
       }
-      for (i = 0; i < n_reg; i++) {
-        region_threshold[i] = Math.max((region_perimeter[i] / total_perimeter) * MIN_PERIMETER_FAC, 0.00025);
-        if (!region_na[i] && (target_area[i] / tmp_tot_target_area < region_threshold[i])) {
-          region_small[i] = true;
-          region_small_ctr++;
-          tot_region_small_area += target_area[i];
+      for (int i = 0; i < regionCount; i++) {
+        region_threshold[i] = Math.max((regionPerimeter[i] / total_perimeter) * MIN_PERIMETER_FAC, 0.00025);
+        if (!regionHasNaN[i] && (targetArea[i] / tempTotalTargetArea < region_threshold[i])) {
+          regionIsSmall[i] = true;
+          smallRegionCounter++;
+          tot_region_small_area += targetArea[i];
         }
       }
-      for (i = 0; i < n_reg; i++) {
-        if (region_small[i]) {
-          total_threshold += region_threshold[i];
+      for (int i = 0; i < regionCount; i++) {
+        if (regionIsSmall[i]) {
+          totalThreshold += region_threshold[i];
         }
       }
-      double total_threshold_area = (total_threshold * (tmp_tot_target_area - tot_region_small_area)) / (1 - total_threshold);
+      double total_threshold_area = (totalThreshold * (tempTotalTargetArea - tot_region_small_area)) / (1 - totalThreshold);
 
-      if (region_small_ctr > 0) {
+      if (smallRegionCounter > 0) {
         logging.debug("Enlarging small regions:");
       }
 
-      for (i = 0; i < n_reg; i++) {
-        if (region_small[i]) {
-          region_threshold_area[i] = (region_threshold[i] / total_threshold) * total_threshold_area;
-          double old_target_area = target_area[i];
-          target_area[i] = region_threshold_area[i];
-          tmp_tot_target_area += target_area[i];
-          tmp_tot_target_area -= old_target_area;
-          logging.debug("Enlarging region id {0}: {1}", region_id[i], target_area[i]);
+      for (int i = 0; i < regionCount; i++) {
+        if (regionIsSmall[i]) {
+          region_threshold_area[i] = (region_threshold[i] / totalThreshold) * total_threshold_area;
+          double old_target_area = targetArea[i];
+          targetArea[i] = region_threshold_area[i];
+          tempTotalTargetArea += targetArea[i];
+          tempTotalTargetArea -= old_target_area;
+          logging.debug("Enlarging region id {0}: {1}", region_id[i], targetArea[i]);
         }
       }
-      if (region_small_ctr <= 0) {
+      if (smallRegionCounter <= 0) {
         logging.debug("No regions below minimum threshold.\n\n"); // TODO what about washington DC? all its polygons are removed, use the min perimeter config?
       }
     } else {
       logging.debug("Note: Not using scaled perimeter threshold.");
-      double min_area = Double.MAX_VALUE;
-      for (i = 1; i < n_reg; i++) {
-        if (target_area[i] > 0.0) {
-          if (min_area <= 0.0) {
-            min_area = target_area[i];
+      double minimumArea = Double.MAX_VALUE;
+      for (int i = 1; i < regionCount; i++) {
+        if (targetArea[i] > 0.0) {
+          if (minimumArea <= 0.0) {
+            minimumArea = targetArea[i];
           } else {
-            min_area = Math.min(min_area, target_area[i]);
+            minimumArea = Math.min(minimumArea, targetArea[i]);
           }
         }
       }
-      for (i = 0; i < n_reg; i++) {
-        if (target_area[i] == 0.0) {
-          target_area[i] = MIN_POP_FAC * min_area;
+      for (int i = 0; i < regionCount; i++) {
+        if (targetArea[i] == 0.0) {
+          targetArea[i] = MIN_POP_FAC * minimumArea;
         }
       }
     }
-    logging.displayDoubleArray( "target_area", target_area);
+    logging.displayDoubleArray( "target_area", targetArea);
 
-    for (i = 0; i < n_reg; i++) {
-      dens[i] = target_area[i] / init_area[i];
+    for (int i = 0; i < regionCount; i++) {
+      density[i] = targetArea[i] / initialArea[i];
     }
 
-    for (i = 0, tot_target_area = 0.0; i < n_reg; i++) {
-      tot_target_area += target_area[i];
+    double tot_target_area = 0.;
+    for (int i = 0; i < regionCount; i++) {
+      tot_target_area += targetArea[i];
     }
-    avg_dens = tot_target_area / tot_init_area;
+    double averageDensity = tot_target_area / totalInitialArea;
 
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
     int[][] xyhalfshift2reg = mapGrid.getXyhalfshift2reg();
     double[] rho_init = mapGrid.getRho_init();
-    for (i = 0; i < lx; i++) {
-      for (j = 0; j < ly; j++) {
+    for (int i = 0; i < lx; i++) {
+      for (int j = 0; j < ly; j++) {
         if (xyhalfshift2reg[i][j] == -1)
-          rho_init[i * ly + j] = avg_dens;
+          rho_init[i * ly + j] = averageDensity;
         else
-          rho_init[i * ly + j] = dens[xyhalfshift2reg[i][j]];
+          rho_init[i * ly + j] = density[xyhalfshift2reg[i][j]];
       }
     }
 
-    gaussian_blur(config.getFftPlanFactory(), mapGrid, tot_init_area, avg_dens);
+    gaussian_blur(config.getFftPlanFactory(), mapGrid, totalInitialArea, averageDensity);
 
     mapGrid.getPlan_fwd().execute();
 

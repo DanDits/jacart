@@ -108,6 +108,28 @@ public class Cartogram {
     }
   }
 
+  public static void project(int gridWidth, int gridHeight, Point[] gridProjection, Point[][] data) {
+    double[] xdisp = new double[gridWidth * gridHeight];
+    double[] ydisp = new double[gridWidth * gridHeight];
+    for (int i = 0; i < gridWidth; i++) {
+      for (int j = 0; j < gridHeight; j++) {
+        int index = i * gridHeight + j;
+        xdisp[index] = gridProjection[index].x - i - 0.5;
+        ydisp[index] = gridProjection[index].y - j - 0.5;
+      }
+    }
+    for (Point[] linearRing : data) {
+      for (int j = 0; j < linearRing.length; j++) {
+        Point pointIJ = linearRing[j].createCopy();
+        Point p = linearRing[j];
+        Integrate.interpolate(gridWidth, gridHeight, pointIJ.x, pointIJ.y, xdisp, ydisp, p);
+        p.x += pointIJ.x;
+        p.y += pointIJ.y;
+      }
+    }
+
+  }
+
   void project(boolean proj_graticule) {
     double x2, y2;
     double[] xdisp, ydisp;
