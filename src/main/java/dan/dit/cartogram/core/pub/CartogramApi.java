@@ -1,6 +1,7 @@
 package dan.dit.cartogram.core.pub;
 
 import dan.dit.cartogram.core.Cartogram;
+import dan.dit.cartogram.core.ConvergenceGoalFailedException;
 import dan.dit.cartogram.core.Density;
 import dan.dit.cartogram.core.context.CartogramContext;
 import dan.dit.cartogram.core.context.Point;
@@ -10,7 +11,7 @@ import java.util.List;
 
 public class CartogramApi {
 
-  public CartogramResult execute(MapFeatureData mapFeatureData, CartogramConfig config) {
+  public CartogramResult execute(MapFeatureData mapFeatureData, CartogramConfig config) throws ConvergenceGoalFailedException {
     CartogramContext cartogramContext = Density.fill_with_density1(mapFeatureData, config);
     CartogramContext context = new Cartogram(cartogramContext)
       .calculate();

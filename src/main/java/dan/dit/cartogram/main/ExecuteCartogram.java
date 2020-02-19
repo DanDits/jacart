@@ -1,5 +1,6 @@
 package dan.dit.cartogram.main;
 
+import dan.dit.cartogram.core.ConvergenceGoalFailedException;
 import dan.dit.cartogram.core.context.*;
 import dan.dit.cartogram.core.context.Point;
 import dan.dit.cartogram.core.pub.*;
@@ -26,7 +27,7 @@ import static org.locationtech.jts.geom.PrecisionModel.FLOATING;
 
 public class ExecuteCartogram {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, ConvergenceGoalFailedException {
     Point[][] examplePolygons = new Point[1][];
     examplePolygons[0] = new Point[]{new Point(-0.5, 1), new Point(0.5, 1), new Point(0.5, -1), new Point(-0.5, -1), new Point(-0.5, 1)};
 
@@ -50,7 +51,7 @@ public class ExecuteCartogram {
   // TODO create a separate project which is the only one having dependencies on geotools to perform geotools IO
   public static void createCartogramToEps(InputStream geoJsonResource, InputStream dataResource,
       OutputStream epsOut,
-      OutputStream jsonOut) throws IOException {
+      OutputStream jsonOut) throws IOException, ConvergenceGoalFailedException {
     FeatureCollection<SimpleFeatureType, SimpleFeature> geo = new GeoJsonIO().importData(geoJsonResource);
     CsvData data = new CsvDataImport().importCsv(dataResource);
     ReferencedEnvelope bounds = geo.getBounds();

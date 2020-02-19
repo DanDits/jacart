@@ -11,6 +11,7 @@ import dan.dit.cartogram.dft.FftPlan2D;
 public class Integrate {
   private static final double INC_AFTER_ACC = 1.1;
   private static final double DEC_AFTER_NOT_ACC = 0.75;
+  private static final double SLOW_CONVERGENCE_DELTA_T_THRESHOLD = 1E-8;
   private final CartogramContext context;
 
   public Integrate(CartogramContext context) {
@@ -103,7 +104,7 @@ public class Integrate {
     grid_fluxy_init_plan.execute();
   }
 
-  void ffb_integrate() {
+  void ffb_integrate() throws ConvergenceGoalFailedException {
     boolean accept;
     double delta_t, t;
     double[] vx_intp, vx_intp_half, vy_intp, vy_intp_half;
@@ -145,6 +146,10 @@ public class Integrate {
       interpolateSpeed(vx_intp, vy_intp, lx, ly, proj, gridvx, gridvy);
       accept = false;
       while (!accept) {
+        if (delta_t < SLOW_CONVERGENCE_DELTA_T_THRESHOLD) {
+          context.getLogging().error("Convergence too slow, time integration step size is {0}", delta_t);
+          throw new ConvergenceGoalFailedException("time integration below threshold: " + delta_t);
+        }
         double currentTimeStep = delta_t;
         IntStream.range(0, lx * ly)
             .forEach(k -> {
@@ -189,7 +194,7 @@ public class Integrate {
       }
 
       if (iter % 10 == 0) {
-        logging.debug("iter = {0}, t = {1,number,#.########}, delta_t = {2,number,#.##########}", iter, t, delta_t);
+        logging.debug("iter = {0}, t = {1,number,#.############}, delta_t = {2,number,#.#############}", iter, t, delta_t);
       }
       t += delta_t;
       iter++;

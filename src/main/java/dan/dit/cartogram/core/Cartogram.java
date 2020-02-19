@@ -21,7 +21,7 @@ public class Cartogram {
     this.density = new Density(context);
   }
 
-  public CartogramContext calculate() {
+  public CartogramContext calculate() throws ConvergenceGoalFailedException {
     boolean onlyOneRegionExists = context.isSingleRegion();
     if (onlyOneRegionExists) {
       context.getLogging().debug("Hint: Only one region exists, output will only be an affine transformation.");
@@ -86,13 +86,11 @@ public class Cartogram {
       lastMae = mae;
       mae = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);
       context.getLogging().debug("max. abs. area error: {0}", mae);
+      if (lastMae < mae) {
+        context.getLogging().error("Did not converge, aborted! Error is: {0}", mae);
+        throw new ConvergenceGoalFailedException("Error increased from " + lastMae + " to " + mae);
+      }
     }
-
-    if (mae > MAX_PERMITTED_AREA_ERROR) {
-      context.getLogging().error("Did not converge, aborted! Error is: {0}", mae);
-    }
-
-
     scalePolygonsToMatchInitialTotalArea(Math.sqrt(init_tot_area[0] / cartogramTotalArea[0]), lx, ly, cartcorn);
 
     double final_max_area_error = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);

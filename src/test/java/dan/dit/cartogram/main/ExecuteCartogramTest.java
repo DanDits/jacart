@@ -1,5 +1,7 @@
 package dan.dit.cartogram.main;
 
+import dan.dit.cartogram.core.ConvergenceGoalFailedException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -8,7 +10,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ExecuteCartogramTest {
 
@@ -22,15 +24,13 @@ public class ExecuteCartogramTest {
       "sample5_geo.json, sample5_data.csv, result5.eps", // single region: no transformation
       "sample6_geo.json, sample6_data.csv, result6.eps", // testing handling of two missing values
       "sample6_geo.json, sample7_data.csv, result7.eps", // testing handling of single missing value
-    // TODO this is stuck, we need a better divergence test
-    //  "sample8_geo.json, sample8_data.csv, result8.eps", // portrait mode, testing non square mode with lx!=ly, does not converge // TODO test 8+9 in gocart and see how the eps file looks like
-    //  "sample8_geo.json, sample9_data.csv, result9.eps", // portrait mode, testing non square mode with lx!=ly
+      "sample8_geo.json, sample9_data.csv, result9.eps", // portrait mode, testing non square mode with lx!=ly
       "sample10_geo.json, sample10_data.csv, result10.eps" // regions with very small areas that should be enhanced
   })
   public void createCartogramAndWriteToEps(
       String geoJsonResource,
       String dataResource,
-      String epsInResource) throws IOException {
+      String epsInResource) throws IOException, ConvergenceGoalFailedException {
     var epsOut = new ByteArrayOutputStream();
     var nullOutput = new ByteArrayOutputStream();
     StringBuilder textBuilder = new StringBuilder();
@@ -50,5 +50,24 @@ public class ExecuteCartogramTest {
     String epsOutData = epsOut.toString();
     String epsInData = textBuilder.toString();
     assertEquals(epsInData, epsOutData);
+  }
+
+
+  @DisplayName("Divergence creating cartogram to EPS")
+  @ParameterizedTest(name = "processing \"{0}\" with \"{1}\" is expect to not converge")
+  @CsvSource({
+    "sample8_geo.json, sample8_data.csv", // portrait mode, testing non square mode with lx!=ly, does not converge // TODO test 8+9 in gocart and see how the eps file looks like
+  })
+  public void creatingCartogramFailsConvergenceGoal(
+    String geoJsonResource,
+    String dataResource) {
+    var epsOut = new ByteArrayOutputStream();
+    var nullOutput = new ByteArrayOutputStream();
+    Assertions.assertThrows(ConvergenceGoalFailedException.class,
+      () -> ExecuteCartogram.createCartogramToEps(
+        ExecuteCartogramTest.class.getResourceAsStream(geoJsonResource),
+        ExecuteCartogramTest.class.getResourceAsStream(dataResource),
+        epsOut,
+        nullOutput));
   }
 }
