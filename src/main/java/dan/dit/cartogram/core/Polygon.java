@@ -8,6 +8,11 @@ import dan.dit.cartogram.core.pub.Logging;
 
 
 public class Polygon {
+  /**
+   * Polygons are considered to have a tiny area if their summed absolute area is smaller than
+   * this threshold, scaled to fit assumption that all given polygons in the map fit into a rectangle
+   * with a unit area (area=1).
+   */
   private static final double AREA_THRESHOLD = 1e-12;
 
   public static RegionData processMap(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
@@ -15,7 +20,8 @@ public class Polygon {
     return make_region(mapData, polygonData);
   }
 
-  public static double polygon_area(Point[] polygon) {
+  // positive for clockwise oriented order, negative for ccw oriented order
+  public static double calculateOrientedArea(Point[] polygon) {
     double area = 0.0;
     int pointCount = polygon.length;
     for (int i = 0; i < pointCount - 1; i++) {
@@ -56,11 +62,12 @@ public class Polygon {
     logging.debug("Amount of polygons: {0}", n_poly);
     logging.debug("Relative area threshold: {0}", relativeTinyAreaThreshold);
     for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
-      double current_area = Math.abs(polygon_area(polycorn[poly_indx]));
-      logging.debug("Polygon {3} (id= {0}) with {1} points has area {2,number,#.######E0}",
-        polygonData.getPolygonId()[poly_indx], polycorn[poly_indx].length, current_area, poly_indx);
+      double orientedArea = calculateOrientedArea(polycorn[poly_indx]);
+      double currentArea = Math.abs(orientedArea);
+      logging.debug("Polygon {3} (id= {0}) with {1} points has area |{2,number,#.######E0}|",
+        polygonData.getPolygonId()[poly_indx], polycorn[poly_indx].length, orientedArea, poly_indx);
       poly_has_tiny_area[poly_indx] =
-        (current_area <
+        (currentArea <
           relativeTinyAreaThreshold);
     }
     int n_non_tiny_poly = 0;

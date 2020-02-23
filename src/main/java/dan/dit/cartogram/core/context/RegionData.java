@@ -3,6 +3,7 @@ package dan.dit.cartogram.core.context;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class RegionData {
   private final int[] region_id;
@@ -12,13 +13,16 @@ public class RegionData {
   private final Map<Integer, Integer> region_id_inv;
   private final int[][] polyinreg;
   private final double[] cartogramArea;
-  private final double[] areaError;
   private final double[] target_area;
   private final Point[][] polycorn;
   private final Point[][] cartcorn;
+  private final int[][] ringsInPolygonByRegion;
 
   public RegionData(List<Region> regions, int[] polygonId, Point[][] polycorn) {
     this.polycorn = polycorn;
+    this.ringsInPolygonByRegion = regions.stream()
+      .map(Region::getRingsInPolygons)
+      .toArray(int[][]::new);
     int regionsCount = regions.size();
     this.region_id = regions.stream()
       .mapToInt(Region::getId)
@@ -31,7 +35,6 @@ public class RegionData {
     this.region_perimeter = new double[regionsCount];
     this.polyinreg = initPolygonInRegions(region_id_inv, region_id, polygonId);
     this.cartogramArea = new double[regionsCount];
-    this.areaError = new double[regionsCount];
     this.target_area = new double[regionsCount];
     this.cartcorn = initCartcorn(polycorn);
   }
@@ -120,15 +123,15 @@ public class RegionData {
     return cartogramArea;
   }
 
-  public double[] getAreaError() {
-    return areaError;
-  }
-
   public double[] getTarget_area() {
     return target_area;
   }
 
   public Point[][] getCartcorn() {
     return cartcorn;
+  }
+
+  public int[][] getRingsInPolygonByRegion() {
+    return ringsInPolygonByRegion;
   }
 }

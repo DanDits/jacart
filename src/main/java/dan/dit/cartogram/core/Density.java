@@ -187,7 +187,7 @@ public class Density {
         tempTotalTargetArea += targetArea[i];
       }
       for (int j = 0; j < polyI.length; j++) {
-        initialArea[i] += Polygon.polygon_area(polycorn[polyI[j]]);
+        initialArea[i] += Polygon.calculateOrientedArea(polycorn[polyI[j]]);
       }
       totalInitialArea += initialArea[i];
     }
@@ -349,7 +349,7 @@ public class Density {
     for (i = 0; i < n_reg; i++) {
       int[] polyI = polyinreg[i];
       for (j = 0; j < polyI.length; j++) {
-        tmp_area[i] += Polygon.polygon_area(polycorn[polyI[j]]);
+        tmp_area[i] += Polygon.calculateOrientedArea(polycorn[polyI[j]]);
       }
     }
     for (i = 0; i < n_reg; i++) dens[i] = target_area[i] / tmp_area[i];

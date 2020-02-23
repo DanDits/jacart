@@ -1,6 +1,7 @@
 package dan.dit.cartogram.main;
 
 import dan.dit.cartogram.core.context.Point;
+import dan.dit.cartogram.core.pub.ResultPolygon;
 import dan.dit.cartogram.core.pub.ResultRegion;
 
 import java.io.*;
@@ -30,19 +31,12 @@ public class EpsWriter {
 
     printWriter.println("0.7 SLW");
     for (ResultRegion resultRegion : regions) {
-      printWriter.println("n");
-      List<Point[]> hullCoordinates = resultRegion.getHullCoordinates();
-      for (Point[] points : hullCoordinates) {
-        printWriter.println(MessageFormat.format("{0} {1} m", points[0].x, points[0].y));
-        for (Point point : points) {
-          printWriter.println(MessageFormat.format("{0} {1} l", point.x, point.y));
+      for (ResultPolygon polygon : resultRegion.getPolygons()) {
+        List<Point> ring = polygon.getExteriorRing();
+        drawRing(printWriter, resultRegion, ring, "0.96 0.92 0.70");
+        for (List<Point> hole : polygon.getInteriorRings()) {
+          drawRing(printWriter, resultRegion, hole, "1 1 1");
         }
-        printWriter.println("c");
-      }
-      if (!resultRegion.isNaN()) {
-        printWriter.println("gsave\n0.96 0.92 0.70 SRGB f\ngrestore\n0 SGRY s");
-      } else {
-        printWriter.println("gsave\n0.75 SGRY f\ngrestore\n0 SGRY s");
       }
     }
 
@@ -66,5 +60,19 @@ public class EpsWriter {
 
     printWriter.println("showpage");
     printWriter.flush();
+  }
+
+  private void drawRing(PrintWriter printWriter, ResultRegion resultRegion, List<Point> points, String color) {
+    printWriter.println("n");
+    printWriter.println(MessageFormat.format("{0} {1} m", points.get(0).x, points.get(0).y));
+    for (Point point : points) {
+      printWriter.println(MessageFormat.format("{0} {1} l", point.x, point.y));
+    }
+    printWriter.println("c");
+    if (!resultRegion.isNaN()) {
+      printWriter.println("gsave\n" + color + " SRGB f\ngrestore\n0 SGRY s");
+    } else {
+      printWriter.println("gsave\n0.75 SGRY f\ngrestore\n0 SGRY s");
+    }
   }
 }

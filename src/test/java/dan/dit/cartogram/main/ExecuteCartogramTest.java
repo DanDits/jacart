@@ -25,7 +25,9 @@ public class ExecuteCartogramTest {
       "sample6_geo.json, sample6_data.csv, result6.eps", // testing handling of two missing values
       "sample6_geo.json, sample7_data.csv, result7.eps", // testing handling of single missing value
       "sample8_geo.json, sample9_data.csv, result9.eps", // portrait mode, testing non square mode with lx!=ly
-      "sample10_geo.json, sample10_data.csv, result10.eps" // regions with very small areas that should be enhanced
+      "sample10_geo.json, sample10_data.csv, result10.eps", // regions with very small areas that should be enhanced
+      "sample11_geo.json, sample11_data.csv, result11.eps", // multipolygon with holes
+      "sample11_geo.json, sample12_data.csv, result12.eps", // multipolygon with holes
   })
   public void createCartogramAndWriteToEps(
       String geoJsonResource,

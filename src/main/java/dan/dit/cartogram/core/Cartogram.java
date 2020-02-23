@@ -28,11 +28,9 @@ public class Cartogram {
     }
     MapGrid mapGrid = context.getMapGrid();
     RegionData regionData = context.getRegionData();
-    double[] area_err = regionData.getAreaError();
-    double[] cart_area = regionData.getCartogramArea();
-    double[] init_tot_area = new double[1];
-    // also initializes init_tot_area...
-    if (max_area_err(area_err, cart_area, regionData.getPolycorn(), init_tot_area) <= MAX_PERMITTED_AREA_ERROR) {
+    AreaErrorResult initialAreaError = calculateMaximumAreaError(regionData.getPolycorn());
+    context.getLogging().displayDoubleArray("Initial cartogram region areas", initialAreaError.cartogramArea);
+    if (initialAreaError.maximumAreaError <= MAX_PERMITTED_AREA_ERROR) {
       context.getLogging().debug("Nothing to do, area already correct.");
       Point[][] cartcorn = context.getRegionData().getCartcorn();
       Point[][] polycorn = context.getRegionData().getPolycorn();
@@ -50,8 +48,8 @@ public class Cartogram {
     project(false);
 
     Point[][] cartcorn = regionData.getCartcorn();
-    double[] cartogramTotalArea = new double[1];
-    double mae = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);
+    AreaErrorResult error = calculateMaximumAreaError(cartcorn);
+    double mae = error.maximumAreaError;
     context.getLogging().debug("max. abs. area error: {0}", mae);
 
     Point[] proj2 = mapGrid.getProj2();
@@ -84,17 +82,19 @@ public class Cartogram {
         }
       }
       lastMae = mae;
-      mae = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);
+      error = calculateMaximumAreaError(cartcorn);
+      mae = error.maximumAreaError;
       context.getLogging().debug("max. abs. area error: {0}", mae);
       if (lastMae < mae) {
         context.getLogging().error("Did not converge, aborted! Error is: {0}", mae);
         throw new ConvergenceGoalFailedException("Error increased from " + lastMae + " to " + mae);
       }
     }
-    scalePolygonsToMatchInitialTotalArea(Math.sqrt(init_tot_area[0] / cartogramTotalArea[0]), lx, ly, cartcorn);
+    scalePolygonsToMatchInitialTotalArea(Math.sqrt(initialAreaError.summedCartogramArea / error.summedCartogramArea), lx, ly, cartcorn);
 
-    double final_max_area_error = max_area_err(area_err, cart_area, cartcorn, cartogramTotalArea);
+    double final_max_area_error = calculateMaximumAreaError(cartcorn).maximumAreaError;
     context.getLogging().debug("Final error: {0}", final_max_area_error);
+    context.getLogging().displayDoubleArray("Final cartogram region areas", error.cartogramArea);
     return this.context;
   }
 
@@ -176,52 +176,6 @@ public class Cartogram {
     }
   }
 
-  double max_area_err(double[] area_err, double[] cart_area, Point[][] corn,
-                      double[] sum_cart_area) {
-    double max, obj_area, sum_target_area;
-    int i, j;
-
-    RegionData regionData = context.getRegionData();
-    int[][] polyinreg = regionData.getPolyinreg();
-    int n_reg = polyinreg.length;
-    double[] target_area = regionData.getTarget_area();
-    for (i = 0; i < n_reg; i++) {
-      // if all polygons in a region were tiny they will be removed and thus it will be impossible for
-      // the cartogram area to reach the target area (e.g.: Washington D.C.)
-      // or we could also remove the region and ignore it completely
-      int[] polyI = polyinreg[i];
-      if (polyI.length > 0) {
-        cart_area[i] = 0.0;
-        for (j = 0; j < polyI.length; j++) {
-          cart_area[i] += Polygon.polygon_area(corn[polyI[j]]);
-        }
-      } else {
-        cart_area[i] = -1.0;
-      }
-    }
-    for (i = 0, sum_target_area = 0.0; i < n_reg; i++) {
-      sum_target_area += target_area[i];
-    }
-    for (i = 0, sum_cart_area[0] = 0.0; i < n_reg; i++) {
-      if (cart_area[i] >= 0) {
-        sum_cart_area[0] += cart_area[i];
-      }
-    }
-    for (i = 0; i < n_reg; i++) {
-      if (cart_area[i] >= 0) {
-        obj_area = target_area[i] * (sum_cart_area[0]) / sum_target_area;
-        area_err[i] = cart_area[i] / obj_area - 1.0;
-      } else {
-        area_err[i] = 0; // ignore the region
-      }
-    }
-    max = 0.0;
-    for (i = 0; i < n_reg; i++) {
-      max = Math.max(max, Math.abs(area_err[i]));
-    }
-    return max;
-  }
-
   Point affine_transf(int triid, Point[] tri, double x, double y) {
     double ainv11, ainv12, ainv13, ainv21, ainv22, ainv23, ainv31, ainv32,
       ainv33, t11, t12, t13, t21, t22, t23, det;
@@ -299,6 +253,66 @@ public class Cartogram {
     if (c <= a && c <= b && c <= d)
       return c;
     return d;
+  }
+
+  private static class AreaErrorResult {
+    private final double maximumAreaError;
+    private final double summedCartogramArea;
+    private final double[] cartogramArea;
+
+    private AreaErrorResult(double maximumAreaError, double summedCartogramArea, double[] cartogramArea) {
+      this.maximumAreaError = maximumAreaError;
+      this.summedCartogramArea = summedCartogramArea;
+      this.cartogramArea = cartogramArea;
+    }
+  }
+
+  AreaErrorResult calculateMaximumAreaError(Point[][] corn) {
+    double obj_area, sum_target_area;
+    int i, j;
+
+    RegionData regionData = context.getRegionData();
+    int[][] polyinreg = regionData.getPolyinreg();
+    int n_reg = polyinreg.length;
+    double[] area_err = new double[n_reg];
+    double[] target_area = regionData.getTarget_area();
+    double[] cart_area = new double[n_reg];
+    for (i = 0; i < n_reg; i++) {
+      // if all polygons in a region were tiny they will be removed and thus it will be impossible for
+      // the cartogram area to reach the target area (e.g.: Washington D.C.)
+      // or we could also remove the region and ignore it completely
+      int[] polyI = polyinreg[i];
+      if (polyI.length > 0) {
+        cart_area[i] = 0.0;
+        for (j = 0; j < polyI.length; j++) {
+          cart_area[i] += Polygon.calculateOrientedArea(corn[polyI[j]]);
+        }
+      } else {
+        cart_area[i] = -1.0;
+      }
+    }
+    for (i = 0, sum_target_area = 0.0; i < n_reg; i++) {
+      sum_target_area += target_area[i];
+    }
+    double sum_cart_area = 0.;
+    for (i = 0; i < n_reg; i++) {
+      if (cart_area[i] >= 0) {
+        sum_cart_area += cart_area[i];
+      }
+    }
+    for (i = 0; i < n_reg; i++) {
+      if (cart_area[i] >= 0) {
+        obj_area = target_area[i] * (sum_cart_area) / sum_target_area;
+        area_err[i] = cart_area[i] / obj_area - 1.0;
+      } else {
+        area_err[i] = 0; // ignore the region
+      }
+    }
+    double max = 0.0;
+    for (i = 0; i < n_reg; i++) {
+      max = Math.max(max, Math.abs(area_err[i]));
+    }
+    return new AreaErrorResult(max, sum_cart_area, cart_area);
   }
 
   double max4(double a, double b, double c, double d) {

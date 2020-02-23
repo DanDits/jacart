@@ -32,7 +32,11 @@ public class ExecuteCartogram {
     examplePolygons[0] = new Point[]{new Point(-0.5, 1), new Point(0.5, 1), new Point(0.5, -1), new Point(-0.5, -1), new Point(-0.5, 1)};
 
     String base = "/home/dd/Cartogram/out/";
-    List<Point[]> polygons = new ArrayList<>(Arrays.asList(examplePolygons));
+    List<ResultPolygon> polygons = new ArrayList<>();
+    for (Point[] examplePolygon : examplePolygons) {
+      polygons.add(new ResultPolygon(Arrays.asList(examplePolygon), List.of()));
+    }
+
     outputPolycornToFile(List.of(new ResultRegion(polygons, false)), new FileOutputStream(new File(base + "example.json")));
 
     InputStream geoJsonResource = ExecuteCartogram.class.getResourceAsStream("reordered_geo.json");
@@ -101,7 +105,7 @@ public class ExecuteCartogram {
     DefaultFeatureCollection resultAsGeo = new DefaultFeatureCollection();
     int dummy_id = 0;
     for (ResultRegion region : polygons) {
-      SimpleFeature feature = createFeature(dummy_id, region.getHullCoordinates());
+      SimpleFeature feature = createFeature(dummy_id, region.getPolygons());
       resultAsGeo.add(feature);
       dummy_id++;
     }
@@ -110,7 +114,7 @@ public class ExecuteCartogram {
       jsonOut);
   }
 
-  private static SimpleFeature createFeature(int id, List<Point[]> points) {
+  private static SimpleFeature createFeature(int id, List<ResultPolygon> resultPolygons) {
     SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
     b.setName("CartPoly");
     // TODO output in input CRS and make sure that they are transformed back from Lspace to normal space!
@@ -118,29 +122,46 @@ public class ExecuteCartogram {
     b.add("geo", Polygon.class); // then add geometry
 
     final SimpleFeatureType simpleFeatureType = b.buildFeatureType();
-    if (points.size() == 0) {
+    if (resultPolygons.size() == 0) {
       return null;
-    } else if (points.size() == 1) {
-      SimpleFeature feature = new SimpleFeatureBuilder(simpleFeatureType)
-        .buildFeature(Integer.toString(id), new Object[]{asPolygon(points.get(0))});
-      return feature;
+    } else if (resultPolygons.size() == 1) {
+      ResultPolygon polygon = resultPolygons.get(0);
+      return new SimpleFeatureBuilder(simpleFeatureType)
+        .buildFeature(Integer.toString(id), new Object[]{asPolygon(polygon.getExteriorRing(), polygon.getInteriorRings())});
     } else {
-      SimpleFeature feature = new SimpleFeatureBuilder(simpleFeatureType)
+      Polygon[] polygons = new Polygon[resultPolygons.size()];
+      for (int i = 0; i < resultPolygons.size(); i++) {
+        ResultPolygon p = resultPolygons.get(i);
+        Polygon polygon = asPolygon(p.getExteriorRing(), p.getInteriorRings());
+        polygons[i] = polygon;
+      }
+      return new SimpleFeatureBuilder(simpleFeatureType)
         .buildFeature(Integer.toString(id), new Object[]{
-          new MultiPolygon(points.stream()
-            .map(ExecuteCartogram::asPolygon)
-            .toArray(Polygon[]::new), new PrecisionModel(FLOATING), 0)});
-      return feature;
+          new MultiPolygon(polygons, new PrecisionModel(FLOATING), 0)});
     }
   }
 
-  private static Polygon asPolygon(Point[] points) {
+  private static Polygon asPolygon(List<Point> points, List<List<Point>> holes) {
     PrecisionModel precision = new PrecisionModel(FLOATING);
-    Coordinate[] coords = new Coordinate[points.length];
-    for (int i = 0; i < points.length; i++) {
-      coords[i] = new Coordinate(points[i].x, points[i].y);
+    int srid = 0;
+    LinearRing outerRing = asRing(points, precision, srid);
+    LinearRing[] jtsHoles = new LinearRing[holes.size()];
+    for (int i = 0; i < holes.size(); i++) {
+      jtsHoles[i] = asRing(holes.get(i), precision, srid);
     }
-    return new Polygon(new LinearRing(coords, precision, 0), precision, 0);
+    return new Polygon(outerRing,
+      jtsHoles,
+      precision,
+      srid);
+  }
+
+  private static LinearRing asRing(List<Point> points, PrecisionModel precision, int srid) {
+    Coordinate[] coords = new Coordinate[points.size()];
+    for (int i = 0; i < points.size(); i++) {
+      Point p = points.get(i);
+      coords[i] = new Coordinate(p.x, p.y);
+    }
+    return new LinearRing(coords, precision, srid);
   }
 
 
@@ -154,29 +175,47 @@ public class ExecuteCartogram {
       int regionId = Integer.parseInt(value.toString());
       Object geometry = feature.getDefaultGeometry();
       if (geometry instanceof Polygon) {
-        Point[][] points = new Point[1][];
-        points[0] = convertPolygon((Polygon) geometry);
-        regions.add(new Region(regionId,
-          valueProvider.apply(regionId),
-          points));
-      } else if (geometry instanceof MultiPolygon) {
-        MultiPolygon multiPolygon = (MultiPolygon) geometry;
-        Point[][] points = new Point[multiPolygon.getNumGeometries()][];
-        for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
-          points[i] = convertPolygon((Polygon) multiPolygon.getGeometryN(i));
+        Polygon polygon = (Polygon) geometry;
+        polygon.normalize();
+        Point[][] points = new Point[1 + polygon.getNumInteriorRing()][];
+        points[0] = convertCoordinates(polygon.getExteriorRing());
+        List<Integer> ringsInPolygons = new ArrayList<>();
+        ringsInPolygons.add(-1);
+        for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
+          points[1 + j] = convertCoordinates(polygon.getInteriorRingN(j));
+          ringsInPolygons.add(0);
         }
         regions.add(new Region(regionId,
           valueProvider.apply(regionId),
-          points));
+          points,
+          ringsInPolygons.stream().mapToInt(a -> a).toArray()));
+      } else if (geometry instanceof MultiPolygon) {
+        MultiPolygon multiPolygon = (MultiPolygon) geometry;
+        multiPolygon.normalize();
+        List<Point[]> points = new ArrayList<>();
+        List<Integer> ringsInPolygons = new ArrayList<>();
+        for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
+          Polygon polygon = (Polygon) multiPolygon.getGeometryN(i);
+          points.add(convertCoordinates(polygon.getExteriorRing()));
+          ringsInPolygons.add(-i - 1);
+          for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
+            points.add(convertCoordinates(polygon.getInteriorRingN(j)));
+            ringsInPolygons.add(i);
+          }
+        }
+        regions.add(new Region(regionId,
+          valueProvider.apply(regionId),
+          points.toArray(Point[][]::new),
+          ringsInPolygons.stream().mapToInt(a -> a).toArray()));
       }
     }
     return regions;
   }
 
-  private static Point[] convertPolygon(Polygon polygon) {
+  private static Point[] convertCoordinates(LineString lineString) {
     // TODO for now we ignore holes, basically they need to be regarded to get the correct target area and also
     //  when we output the polygons again the holes also need to be transformed accordingly
-    return Arrays.stream(polygon.getCoordinates())
+    return Arrays.stream(lineString.getCoordinates())
       .map(coord -> new Point(coord.x, coord.y))
       .toArray(Point[]::new);
   }
