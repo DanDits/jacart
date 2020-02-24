@@ -8,7 +8,6 @@ import dan.dit.cartogram.core.context.Point;
 import dan.dit.cartogram.core.context.Region;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class CartogramApi {
 
@@ -16,9 +15,6 @@ public class CartogramApi {
     CartogramContext cartogramContext = Density.initializeContext(mapFeatureData, config);
     CartogramContext context = new Cartogram(cartogramContext)
       .calculate();
-    // TODO also allow the input+ouput regions to have polygons with holes
-    //  those holes need to be considered for area calculation initially, they can be ignored during iteration
-    //  and only have to be projected at the end
     int[] regionIds = context.getRegionData().getRegion_id();
     List<ResultRegion> resultRegions = new ArrayList<>();
     int[][] polyinreg = context.getRegionData().getPolyinreg();
