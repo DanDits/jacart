@@ -15,6 +15,8 @@ import dan.dit.cartogram.core.pub.FftPlanFactory;
 import dan.dit.cartogram.core.pub.Logging;
 import dan.dit.cartogram.dft.FftPlan2D;
 
+import static dan.dit.cartogram.core.Cartogram.calculateMaximumAreaError;
+
 public class Density {
   /**
    * Defines a threshold for the resulting cartogram areas: The maximum error of each region
@@ -142,6 +144,10 @@ public class Density {
     Logging logging = config.getLogging();
     RegionData regionData = Polygon.processMap(logging, featureData, polygonData);
     logging.debug("Amount of regions: {0}", regionData.getRegionId().length);
+    double originalSummedArea = calculateMaximumAreaError(
+      regionData.getTarget_area(),
+      regionData.getPolyinreg(),
+      regionData.getPolycorn()).getSummedPolygonArea();
     MapGrid mapGrid = transformMapToLSpace(config.getFftPlanFactory(), logging, featureData, regionData.getPolycorn());
 
     int regionCount = regionData.getPolyinreg().length;
@@ -149,7 +155,7 @@ public class Density {
     boolean[] regionHasNaN = regionData.getRegion_na();
     if (regionCount == 1) {
       targetArea[0] = 1.0;
-      return new CartogramContext(logging, mapGrid, regionData, true);
+      return new CartogramContext(logging, mapGrid, regionData, true, originalSummedArea);
     }
 
     double[] density = new double[regionCount];
@@ -313,7 +319,7 @@ public class Density {
 
     mapGrid.getPlan_fwd().execute();
 
-    return new CartogramContext(logging, mapGrid, regionData, false);
+    return new CartogramContext(logging, mapGrid, regionData, false, originalSummedArea);
   }
 
   void fill_with_density2() {

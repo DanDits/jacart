@@ -65,9 +65,9 @@ public class EpsWriter {
   private void drawRing(PrintWriter printWriter, ResultRegion resultRegion, List<Point> points, String color) {
     printWriter.println("n");
     printWriter.println(MessageFormat.format("{0} {1} m", points.get(0).x, points.get(0).y));
-    for (Point point : points) {
-      printWriter.println(MessageFormat.format("{0} {1} l", point.x, point.y));
-    }
+    points.stream()
+      .skip(1)
+      .forEach(point -> printWriter.println(MessageFormat.format("{0} {1} l", point.x, point.y)));
     printWriter.println("c");
     if (!resultRegion.isNaN()) {
       printWriter.println("gsave\n" + color + " SRGB f\ngrestore\n0 SGRY s");

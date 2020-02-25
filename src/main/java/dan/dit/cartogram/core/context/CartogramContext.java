@@ -12,13 +12,15 @@ public class CartogramContext {
   private final MapGrid mapGrid;
   private final RegionData regionData;
   private final boolean isSingleRegion;
+  private final double originalSummedArea;
   private final Logging logging;
 
-  public CartogramContext(Logging logging, MapGrid mapGrid, RegionData regionData, boolean isSingleRegion) {
+  public CartogramContext(Logging logging, MapGrid mapGrid, RegionData regionData, boolean isSingleRegion, double originalSummedArea) {
     this.logging = logging;
     this.mapGrid = mapGrid;
     this.regionData = regionData;
     this.isSingleRegion = isSingleRegion;
+    this.originalSummedArea = originalSummedArea;
   }
 
   public boolean isSingleRegion() {
@@ -35,5 +37,9 @@ public class CartogramContext {
 
   public Logging getLogging() {
     return logging;
+  }
+
+  public double getOriginalSummedArea() {
+    return originalSummedArea;
   }
 }
