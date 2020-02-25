@@ -13,7 +13,7 @@ public class CartogramConfig {
   private final boolean usePerimeterThreshold;
   private final Logging logging;
   private final FftPlanFactory fftPlanFactory;
-  private final boolean scaleToOriginalPolygonSize;
+  private final boolean scaleToOriginalPolygonRegion;
 
   /**
    * Defines a threshold for the resulting cartogram areas: The maximum error of each region
@@ -23,12 +23,12 @@ public class CartogramConfig {
    */
   private final double maxPermittedAreaError;
 
-  public CartogramConfig(double maxPermittedAreaError, boolean usePerimeterThreshold, Logging logging, FftPlanFactory fftPlanFactory, boolean scaleToOriginalPolygonSize) {
+  public CartogramConfig(double maxPermittedAreaError, boolean usePerimeterThreshold, Logging logging, FftPlanFactory fftPlanFactory, boolean scaleToOriginalPolygonRegion) {
     this.maxPermittedAreaError = maxPermittedAreaError;
     this.usePerimeterThreshold = usePerimeterThreshold;
     this.logging = logging;
     this.fftPlanFactory = fftPlanFactory;
-    this.scaleToOriginalPolygonSize = scaleToOriginalPolygonSize;
+    this.scaleToOriginalPolygonRegion = scaleToOriginalPolygonRegion;
   }
 
   public boolean isUsePerimeterThreshold() {
@@ -43,8 +43,8 @@ public class CartogramConfig {
     return fftPlanFactory;
   }
 
-  public boolean isScaleToOriginalPolygonSize() {
-    return scaleToOriginalPolygonSize;
+  public boolean isScaleToOriginalPolygonRegion() {
+    return scaleToOriginalPolygonRegion;
   }
 
   public double getMaxPermittedAreaError() {

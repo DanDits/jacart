@@ -6,7 +6,6 @@ import dan.dit.cartogram.core.pub.ResultRegion;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
@@ -29,24 +28,25 @@ public class FeatureConverter {
   public DefaultFeatureCollection convertToFeatureCollection(List<ResultRegion> regions) {
     DefaultFeatureCollection resultAsGeo = new DefaultFeatureCollection();
     int id = 0;
+    boolean isMultiPolygon = regions.stream().anyMatch(region -> region.getPolygons().size() > 1);
     for (ResultRegion region : regions) {
-      SimpleFeature feature = createFeature(id, region.getPolygons());
+      SimpleFeature feature = createFeature(id, region.getPolygons(), isMultiPolygon);
       resultAsGeo.add(feature);
       id++;
     }
     return resultAsGeo;
   }
 
-  private SimpleFeature createFeature(int id, List<ResultPolygon> resultPolygons) {
+  private SimpleFeature createFeature(int id, List<ResultPolygon> resultPolygons, boolean isMultiPolygon) {
     Geometry geometry = geometryConverter.createGeometry(resultPolygons);
-    SimpleFeatureType simpleFeatureType = createSimpleFeatureType();
+    SimpleFeatureType simpleFeatureType = createSimpleFeatureType(isMultiPolygon);
     return new SimpleFeatureBuilder(simpleFeatureType)
       .buildFeature(Integer.toString(id), new Object[]{geometry});
   }
 
-  private SimpleFeatureType createSimpleFeatureType() {
+  private SimpleFeatureType createSimpleFeatureType(boolean isMultiPolygon) {
     SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
-    b.add("geo", Polygon.class);
+    b.add("geo", isMultiPolygon ? MultiPolygon.class : Polygon.class);
     b.setName("CartRegion");
     return b.buildFeatureType();
   }

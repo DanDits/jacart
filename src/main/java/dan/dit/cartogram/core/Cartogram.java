@@ -20,7 +20,7 @@ public class Cartogram {
     this.density = new Density(context);
   }
 
-  public CartogramContext calculate(boolean isScaleToOriginalPolygonSize, double maxPermittedAreaError) throws ConvergenceGoalFailedException {
+  public CartogramContext calculate(boolean isScaleToOriginalPolygonRegion, double maxPermittedAreaError) throws ConvergenceGoalFailedException {
     boolean onlyOneRegionExists = context.isSingleRegion();
     if (onlyOneRegionExists) {
       context.getLogging().debug("Hint: Only one region exists, output will only be an affine transformation.");
@@ -97,11 +97,11 @@ public class Cartogram {
         throw new ConvergenceGoalFailedException("Error increased from " + lastMae + " to " + mae);
       }
     }
-    double originalArea = isScaleToOriginalPolygonSize ? context.getOriginalSummedArea() : initialAreaError.summedCartogramArea;
-    double correctionFactor = Math.sqrt(originalArea / error.summedCartogramArea);
+    double originalArea = isScaleToOriginalPolygonRegion ? context.getOriginalSummedArea() : initialAreaError.summedCartogramArea;
+    double correctionFactor = Math.sqrt(originalArea / error.summedCartogramArea); // TODO was: 0.01259765625, now 0.012576026815041663
     context.getLogging().debug("Scaling result with factor = {0}", correctionFactor);
     for (Point[] points : cartcorn) {
-      scalePolygonsToMatchInitialTotalArea(correctionFactor, lx, ly, points);
+      scalePolygonsToMatchInitialTotalArea(correctionFactor, lx, ly, points, isScaleToOriginalPolygonRegion);
     }
 
     double final_max_area_error = calculateMaximumAreaError(
@@ -112,10 +112,10 @@ public class Cartogram {
     return this.context;
   }
 
-  private void scalePolygonsToMatchInitialTotalArea(double correction_factor, int lx, int ly, Point[] points) {
+  private void scalePolygonsToMatchInitialTotalArea(double correction_factor, int lx, int ly, Point[] points, boolean isScaleToOriginalPolygonRegion) {
     for (Point point : points) {
-      point.x = correction_factor * (point.x - 0.5 * lx) + 0.5 * lx;
-      point.y = correction_factor * (point.y - 0.5 * ly) + 0.5 * ly;
+      point.x = correction_factor * (point.x - 0.5 * lx) + (isScaleToOriginalPolygonRegion ? 0 : 0.5 * lx);
+      point.y = correction_factor * (point.y - 0.5 * ly) + (isScaleToOriginalPolygonRegion ? 0 : 0.5 * ly);
     }
   }
 

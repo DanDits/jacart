@@ -43,7 +43,7 @@ public class ExecuteCartogram {
     FileOutputStream epsOut = new FileOutputStream(new File("/home/dd/Cartogram/jacart/src/main/resources/dan/dit/cartogram/main/image.eps"));
 
     FileOutputStream jsonOut = new FileOutputStream(new File(base + "transformed.json"));
-    createCartogramToEps(createDefaultConfig(), geoJsonResource, dataResource, epsOut, jsonOut);
+    createCartogramToEps(createDefaultConfig(), geoJsonResource, dataResource, epsOut);
   }
 
   private static CartogramConfig createDefaultConfig() {
@@ -57,14 +57,44 @@ public class ExecuteCartogram {
 
   // TODO create a separate project which is the only one having dependencies on geotools to perform geotools IO
   public static void createCartogramToEps(CartogramConfig config, InputStream geoJsonResource, InputStream dataResource,
-                                          OutputStream epsOut,
+                                          OutputStream epsOut) throws IOException, ConvergenceGoalFailedException {
+    FeatureConverter featureConverter = new FeatureConverter(new GeometryConverter(new GeometryFactory()));
+    CartogramResult result = createMapFeatureData(config, featureConverter, geoJsonResource, dataResource);
+    new EpsWriter().ps_figure(
+      epsOut,
+      result.getGridSizeX(),
+      result.getGridSizeY(),
+      result.getResultRegions(),
+      result.getGridProjection(),
+      true);
+  }
+
+  public static void createCartogramToGeoJson(CartogramConfig config, InputStream geoJsonResource, InputStream dataResource,
                                           OutputStream jsonOut) throws IOException, ConvergenceGoalFailedException {
+    FeatureConverter featureConverter = new FeatureConverter(new GeometryConverter(new GeometryFactory()));
+    CartogramResult result = createMapFeatureData(config, featureConverter, geoJsonResource, dataResource);
+    outputPolycornToFile(featureConverter, result.getResultRegions(), jsonOut);
+  }
+
+  private static Double extractData(CsvData data, int regionIdColumnIndex, int regionDataColumnIndex, Integer id) {
+    for (int i = 0; i < data.getData().size(); i++) {
+      Object[] csvValues = data.getData().get(i);
+      if (csvValues[regionIdColumnIndex].equals(id)) {
+        if (csvValues[regionDataColumnIndex] == null) {
+          return Double.NaN;
+        }
+        return (Double) csvValues[regionDataColumnIndex];
+      }
+    }
+    throw new IllegalStateException("Did not find value for region " + id);
+  }
+
+  private static CartogramResult createMapFeatureData(CartogramConfig config, FeatureConverter featureConverter, InputStream geoJsonResource, InputStream dataResource) throws IOException, ConvergenceGoalFailedException {
     FeatureCollection<SimpleFeatureType, SimpleFeature> geo = new GeoJsonIO().importData(geoJsonResource);
     CsvData data = new CsvDataImport().importCsv(dataResource);
     ReferencedEnvelope bounds = geo.getBounds();
     int regionIdColumnIndex = data.getNames().indexOf("Region.Id");
     int regionDataColumnIndex = data.getNames().indexOf("Region.Data");
-    FeatureConverter featureConverter = new FeatureConverter(new GeometryConverter(new GeometryFactory()));
     List<Region> regions = featureConverter.createRegions(asIterable(geo),
       ExecuteCartogram::extractFeatureId,
       id -> extractData(data, regionIdColumnIndex, regionDataColumnIndex, id));
@@ -80,28 +110,7 @@ public class ExecuteCartogram {
       bounds.getMaxY(),
       regions,
       targetAreaPerRegion);
-    CartogramResult result = new CartogramApi().execute(mapFeatureData, config);
-    new EpsWriter().ps_figure(
-      epsOut,
-      result.getGridSizeX(),
-      result.getGridSizeY(),
-      result.getResultRegions(),
-      result.getGridProjection(),
-      true);
-    outputPolycornToFile(featureConverter, result.getResultRegions(), jsonOut);
-  }
-
-  private static Double extractData(CsvData data, int regionIdColumnIndex, int regionDataColumnIndex, Integer id) {
-    for (int i = 0; i < data.getData().size(); i++) {
-      Object[] csvValues = data.getData().get(i);
-      if (csvValues[regionIdColumnIndex].equals(id)) {
-        if (csvValues[regionDataColumnIndex] == null) {
-          return Double.NaN;
-        }
-        return (Double) csvValues[regionDataColumnIndex];
-      }
-    }
-    throw new IllegalStateException("Did not find value for region " + id);
+    return new CartogramApi().execute(mapFeatureData, config);
   }
 
   private static int extractFeatureId(SimpleFeature feature) {

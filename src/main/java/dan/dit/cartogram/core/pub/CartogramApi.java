@@ -14,7 +14,7 @@ public class CartogramApi {
   public CartogramResult execute(MapFeatureData mapFeatureData, CartogramConfig config) throws ConvergenceGoalFailedException {
     CartogramContext cartogramContext = Density.initializeContext(mapFeatureData, config);
     CartogramContext context = new Cartogram(cartogramContext)
-      .calculate(config.isScaleToOriginalPolygonSize(), config.getMaxPermittedAreaError());
+      .calculate(config.isScaleToOriginalPolygonRegion(), config.getMaxPermittedAreaError());
     int[] regionIds = context.getRegionData().getRegion_id();
     List<ResultRegion> resultRegions = new ArrayList<>();
     int[][] polyinreg = context.getRegionData().getPolyinreg();

@@ -96,6 +96,7 @@ public class Density {
 
     for (Point[] points : polycorn) {
       for (Point point : points) {
+        // TODO improve rescaling to original region setting by storing this transformation and applying the inverse
         point.x = (point.x - new_minx) / latt_const;
         point.y = (point.y - new_miny) / latt_const;
       }
