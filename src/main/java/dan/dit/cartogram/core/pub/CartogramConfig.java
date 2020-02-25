@@ -13,11 +13,22 @@ public class CartogramConfig {
   private final boolean usePerimeterThreshold;
   private final Logging logging;
   private final FftPlanFactory fftPlanFactory;
+  private final boolean scaleToOriginalPolygonSize;
 
-  public CartogramConfig(boolean usePerimeterThreshold, Logging logging, FftPlanFactory fftPlanFactory) {
+  /**
+   * Defines a threshold for the resulting cartogram areas: The maximum error of each region
+   * must only differ by that percentage. The error hereby is defined by how much the cartogram region's relative area
+   * differs from the region's relative target area: For example if region A should accumulate 20%
+   * of the total area mass but currently accumulates 30%, the error would be 0.2/0.3-1=0.66-1=-0.33 which is 33%
+   */
+  private final double maxPermittedAreaError;
+
+  public CartogramConfig(double maxPermittedAreaError, boolean usePerimeterThreshold, Logging logging, FftPlanFactory fftPlanFactory, boolean scaleToOriginalPolygonSize) {
+    this.maxPermittedAreaError = maxPermittedAreaError;
     this.usePerimeterThreshold = usePerimeterThreshold;
     this.logging = logging;
     this.fftPlanFactory = fftPlanFactory;
+    this.scaleToOriginalPolygonSize = scaleToOriginalPolygonSize;
   }
 
   public boolean isUsePerimeterThreshold() {
@@ -30,5 +41,13 @@ public class CartogramConfig {
 
   public FftPlanFactory getFftPlanFactory() {
     return fftPlanFactory;
+  }
+
+  public boolean isScaleToOriginalPolygonSize() {
+    return scaleToOriginalPolygonSize;
+  }
+
+  public double getMaxPermittedAreaError() {
+    return maxPermittedAreaError;
   }
 }

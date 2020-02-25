@@ -19,14 +19,6 @@ import static dan.dit.cartogram.core.Cartogram.calculateMaximumAreaError;
 
 public class Density {
   /**
-   * Defines a threshold for the resulting cartogram areas: The maximum error of each region
-   * must only differ by that percentage. The error hereby is defined by how much the cartogram region's relative area
-   * differs from the region's relative target area: For example if region A should accumulate 20%
-   * of the total area mass but currently accumulates 30%, the error would be 0.2/0.3-1=0.66-1=-0.33 which is 33%
-   */
-  public static final double MAX_PERMITTED_AREA_ERROR = 0.01;
-
-  /**
    * Defines the grid's resolution. Must be a multiple of 2.
    */
   public static final int L = 512;

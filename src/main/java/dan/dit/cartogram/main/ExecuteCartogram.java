@@ -43,11 +43,20 @@ public class ExecuteCartogram {
     FileOutputStream epsOut = new FileOutputStream(new File("/home/dd/Cartogram/jacart/src/main/resources/dan/dit/cartogram/main/image.eps"));
 
     FileOutputStream jsonOut = new FileOutputStream(new File(base + "transformed.json"));
-    createCartogramToEps(geoJsonResource, dataResource, epsOut, jsonOut);
+    createCartogramToEps(createDefaultConfig(), geoJsonResource, dataResource, epsOut, jsonOut);
+  }
+
+  private static CartogramConfig createDefaultConfig() {
+    return new CartogramConfig(
+      0.01,
+      true,
+      Logging.ofStandardOutput(),
+      FftPlanFactory.ofDefault(),
+      false);
   }
 
   // TODO create a separate project which is the only one having dependencies on geotools to perform geotools IO
-  public static void createCartogramToEps(InputStream geoJsonResource, InputStream dataResource,
+  public static void createCartogramToEps(CartogramConfig config, InputStream geoJsonResource, InputStream dataResource,
                                           OutputStream epsOut,
                                           OutputStream jsonOut) throws IOException, ConvergenceGoalFailedException {
     FeatureCollection<SimpleFeatureType, SimpleFeature> geo = new GeoJsonIO().importData(geoJsonResource);
@@ -71,11 +80,6 @@ public class ExecuteCartogram {
       bounds.getMaxY(),
       regions,
       targetAreaPerRegion);
-    CartogramConfig config = new CartogramConfig(
-      // TODO make max area error configurable
-      true,
-      Logging.ofStandardOutput(),
-      FftPlanFactory.ofDefault());
     CartogramResult result = new CartogramApi().execute(mapFeatureData, config);
     new EpsWriter().ps_figure(
       epsOut,

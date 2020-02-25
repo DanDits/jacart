@@ -1,6 +1,5 @@
 package dan.dit.cartogram.core;
 
-import static dan.dit.cartogram.core.Density.MAX_PERMITTED_AREA_ERROR;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -21,7 +20,7 @@ public class Cartogram {
     this.density = new Density(context);
   }
 
-  public CartogramContext calculate() throws ConvergenceGoalFailedException {
+  public CartogramContext calculate(boolean isScaleToOriginalPolygonSize, double maxPermittedAreaError) throws ConvergenceGoalFailedException {
     boolean onlyOneRegionExists = context.isSingleRegion();
     if (onlyOneRegionExists) {
       context.getLogging().debug("Hint: Only one region exists, output will only be an affine transformation.");
@@ -32,7 +31,7 @@ public class Cartogram {
       context.getRegionData().getTarget_area(),
       context.getRegionData().getPolyinreg(),
       regionData.getPolycorn());
-    if (initialAreaError.maximumAreaError <= MAX_PERMITTED_AREA_ERROR) {
+    if (initialAreaError.maximumAreaError <= maxPermittedAreaError) {
       context.getLogging().debug("Nothing to do, area already correct.");
       Point[][] cartcorn = context.getRegionData().getCartcorn();
       Point[][] polycorn = context.getRegionData().getPolycorn();
@@ -60,7 +59,7 @@ public class Cartogram {
     Point[] proj2 = mapGrid.getProj2();
     int integration = 0;
     double lastMae = Double.POSITIVE_INFINITY;
-    while (mae > MAX_PERMITTED_AREA_ERROR && mae < lastMae) {
+    while (mae > maxPermittedAreaError && mae < lastMae) {
       density.fill_with_density2();
 
       for (int i = 0; i < lx; i++) {
@@ -98,7 +97,8 @@ public class Cartogram {
         throw new ConvergenceGoalFailedException("Error increased from " + lastMae + " to " + mae);
       }
     }
-    double correctionFactor = Math.sqrt(initialAreaError.summedCartogramArea / error.summedCartogramArea);
+    double originalArea = isScaleToOriginalPolygonSize ? context.getOriginalSummedArea() : initialAreaError.summedCartogramArea;
+    double correctionFactor = Math.sqrt(originalArea / error.summedCartogramArea);
     context.getLogging().debug("Scaling result with factor = {0}", correctionFactor);
     for (Point[] points : cartcorn) {
       scalePolygonsToMatchInitialTotalArea(correctionFactor, lx, ly, points);

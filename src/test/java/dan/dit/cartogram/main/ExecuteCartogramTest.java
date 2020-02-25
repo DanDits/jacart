@@ -1,6 +1,9 @@
 package dan.dit.cartogram.main;
 
 import dan.dit.cartogram.core.ConvergenceGoalFailedException;
+import dan.dit.cartogram.core.pub.CartogramConfig;
+import dan.dit.cartogram.core.pub.FftPlanFactory;
+import dan.dit.cartogram.core.pub.Logging;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -44,8 +47,14 @@ public class ExecuteCartogramTest {
         textBuilder.append((char) c);
       }
     }
+    CartogramConfig config = new CartogramConfig(
+      0.01,
+      true,
+      Logging.ofStandardOutput(),
+      FftPlanFactory.ofDefault(),
+      false);
     ExecuteCartogram.createCartogramToEps(
-        ExecuteCartogramTest.class.getResourceAsStream(geoJsonResource),
+      config, ExecuteCartogramTest.class.getResourceAsStream(geoJsonResource),
         ExecuteCartogramTest.class.getResourceAsStream(dataResource),
         epsOut,
         nullOutput);
@@ -65,9 +74,15 @@ public class ExecuteCartogramTest {
     String dataResource) {
     var epsOut = new ByteArrayOutputStream();
     var nullOutput = new ByteArrayOutputStream();
+    CartogramConfig config = new CartogramConfig(
+      0.01,
+      true,
+      Logging.ofStandardOutput(),
+      FftPlanFactory.ofDefault(),
+      false);
     Assertions.assertThrows(ConvergenceGoalFailedException.class,
       () -> ExecuteCartogram.createCartogramToEps(
-        ExecuteCartogramTest.class.getResourceAsStream(geoJsonResource),
+        config, ExecuteCartogramTest.class.getResourceAsStream(geoJsonResource),
         ExecuteCartogramTest.class.getResourceAsStream(dataResource),
         epsOut,
         nullOutput));
