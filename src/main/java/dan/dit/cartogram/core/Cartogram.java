@@ -8,6 +8,7 @@ import dan.dit.cartogram.core.context.CartogramContext;
 import dan.dit.cartogram.core.context.MapGrid;
 import dan.dit.cartogram.core.context.Point;
 import dan.dit.cartogram.core.context.RegionData;
+import dan.dit.cartogram.core.pub.ParallelismConfig;
 
 public class Cartogram {
   private final Integrate integrate;
@@ -20,7 +21,7 @@ public class Cartogram {
     this.density = new Density(context);
   }
 
-  public CartogramContext calculate(boolean scaleToOriginalPolygonRegion, double maxPermittedAreaError) throws ConvergenceGoalFailedException {
+  public CartogramContext calculate(ParallelismConfig parallelismConfig, boolean scaleToOriginalPolygonRegion, double maxPermittedAreaError) throws ConvergenceGoalFailedException {
     boolean onlyOneRegionExists = context.isSingleRegion();
     if (onlyOneRegionExists) {
       context.getLogging().debug("Hint: Only one region exists, output will only be an affine transformation.");
@@ -45,7 +46,7 @@ public class Cartogram {
     Point[] proj = mapGrid.getProj();
 
     context.getLogging().debug("Starting integration 1\n");
-    integrate.ffb_integrate();
+    integrate.ffb_integrate(parallelismConfig);
     project(false);
 
     Point[][] cartcorn = regionData.getCartcorn();
@@ -76,7 +77,7 @@ public class Cartogram {
       }
       integration++;
       context.getLogging().debug("Starting integration {0}", integration);
-      integrate.ffb_integrate();
+      integrate.ffb_integrate(parallelismConfig);
       project(true);
 
       for (int i = 0; i < lx; i++) {

@@ -4,6 +4,7 @@ import dan.dit.cartogram.core.ConvergenceGoalFailedException;
 import dan.dit.cartogram.core.pub.CartogramConfig;
 import dan.dit.cartogram.core.pub.FftPlanFactory;
 import dan.dit.cartogram.core.pub.Logging;
+import dan.dit.cartogram.core.pub.ParallelismConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,8 +42,9 @@ public class ExecuteCartogramTest {
       0.01,
       true,
       Logging.ofStandardOutput(),
-      FftPlanFactory.ofDefault(),
-      true);
+      FftPlanFactory.ofDefault(ParallelismConfig.ofCommonPool()),
+      true,
+      ParallelismConfig.ofCommonPool());
     ExecuteCartogram.createCartogramToGeoJson(
       config, ExecuteCartogramTest.class.getResourceAsStream(geoJsonResource),
       ExecuteCartogramTest.class.getResourceAsStream(dataResource),
@@ -85,8 +87,9 @@ public class ExecuteCartogramTest {
       0.01,
       true,
       Logging.ofStandardOutput(),
-      FftPlanFactory.ofDefault(),
-      false);
+      FftPlanFactory.ofDefault(ParallelismConfig.ofCommonPool()),
+      false,
+      ParallelismConfig.ofCommonPool());
     ExecuteCartogram.createCartogramToEps(
       config, ExecuteCartogramTest.class.getResourceAsStream(geoJsonResource),
         ExecuteCartogramTest.class.getResourceAsStream(dataResource),
@@ -109,8 +112,9 @@ public class ExecuteCartogramTest {
       0.01,
       true,
       Logging.ofStandardOutput(),
-      FftPlanFactory.ofDefault(),
-      false);
+      FftPlanFactory.ofDefault(ParallelismConfig.ofCommonPool()),
+      false,
+      ParallelismConfig.ofCommonPool());
     Assertions.assertThrows(ConvergenceGoalFailedException.class,
       () -> ExecuteCartogram.createCartogramToEps(
         config, ExecuteCartogramTest.class.getResourceAsStream(geoJsonResource),

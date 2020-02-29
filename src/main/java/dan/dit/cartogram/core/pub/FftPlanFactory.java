@@ -81,8 +81,8 @@ public class FftPlanFactory {
     return new FftPlanFactory(planner);
   }
 
-  public static FftPlanFactory ofDefault() {
-    return new FftPlanFactory(new DefaultFftPlanner());
+  public static FftPlanFactory ofDefault(ParallelismConfig parallelismConfig) {
+    return new FftPlanFactory(new DefaultFftPlanner(parallelismConfig));
   }
 
   public FftPlan2D createDCT2_2D(int width, int height, double[] inputData, double[] outputData) {

@@ -6,7 +6,6 @@ package dan.dit.cartogram.core.pub;
  */
 public class CartogramConfig {
 
-  // TODO allow configuring the parallelism, maybe just by specifying a ForkJoinPool? Or just by disabling it?
   /**
    * If true then extremely small regions are scaled up
    */
@@ -14,6 +13,7 @@ public class CartogramConfig {
   private final Logging logging;
   private final FftPlanFactory fftPlanFactory;
   private final boolean scaleToOriginalPolygonRegion;
+  private final ParallelismConfig parallelismConfig;
 
   /**
    * Defines a threshold for the resulting cartogram areas: The maximum error of each region
@@ -23,12 +23,13 @@ public class CartogramConfig {
    */
   private final double maxPermittedAreaError;
 
-  public CartogramConfig(double maxPermittedAreaError, boolean usePerimeterThreshold, Logging logging, FftPlanFactory fftPlanFactory, boolean scaleToOriginalPolygonRegion) {
+  public CartogramConfig(double maxPermittedAreaError, boolean usePerimeterThreshold, Logging logging, FftPlanFactory fftPlanFactory, boolean scaleToOriginalPolygonRegion, ParallelismConfig parallelismConfig) {
     this.maxPermittedAreaError = maxPermittedAreaError;
     this.usePerimeterThreshold = usePerimeterThreshold;
     this.logging = logging;
     this.fftPlanFactory = fftPlanFactory;
     this.scaleToOriginalPolygonRegion = scaleToOriginalPolygonRegion;
+    this.parallelismConfig = parallelismConfig;
   }
 
   public boolean isUsePerimeterThreshold() {
@@ -49,5 +50,9 @@ public class CartogramConfig {
 
   public double getMaxPermittedAreaError() {
     return maxPermittedAreaError;
+  }
+
+  public ParallelismConfig getParallelismConfig() {
+    return parallelismConfig;
   }
 }

@@ -1,5 +1,7 @@
 package dan.dit.cartogram.dft;
 
+import dan.dit.cartogram.core.pub.ParallelismConfig;
+
 import java.util.stream.IntStream;
 
 public class FftPlan2D {
@@ -14,13 +16,15 @@ public class FftPlan2D {
   private final double[] sinTableHeight;
   private final InplaceDftAlgorithm inplaceAlgorithmRows;
   private final InplaceDftAlgorithm inplaceAlgorithmColumns;
+  private final ParallelismConfig parallelismConfig;
 
   public FftPlan2D(
-      int width, int height,
-      double[] inputTabularData,
-      double[] outputTabularData,
-      InplaceDftAlgorithm inplaceAlgorithmRows,
-      InplaceDftAlgorithm inplaceAlgorithmColumns) {
+    ParallelismConfig parallelismConfig, int width, int height,
+    double[] inputTabularData,
+    double[] outputTabularData,
+    InplaceDftAlgorithm inplaceAlgorithmRows,
+    InplaceDftAlgorithm inplaceAlgorithmColumns) {
+    this.parallelismConfig = parallelismConfig;
     if (width * height != inputTabularData.length) {
       throw new IllegalArgumentException("Array size does not match width*height!");
     }
@@ -64,8 +68,7 @@ public class FftPlan2D {
   }
 
   private void executePerColumn() {
-    IntStream.range(0, width)
-        .parallel()
+    parallelismConfig.apply(IntStream.range(0, width))
         .forEach(col -> {
           double[] heightBuffer = new double[height];
           for (int row = 0; row < height; row++) {
@@ -79,8 +82,7 @@ public class FftPlan2D {
   }
 
   private void executePerRow() {
-    IntStream.range(0, height)
-        .parallel()
+    parallelismConfig.apply(IntStream.range(0, height))
         .forEach(row -> {
           double[] widthBuffer = new double[width];
           int indexOffset = row * width;

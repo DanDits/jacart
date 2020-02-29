@@ -51,8 +51,9 @@ public class ExecuteCartogram {
       0.01,
       true,
       Logging.ofStandardOutput(),
-      FftPlanFactory.ofDefault(),
-      false);
+      FftPlanFactory.ofDefault(ParallelismConfig.ofCommonPool()),
+      false,
+      ParallelismConfig.ofCommonPool());
   }
 
   // TODO create a separate project which is the only one having dependencies on geotools to perform geotools IO

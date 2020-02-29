@@ -2,8 +2,8 @@ package dan.dit.cartogram.dft;
 
 import dan.dit.cartogram.core.pub.Fft2DPlanner;
 import dan.dit.cartogram.core.pub.Logging;
+import dan.dit.cartogram.core.pub.ParallelismConfig;
 
-import java.text.MessageFormat;
 import java.util.Arrays;
 
 /**
@@ -22,16 +22,23 @@ import java.util.Arrays;
  */
 public class DefaultFftPlanner implements Fft2DPlanner {
 
+  private final ParallelismConfig parallelismConfig;
+
+  public DefaultFftPlanner(ParallelismConfig parallelismConfig) {
+    this.parallelismConfig = parallelismConfig;
+  }
+
   public static void main(String[] args) {
     Logging logging = Logging.ofStandardOutput();
     logging.debug("DCT3_2D:");
 
+    ParallelismConfig parallelismConfig = ParallelismConfig.ofCommonPool();
     for (int i = 2; i <= 1024; i *= 2) {
       double[] test = new double[i * i];
       double[] target = new double[i * i];
       Arrays.fill(test, 1.);
       logging.displayDoubleArray(i + " test (before)", test);
-      var plan_bwd = new DefaultFftPlanner().createDCT3_2D(i, i, test, target);
+      var plan_bwd = new DefaultFftPlanner(parallelismConfig).createDCT3_2D(i, i, test, target);
       plan_bwd.execute();
       logging.displayDoubleArray( i + " target (after)", target);
       logging.debug("");
@@ -46,7 +53,7 @@ public class DefaultFftPlanner implements Fft2DPlanner {
       double[] target = new double[i * i];
       test[j] = 2;
       logging.displayDoubleArray(i + " test (before)", test);
-      var plan_bwd = new DefaultFftPlanner().createDCT3_DST3_2D(i, i, test, target);
+      var plan_bwd = new DefaultFftPlanner(parallelismConfig).createDCT3_DST3_2D(i, i, test, target);
       plan_bwd.execute();
       logging.displayDoubleArray(i + " target (after)", target);
       logging.debug("");
@@ -60,7 +67,7 @@ public class DefaultFftPlanner implements Fft2DPlanner {
       double[] target = new double[i * i];
       test[j] = 2;
       logging.displayDoubleArray(i + " test (before)", test);
-      var plan_bwd = new DefaultFftPlanner().createDST3_DCT3_2D(i, i, test, target);
+      var plan_bwd = new DefaultFftPlanner(parallelismConfig).createDST3_DCT3_2D(i, i, test, target);
       plan_bwd.execute();
       logging.displayDoubleArray(i + " target (after)", target);
       logging.debug("");
@@ -97,21 +104,21 @@ public class DefaultFftPlanner implements Fft2DPlanner {
 
   @Override
   public FftPlan2D createDCT2_2D(int width, int height, double[] inputData, double[] outputData) {
-    return new FftPlan2D(width, height, inputData, outputData, DCT::transform, DCT::transform);
+    return new FftPlan2D(parallelismConfig, width, height, inputData, outputData, DCT::transform, DCT::transform);
   }
 
   @Override
   public FftPlan2D createDCT3_2D(int width, int height, double[] inputData, double[] outputData) {
-    return new FftPlan2D(width, height, inputData, outputData, DCT::inverseTransform, DCT::inverseTransform);
+    return new FftPlan2D(parallelismConfig, width, height, inputData, outputData, DCT::inverseTransform, DCT::inverseTransform);
   }
 
   @Override
   public FftPlan2D createDCT3_DST3_2D(int width, int height, double[] inputData, double[] outputData) {
-    return new FftPlan2D(width, height, inputData, outputData, DCT::inverseTransform, DST::inverseTransform);
+    return new FftPlan2D(parallelismConfig, width, height, inputData, outputData, DCT::inverseTransform, DST::inverseTransform);
   }
 
   @Override
   public FftPlan2D createDST3_DCT3_2D(int width, int height, double[] inputData, double[] outputData) {
-    return new FftPlan2D(width, height, inputData, outputData, DST::inverseTransform, DCT::inverseTransform);
+    return new FftPlan2D(parallelismConfig, width, height, inputData, outputData, DST::inverseTransform, DCT::inverseTransform);
   }
 }

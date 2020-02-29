@@ -1,12 +1,13 @@
 package dan.dit.cartogram.core;
 
-import java.util.stream.IntStream;
-
 import dan.dit.cartogram.core.context.CartogramContext;
 import dan.dit.cartogram.core.context.MapGrid;
 import dan.dit.cartogram.core.context.Point;
 import dan.dit.cartogram.core.pub.Logging;
+import dan.dit.cartogram.core.pub.ParallelismConfig;
 import dan.dit.cartogram.dft.FftPlan2D;
+
+import java.util.stream.IntStream;
 
 public class Integrate {
   private static final double INC_AFTER_ACC = 1.1;
@@ -104,7 +105,7 @@ public class Integrate {
     grid_fluxy_init_plan.execute();
   }
 
-  void ffb_integrate() throws ConvergenceGoalFailedException {
+  void ffb_integrate(ParallelismConfig parallelismConfig) throws ConvergenceGoalFailedException {
     boolean accept;
     double delta_t, t;
     double[] vx_intp, vx_intp_half, vy_intp, vy_intp_half;
@@ -142,8 +143,8 @@ public class Integrate {
     delta_t = 1E-2;
     Logging logging = context.getLogging();
     do {
-      calculateSpeedOnGrid(t);
-      interpolateSpeed(vx_intp, vy_intp, lx, ly, proj, gridvx, gridvy);
+      calculateSpeedOnGrid(t, parallelismConfig);
+      interpolateSpeed(parallelismConfig, vx_intp, vy_intp, lx, ly, proj, gridvx, gridvy);
       accept = false;
       while (!accept) {
         if (delta_t < SLOW_CONVERGENCE_DELTA_T_THRESHOLD) {
@@ -157,7 +158,7 @@ public class Integrate {
               eul[k].y = proj[k].y + vy_intp[k] * currentTimeStep;
             });
 
-        calculateSpeedOnGrid(t + 0.5 * delta_t);
+        calculateSpeedOnGrid(t + 0.5 * delta_t, parallelismConfig);
 
         accept = true;
         for (int k = 0; k < lx * ly; k++) {
@@ -173,6 +174,7 @@ public class Integrate {
         }
         if (accept) {
           accept = integrateAcceptedTimestep(
+            parallelismConfig,
             delta_t,
             vx_intp,
             vx_intp_half,
@@ -214,6 +216,7 @@ public class Integrate {
   }
 
   private static boolean integrateAcceptedTimestep(
+    ParallelismConfig parallelismConfig,
     double delta_t,
     double[] vx_intp,
     double[] vx_intp_half,
@@ -227,8 +230,7 @@ public class Integrate {
     double[] gridvx,
     double[] gridvy,
     double absTol) {
-    return IntStream.range(0, lx * ly)
-      .parallel()
+    return parallelismConfig.apply(IntStream.range(0, lx * ly))
       .allMatch(k -> {
         interpolate(
           lx,
@@ -256,6 +258,7 @@ public class Integrate {
   }
 
   private static void interpolateSpeed(
+    ParallelismConfig parallelismConfig,
     double[] vx_intp,
     double[] vy_intp,
     int lx,
@@ -263,14 +266,13 @@ public class Integrate {
     Point[] proj,
     double[] gridvx,
     double[] gridvy) {
-    IntStream.range(0, lx * ly)
-      .parallel()
+    parallelismConfig.apply(IntStream.range(0, lx * ly))
       .forEach(k -> { // FIXME seems fine here
         interpolate(lx, ly, proj[k].x, proj[k].y, gridvx, gridvy, vx_intp, vy_intp, k);
       });
   }
 
-  void calculateSpeedOnGrid(double t) {
+  void calculateSpeedOnGrid(double t, ParallelismConfig parallelismConfig) {
     MapGrid mapGrid = context.getMapGrid();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
@@ -281,8 +283,7 @@ public class Integrate {
     double[] grid_fluxx_init = mapGrid.getGrid_fluxx_init().getOutputData();
     double[] grid_fluxy_init = mapGrid.getGrid_fluxy_init().getOutputData();
 
-    IntStream.range(0, lx * ly)
-      .parallel()
+    parallelismConfig.apply(IntStream.range(0, lx * ly))
       .forEach(k -> {
         double rho = rho_ft[0] + (1.0 - t) * (rho_init[k] - rho_ft[0]);
         gridvx[k] = -grid_fluxx_init[k] / rho;
