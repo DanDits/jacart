@@ -14,7 +14,52 @@ public class FftPlanFactory {
     this.planner = planner;
     validatePlannerPerformDCT2_2D(planner);
     validatePlannerPerformDCT3_2D(planner);
-    // TODO also validate the DCT3_DST3 (and vice versa) planners
+    validatePlannerPerformDCT3_DST3_2D(planner);
+    validatePlannerPerformDST3_DCT3_2D(planner);
+  }
+
+  private static void validatePlannerPerformDST3_DCT3_2D(Fft2DPlanner planner) {
+    double[] input = new double[] {1, 1, 1, 1};
+    double[] output = new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+    FftPlan2D plan = planner.createDST3_DCT3_2D(2, 2, input, output);
+    plan.execute();
+    boolean inputUnchanged = Arrays.equals(input, new double[] {1, 1, 1, 1});
+    String baseFailure = "Given planner did not perform DST3_DCT3 as expected: ";
+    if (!inputUnchanged) {
+      throw new IllegalArgumentException(baseFailure + "Input was modified.");
+    }
+    if (plan.getOutputData() != output) {
+      throw new IllegalArgumentException(baseFailure + "Output data array must be identical to the given output data array.");
+    }
+    double[] expectedOutput = {5.82842712474619, 1.0, -1.0, -0.17157287525380993};
+    if (!arraysAlmostEqual(expectedOutput, output)) {
+      throw new IllegalArgumentException(
+        MessageFormat.format(baseFailure + "Expected output {0} but was {1}",
+          arraysAsString(expectedOutput),
+          arraysAsString(output)));
+    }
+  }
+
+  private static void validatePlannerPerformDCT3_DST3_2D(Fft2DPlanner planner) {
+    double[] input = new double[] {1, 1, 1, 1};
+    double[] output = new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+    FftPlan2D plan = planner.createDCT3_DST3_2D(2, 2, input, output);
+    plan.execute();
+    boolean inputUnchanged = Arrays.equals(input, new double[] {1, 1, 1, 1});
+    String baseFailure = "Given planner did not perform DCT3_DST3 as expected: ";
+    if (!inputUnchanged) {
+      throw new IllegalArgumentException(baseFailure + "Input was modified.");
+    }
+    if (plan.getOutputData() != output) {
+      throw new IllegalArgumentException(baseFailure + "Output data array must be identical to the given output data array.");
+    }
+    double[] expectedOutput = {5.82842712474619, -1.0, 1.0, -0.17157287525380993};
+    if (!arraysAlmostEqual(expectedOutput, output)) {
+      throw new IllegalArgumentException(
+        MessageFormat.format(baseFailure + "Expected output {0} but was {1}",
+          arraysAsString(expectedOutput),
+          arraysAsString(output)));
+    }
   }
 
   private static void validatePlannerPerformDCT2_2D(Fft2DPlanner planner) {
