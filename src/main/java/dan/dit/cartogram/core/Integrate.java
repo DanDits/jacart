@@ -267,9 +267,7 @@ public class Integrate {
     double[] gridvx,
     double[] gridvy) {
     parallelismConfig.apply(IntStream.range(0, lx * ly))
-      .forEach(k -> { // FIXME seems fine here
-        interpolate(lx, ly, proj[k].x, proj[k].y, gridvx, gridvy, vx_intp, vy_intp, k);
-      });
+      .forEach(k -> interpolate(lx, ly, proj[k].x, proj[k].y, gridvx, gridvy, vx_intp, vy_intp, k));
   }
 
   void calculateSpeedOnGrid(double t, ParallelismConfig parallelismConfig) {
