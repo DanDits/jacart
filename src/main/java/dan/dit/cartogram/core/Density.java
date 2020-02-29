@@ -163,11 +163,11 @@ public class Density {
       }
     }
 
-    int[] region_id = regionData.getRegionId();
+    int[] regionId = regionData.getRegionId();
     for (int i = 0; i < regionCount; i++) {
       if (targetArea[i] < 0.0 && !Double.isNaN(targetArea[i])) {
         throw new IllegalArgumentException(
-          MessageFormat.format("ERROR: No target area for region {0}", region_id[i]));
+          MessageFormat.format("ERROR: No target area for region {0}", regionId[i]));
       }
     }
     logging.displayDoubleArray( "target_area", targetArea);
@@ -216,7 +216,7 @@ public class Density {
           firstRegion = false;
         }
         targetArea[i] = (initialArea[i] / totalInitialArea) / totalNaNRatio * total_NA_area;
-        logging.debug("\tRegion id {0}: {1}", region_id[i], targetArea[i]);
+        logging.debug("\tRegion id {0}: {1}", regionId[i], targetArea[i]);
       }
     }
 
@@ -252,11 +252,11 @@ public class Density {
       for (int i = 0; i < regionCount; i++) {
         if (regionIsSmall[i]) {
           region_threshold_area[i] = (region_threshold[i] / totalThreshold) * total_threshold_area;
-          double old_target_area = targetArea[i];
+          double oldTargetArea = targetArea[i];
           targetArea[i] = region_threshold_area[i];
           tempTotalTargetArea += targetArea[i];
-          tempTotalTargetArea -= old_target_area;
-          logging.debug("Enlarging region id {0}: {1}", region_id[i], targetArea[i]);
+          tempTotalTargetArea -= oldTargetArea;
+          logging.debug("Enlarging region id {0}: from {1} to {2}", regionId[i], oldTargetArea, targetArea[i]);
         }
       }
       if (smallRegionCounter <= 0) {
