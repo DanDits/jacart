@@ -2,11 +2,7 @@ package de.dandit.cartogram.core.context;
 
 import de.dandit.cartogram.core.pub.Logging;
 
-/**
- * For now this holds all previously global variables with the goal to better encapsulate, group and separate them
- * while making sure that initialization order and data flow becomes more obvious and less error prone than in the
- * C program
- */
+// TODO add copyright header into my source files
 public class CartogramContext {
 
   private final MapGrid mapGrid;

@@ -5,37 +5,36 @@ import java.util.List;
 import java.util.Map;
 
 public class RegionData {
-  private final int[] region_id;
-  private final boolean[] region_na;
-  private final double[] region_perimeter;
-  // using a map instead of an array to support large ids and sparse ids and non positive ids
-  private final Map<Integer, Integer> region_id_inv;
-  private final int[][] polyinreg;
-  private final double[] cartogramArea;
-  private final double[] target_area;
-  private final Point[][] polycorn;
-  private final Point[][] cartcorn;
+  private final int[] regionId;
+  private final boolean[] regionNaN;
+  private final double[] regionPerimeter;
+  private final int[][] ringInRegion;
+  private final double[] targetArea;
+  private final Point[][] rings;
+  private final Point[][] cartogramRings;
   private final int[][] ringsInPolygonByRegion;
+  // TODO make naming consistent: ring, polygon, region,...
 
-  public RegionData(List<Region> regions, int[] polygonId, Point[][] polycorn) {
-    this.polycorn = polycorn;
+  public RegionData(List<Region> regions, int[] polygonId, Point[][] rings) {
+    this.rings = rings;
     this.ringsInPolygonByRegion = regions.stream()
       .map(Region::getRingsInPolygons)
       .toArray(int[][]::new);
     int regionsCount = regions.size();
-    this.region_id = regions.stream()
+    this.regionId = regions.stream()
       .mapToInt(Region::getId)
       .toArray();
-    this.region_id_inv = new HashMap<>(region_id.length);
-    for (int i = 0; i < region_id.length; i++) {
-      region_id_inv.put(region_id[i], i);
+
+    // using a map instead of an array to support large ids and sparse ids and non positive ids
+    Map<Integer, Integer> regionIdInv = new HashMap<>(regionId.length);
+    for (int i = 0; i < regionId.length; i++) {
+      regionIdInv.put(regionId[i], i);
     }
-    this.region_na = new boolean[regionsCount];
-    this.region_perimeter = new double[regionsCount];
-    this.polyinreg = initPolygonInRegions(region_id_inv, region_id, polygonId);
-    this.cartogramArea = new double[regionsCount];
-    this.target_area = new double[regionsCount];
-    this.cartcorn = initCartcorn(polycorn);
+    this.regionNaN = new boolean[regionsCount];
+    this.regionPerimeter = new double[regionsCount];
+    this.ringInRegion = initPolygonInRegions(regionIdInv, regionId, polygonId);
+    this.targetArea = new double[regionsCount];
+    this.cartogramRings = initCartcorn(rings);
   }
 
   private static Point[][] initCartcorn(Point[][] polycorn) {
@@ -50,84 +49,72 @@ public class RegionData {
     return cartcorn;
   }
 
-  private static int regionIdToIndex(Map<Integer, Integer> region_id_inv, int id) {
-    return region_id_inv.getOrDefault(id, -1);
+  private static int regionIdToIndex(Map<Integer, Integer> regionIdInverse, int id) {
+    return regionIdInverse.getOrDefault(id, -1);
   }
 
-  private static int[][] initPolygonInRegions(Map<Integer, Integer> region_id_inv, int[] region_id, int[] polygonId) {
-    int n_reg = region_id.length;
-    int[][] polyinreg = new int[n_reg][];
-    int last_id = polygonId[0];
-    int[] n_polyinreg = new int[n_reg];
+  private static int[][] initPolygonInRegions(Map<Integer, Integer> regionIdInverse, int[] regionId, int[] polygonId) {
+    int regionCount = regionId.length;
+    int[][] polyinreg = new int[regionCount][];
+    int lastId = polygonId[0];
+    int[] ringsInRegionCount = new int[regionCount];
     double polygonCount = polygonId.length;
-    for (int j = 0; j < polygonCount; j++) {
-      if (polygonId[j] != -99999) {
-        n_polyinreg[regionIdToIndex(region_id_inv, polygonId[j])]++;
-        last_id = polygonId[j];
+    for (int i : polygonId) {
+      if (i != -99999) {
+        ringsInRegionCount[regionIdToIndex(regionIdInverse, i)]++;
+        lastId = i;
       } else {
-        n_polyinreg[regionIdToIndex(region_id_inv, last_id)]++;
+        ringsInRegionCount[regionIdToIndex(regionIdInverse, lastId)]++;
       }
     }
-    for (int j = 0; j < n_reg; j++) {
-      polyinreg[j] = new int[n_polyinreg[j]];
+    for (int j = 0; j < regionCount; j++) {
+      polyinreg[j] = new int[ringsInRegionCount[j]];
     }
-    for (int j = 0; j < n_reg; j++) {
-      n_polyinreg[j] = 0;
+    for (int j = 0; j < regionCount; j++) {
+      ringsInRegionCount[j] = 0;
     }
-    last_id = polygonId[0];
+    lastId = polygonId[0];
     for (int j = 0; j < polygonCount; j++) {
       if (polygonId[j] != -99999) {
-        int regionIndex = regionIdToIndex(region_id_inv, polygonId[j]);
+        int regionIndex = regionIdToIndex(regionIdInverse, polygonId[j]);
         polyinreg[regionIndex]
-          [n_polyinreg[regionIndex]++] = j;
-        last_id = polygonId[j];
+          [ringsInRegionCount[regionIndex]++] = j;
+        lastId = polygonId[j];
       } else {
-        int regionIndex = regionIdToIndex(region_id_inv, last_id);
+        int regionIndex = regionIdToIndex(regionIdInverse, lastId);
         polyinreg[regionIndex]
-          [n_polyinreg[regionIndex]++] = j;
+          [ringsInRegionCount[regionIndex]++] = j;
       }
     }
     return polyinreg;
   }
 
-  public Point[][] getPolycorn() {
-    return polycorn;
+  public Point[][] getRings() {
+    return rings;
   }
 
   public int[] getRegionId() {
-    return region_id;
+    return regionId;
   }
 
-  public int[] getRegion_id() {
-    return region_id;
+  public boolean[] getRegionNaN() {
+    return regionNaN;
   }
 
-  public boolean[] getRegion_na() {
-    return region_na;
+  public double[] getRegionPerimeter() {
+    return regionPerimeter;
   }
 
-  public double[] getRegion_perimeter() {
-    return region_perimeter;
+  public int[][] getRingInRegion() {
+    return ringInRegion;
   }
 
-  public Map<Integer, Integer> getRegion_id_inv() {
-    return region_id_inv;
+  public double[] getTargetArea() {
+    return targetArea;
   }
 
-  public int[][] getPolyinreg() {
-    return polyinreg;
-  }
-
-  public double[] getCartogramArea() {
-    return cartogramArea;
-  }
-
-  public double[] getTarget_area() {
-    return target_area;
-  }
-
-  public Point[][] getCartcorn() {
-    return cartcorn;
+  public Point[][] getCartogramRings() {
+    return cartogramRings;
   }
 
   public int[][] getRingsInPolygonByRegion() {

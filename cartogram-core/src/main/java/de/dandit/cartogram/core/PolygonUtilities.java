@@ -7,7 +7,7 @@ import de.dandit.cartogram.core.context.RegionData;
 import de.dandit.cartogram.core.pub.Logging;
 
 
-public class Polygon {
+public class PolygonUtilities {
   /**
    * Polygons are considered to have a tiny area if their summed absolute area is smaller than
    * this threshold, scaled to fit assumption that all given polygons in the map fit into a rectangle
@@ -16,7 +16,7 @@ public class Polygon {
   private static final double AREA_THRESHOLD = 1e-12;
 
   public static RegionData processMap(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
-    polygonData = remove_tiny_polygons_in_nonLSpace(logging, mapData, polygonData);
+    polygonData = removeTinyPolygonsInNonLSpace(logging, mapData, polygonData);
     return make_region(mapData, polygonData);
   }
 
@@ -33,83 +33,80 @@ public class Polygon {
   }
 
   public static double calculatePolygonPerimeter(Point[] polygon) {
-    int ncrns = polygon.length;
+    int pointCount = polygon.length;
     double perimeter = 0.0;
-    for (int i = 0; i < ncrns - 1; i++) {
+    for (int i = 0; i < pointCount - 1; i++) {
       perimeter += Math.sqrt((polygon[i + 1].x - polygon[i].x) * (polygon[i + 1].x - polygon[i].x) +
         (polygon[i + 1].y - polygon[i].y) * (polygon[i + 1].y - polygon[i].y));
     }
-    return perimeter + Math.sqrt((polygon[0].x - polygon[ncrns - 1].x) * (polygon[0].x - polygon[ncrns - 1].x) +
-      (polygon[0].y - polygon[ncrns - 1].y) * (polygon[0].y - polygon[ncrns - 1].y));
+    return perimeter + Math.sqrt((polygon[0].x - polygon[pointCount - 1].x) * (polygon[0].x - polygon[pointCount - 1].x) +
+      (polygon[0].y - polygon[pointCount - 1].y) * (polygon[0].y - polygon[pointCount - 1].y));
   }
 
   private static RegionData make_region(MapFeatureData mapData, PolygonData polygonData) {
-    return new RegionData(mapData.getRegions(), polygonData.getPolygonId(), polygonData.getPolycorn());
+    return new RegionData(mapData.getRegions(), polygonData.getPolygonId(), polygonData.getPolygonRings());
   }
 
-  public static PolygonData remove_tiny_polygons_in_nonLSpace(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
-
-    Point[][] polycorn = polygonData.getPolycorn();
-    int n_poly = polycorn.length;
+  public static PolygonData removeTinyPolygonsInNonLSpace(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
+    Point[][] rings = polygonData.getPolygonRings();
+    int ringCount = rings.length;
 
     double map_maxx = mapData.getMap_maxx();
     double map_maxy = mapData.getMap_maxy();
     double map_minx = mapData.getMap_minx();
     double map_miny = mapData.getMap_miny();
 
-    boolean[] poly_has_tiny_area = new boolean[n_poly];
+    boolean[] ringHasTinyArea = new boolean[ringCount];
     double relativeTinyAreaThreshold = AREA_THRESHOLD * (map_maxx - map_minx) * (map_maxy - map_miny);
-    logging.debug("Amount of polygons: {0}", n_poly);
+    logging.debug("Amount of polygons: {0}", ringCount);
     logging.debug("Relative area threshold: {0}", relativeTinyAreaThreshold);
-    for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
-      double orientedArea = calculateOrientedArea(polycorn[poly_indx]);
+    for (int ringIndex = 0; ringIndex < ringCount; ringIndex++) {
+      double orientedArea = calculateOrientedArea(rings[ringIndex]);
       double currentArea = Math.abs(orientedArea);
       logging.debug("Polygon {3} (id= {0}) with {1} points has area |{2,number,#.######E0}|",
-        polygonData.getPolygonId()[poly_indx], polycorn[poly_indx].length, orientedArea, poly_indx);
-      poly_has_tiny_area[poly_indx] =
-        (currentArea <
-          relativeTinyAreaThreshold);
+        polygonData.getPolygonId()[ringIndex], rings[ringIndex].length, orientedArea, ringIndex);
+      ringHasTinyArea[ringIndex] = currentArea < relativeTinyAreaThreshold;
     }
-    int n_non_tiny_poly = 0;
-    for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
-      boolean nonTinyArea = !(poly_has_tiny_area[poly_indx]);
+    int nonTinyRingCount = 0;
+    for (int ringIndex = 0; ringIndex < ringCount; ringIndex++) {
+      boolean nonTinyArea = !(ringHasTinyArea[ringIndex]);
       if (nonTinyArea) {
-        n_non_tiny_poly++;
+        nonTinyRingCount++;
       }
     }
-    if (n_non_tiny_poly < n_poly) {
+    if (nonTinyRingCount < ringCount) {
       logging.debug("Removing tiny polygons.");
 
-      int[] n_non_tiny_polycorn = new int[n_non_tiny_poly];
-      int[] non_tiny_polygon_id = new int[n_non_tiny_poly];
-      n_non_tiny_poly = 0;
+      int[] n_non_tiny_polycorn = new int[nonTinyRingCount];
+      int[] non_tiny_polygon_id = new int[nonTinyRingCount];
+      nonTinyRingCount = 0;
       int[] polygon_id = polygonData.getPolygonId();
-      for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
-        if (!poly_has_tiny_area[poly_indx]) {
-          n_non_tiny_polycorn[n_non_tiny_poly] = polycorn[poly_indx].length;
-          non_tiny_polygon_id[n_non_tiny_poly] = polygon_id[poly_indx];
-          n_non_tiny_poly++;
+      for (int poly_indx = 0; poly_indx < ringCount; poly_indx++) {
+        if (!ringHasTinyArea[poly_indx]) {
+          n_non_tiny_polycorn[nonTinyRingCount] = rings[poly_indx].length;
+          non_tiny_polygon_id[nonTinyRingCount] = polygon_id[poly_indx];
+          nonTinyRingCount++;
         }
       }
-      Point[][] non_tiny_polycorn = new Point[n_non_tiny_poly][];
-      for (int poly_indx = 0; poly_indx < n_non_tiny_poly; poly_indx++) {
+      Point[][] non_tiny_polycorn = new Point[nonTinyRingCount][];
+      for (int poly_indx = 0; poly_indx < nonTinyRingCount; poly_indx++) {
         non_tiny_polycorn[poly_indx] = new Point[n_non_tiny_polycorn[poly_indx]];
       }
-      n_non_tiny_poly = 0;
-      for (int poly_indx = 0; poly_indx < n_poly; poly_indx++) {
-        if (!poly_has_tiny_area[poly_indx]) {
+      nonTinyRingCount = 0;
+      for (int poly_indx = 0; poly_indx < ringCount; poly_indx++) {
+        if (!ringHasTinyArea[poly_indx]) {
           for (int corn_indx = 0;
-               corn_indx < polycorn[poly_indx].length;
+               corn_indx < rings[poly_indx].length;
                corn_indx++) {
-            non_tiny_polycorn[n_non_tiny_poly][corn_indx]
-              = polycorn[poly_indx][corn_indx].createCopy();
+            non_tiny_polycorn[nonTinyRingCount][corn_indx]
+              = rings[poly_indx][corn_indx].createCopy();
           }
-          n_non_tiny_poly++;
+          nonTinyRingCount++;
         }
       }
 
 
-      return createOverridenPolygons(n_non_tiny_poly, non_tiny_polycorn, n_non_tiny_polycorn, non_tiny_polygon_id);
+      return createOverridenPolygons(nonTinyRingCount, non_tiny_polycorn, n_non_tiny_polycorn, non_tiny_polygon_id);
     }
     return polygonData;
   }

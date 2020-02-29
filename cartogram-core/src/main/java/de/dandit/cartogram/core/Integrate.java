@@ -65,7 +65,7 @@ public class Integrate {
     MapGrid mapGrid = context.getMapGrid();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    double[] rho_ft = mapGrid.getRho_ft();
+    double[] rho_ft = mapGrid.getRhoFt();
     double di;
     int i, j;
 
@@ -74,8 +74,8 @@ public class Integrate {
       rho_ft[i] /= rho_ft_initial;
     }
 
-    FftPlan2D grid_fluxx_init_plan = mapGrid.getGrid_fluxx_init();
-    FftPlan2D grid_fluxy_init_plan = mapGrid.getGrid_fluxy_init();
+    FftPlan2D grid_fluxx_init_plan = mapGrid.getGridFluxInitX();
+    FftPlan2D grid_fluxy_init_plan = mapGrid.getGridFluxInitY();
     double[] grid_fluxx_init = grid_fluxx_init_plan.getOutputData();
     double[] grid_fluxy_init = grid_fluxy_init_plan.getOutputData();
     for (i = 0; i < lx - 1; i++) {
@@ -115,10 +115,10 @@ public class Integrate {
     MapGrid mapGrid = context.getMapGrid();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    Point[] proj = mapGrid.getProj();
+    Point[] proj = mapGrid.getGridProjection();
 
-    double[] gridvx = mapGrid.getGridvx();
-    double[] gridvy = mapGrid.getGridvy();
+    double[] gridvx = mapGrid.getGridSpeedX();
+    double[] gridvy = mapGrid.getGridSpeedY();
 
     eul = new Point[lx * ly];
     for (int i = 0; i < eul.length; i++) {
@@ -274,12 +274,12 @@ public class Integrate {
     MapGrid mapGrid = context.getMapGrid();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    double[] gridvx = mapGrid.getGridvx();
-    double[] gridvy = mapGrid.getGridvy();
-    double[] rho_ft = mapGrid.getRho_ft();
-    double[] rho_init = mapGrid.getRho_init();
-    double[] grid_fluxx_init = mapGrid.getGrid_fluxx_init().getOutputData();
-    double[] grid_fluxy_init = mapGrid.getGrid_fluxy_init().getOutputData();
+    double[] gridvx = mapGrid.getGridSpeedX();
+    double[] gridvy = mapGrid.getGridSpeedY();
+    double[] rho_ft = mapGrid.getRhoFt();
+    double[] rho_init = mapGrid.getRhoInit();
+    double[] grid_fluxx_init = mapGrid.getGridFluxInitX().getOutputData();
+    double[] grid_fluxy_init = mapGrid.getGridFluxInitY().getOutputData();
 
     parallelismConfig.apply(IntStream.range(0, lx * ly))
       .forEach(k -> {

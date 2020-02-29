@@ -3,18 +3,18 @@ package de.dandit.cartogram.core.context;
 public class Region {
   private final int regionId;
   private final double data;
-  private final Point[][] hullCoordinates;
+  private final Point[][] polygonRings;
   private final int[] ringsInPolygons;
 
-  public Region(int regionId, double data, Point[][] hullCoordinates, int[] ringsInPolygons) {
+  public Region(int regionId, double data, Point[][] polygonRings, int[] ringsInPolygons) {
     this.regionId = regionId;
     this.data = data;
-    this.hullCoordinates = hullCoordinates;
+    this.polygonRings = polygonRings;
     this.ringsInPolygons = ringsInPolygons;
   }
 
-  public Point[][] getHullCoordinates() {
-    return hullCoordinates;
+  public Point[][] getPolygonRings() {
+    return polygonRings;
   }
 
   public double getData() {

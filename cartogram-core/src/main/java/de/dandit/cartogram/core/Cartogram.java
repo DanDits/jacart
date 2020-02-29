@@ -29,13 +29,13 @@ public class Cartogram {
     MapGrid mapGrid = context.getMapGrid();
     RegionData regionData = context.getRegionData();
     AreaErrorResult initialAreaError = calculateMaximumAreaError(
-      context.getRegionData().getTarget_area(),
-      context.getRegionData().getPolyinreg(),
-      regionData.getPolycorn());
+      context.getRegionData().getTargetArea(),
+      context.getRegionData().getRingInRegion(),
+      regionData.getRings());
     if (initialAreaError.maximumAreaError <= maxPermittedAreaError) {
       context.getLogging().debug("Nothing to do, area already correct.");
-      Point[][] cartcorn = context.getRegionData().getCartcorn();
-      Point[][] polycorn = context.getRegionData().getPolycorn();
+      Point[][] cartcorn = context.getRegionData().getCartogramRings();
+      Point[][] polycorn = context.getRegionData().getRings();
       for (int i = 0; i < polycorn.length; i++) {
         cartcorn[i] = Arrays.copyOf(polycorn[i], polycorn[i].length);
       }
@@ -43,21 +43,21 @@ public class Cartogram {
     }
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    Point[] proj = mapGrid.getProj();
+    Point[] proj = mapGrid.getGridProjection();
 
     context.getLogging().debug("Starting integration 1\n");
     integrate.ffb_integrate(parallelismConfig);
     project(false);
 
-    Point[][] cartcorn = regionData.getCartcorn();
+    Point[][] cartcorn = regionData.getCartogramRings();
     AreaErrorResult error = calculateMaximumAreaError(
-      context.getRegionData().getTarget_area(),
-      context.getRegionData().getPolyinreg(),
+      context.getRegionData().getTargetArea(),
+      context.getRegionData().getRingInRegion(),
       cartcorn);
     double mae = error.maximumAreaError;
     context.getLogging().debug("max. abs. area error: {0}", mae);
 
-    Point[] proj2 = mapGrid.getProj2();
+    Point[] proj2 = mapGrid.getGridProjectionSwapper();
     int integration = 0;
     double lastMae = Double.POSITIVE_INFINITY;
     while (mae > maxPermittedAreaError && mae < lastMae) {
@@ -88,8 +88,8 @@ public class Cartogram {
       }
       lastMae = mae;
       error = calculateMaximumAreaError(
-        context.getRegionData().getTarget_area(),
-        context.getRegionData().getPolyinreg(),
+        context.getRegionData().getTargetArea(),
+        context.getRegionData().getRingInRegion(),
         cartcorn);
       mae = error.maximumAreaError;
       context.getLogging().debug("max. abs. area error: {0}", mae);
@@ -117,8 +117,8 @@ public class Cartogram {
     }
 
     double final_max_area_error = calculateMaximumAreaError(
-      context.getRegionData().getTarget_area(),
-      context.getRegionData().getPolyinreg(),
+      context.getRegionData().getTargetArea(),
+      context.getRegionData().getRingInRegion(),
       cartcorn).maximumAreaError;
     context.getLogging().debug("Final error: {0}", final_max_area_error);
     return this.context;
@@ -139,7 +139,7 @@ public class Cartogram {
     RegionData regionData = context.getRegionData();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    Point[] proj = mapGrid.getProj();
+    Point[] proj = mapGrid.getGridProjection();
 
     xdisp = new double[lx * ly];
     ydisp = new double[lx * ly];
@@ -150,10 +150,10 @@ public class Cartogram {
       }
     }
 
-    Point[][] polycorn = regionData.getPolycorn();
+    Point[][] polycorn = regionData.getRings();
     int n_poly = polycorn.length;
-    Point[] proj2 = mapGrid.getProj2();
-    Point[][] cartcorn = regionData.getCartcorn();
+    Point[] proj2 = mapGrid.getGridProjectionSwapper();
+    Point[][] cartcorn = regionData.getCartogramRings();
 
     for (i = 0; i < n_poly; i++) {
       Point[] polyI = polycorn[i];
@@ -206,7 +206,7 @@ public class Cartogram {
       if (polyI.length > 0) {
         cart_area[i] = 0.0;
         for (j = 0; j < polyI.length; j++) {
-          cart_area[i] += Polygon.calculateOrientedArea(corn[polyI[j]]);
+          cart_area[i] += PolygonUtilities.calculateOrientedArea(corn[polyI[j]]);
         }
       } else {
         cart_area[i] = -1.0;

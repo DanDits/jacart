@@ -110,7 +110,7 @@ public class ExecuteCartogram {
       bounds.getMaxY(),
       regions,
       targetAreaPerRegion);
-    return new CartogramApi().execute(mapFeatureData, config);
+    return new CartogramApi().calculateGastnerCartogram(mapFeatureData, config);
   }
 
   private static int extractFeatureId(SimpleFeature feature) {

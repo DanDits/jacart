@@ -10,16 +10,16 @@ import java.util.*;
 
 public class CartogramApi {
 
-  public CartogramResult execute(MapFeatureData mapFeatureData, CartogramConfig config) throws ConvergenceGoalFailedException {
+  public CartogramResult calculateGastnerCartogram(MapFeatureData mapFeatureData, CartogramConfig config) throws ConvergenceGoalFailedException {
     CartogramContext cartogramContext = Density.initializeContext(mapFeatureData, config);
     CartogramContext context = new Cartogram(cartogramContext)
       .calculate(config.getParallelismConfig(), config.isScaleToOriginalPolygonRegion(), config.getMaxPermittedAreaError());
-    int[] regionIds = context.getRegionData().getRegion_id();
+    int[] regionIds = context.getRegionData().getRegionId();
     List<ResultRegion> resultRegions = new ArrayList<>();
-    int[][] polyinreg = context.getRegionData().getPolyinreg();
-    Point[][] cartcorn = context.getRegionData().getCartcorn();
+    int[][] polyinreg = context.getRegionData().getRingInRegion();
+    Point[][] cartcorn = context.getRegionData().getCartogramRings();
     int[][] ringsInPolygonByRegion = context.getRegionData().getRingsInPolygonByRegion();
-    boolean[] regionNa = context.getRegionData().getRegion_na();
+    boolean[] regionNa = context.getRegionData().getRegionNaN();
     for (int i = 0; i < regionIds.length; i++) {
       ResultRegion resultRegion = createResultRegion(polyinreg[i], ringsInPolygonByRegion[i], cartcorn,
         regionNa[i]);
@@ -27,7 +27,7 @@ public class CartogramApi {
     }
     return new CartogramResult(
       resultRegions,
-      cartogramContext.getMapGrid().getProj(),
+      cartogramContext.getMapGrid().getGridProjection(),
       cartogramContext.getMapGrid().getLx(),
       cartogramContext.getMapGrid().getLy());
   }

@@ -1,16 +1,16 @@
 package de.dandit.cartogram.core.context;
 
 public class PolygonData {
-  private final Point[][] polycorn;
+  private final Point[][] polygonRings;
   private final int[] polygonId;
 
-  public PolygonData(Point[][] polycorn, int[] polygonId) {
-    this.polycorn = polycorn;
+  public PolygonData(Point[][] polygonRings, int[] polygonId) {
+    this.polygonRings = polygonRings;
     this.polygonId = polygonId;
   }
 
-  public Point[][] getPolycorn() {
-    return polycorn;
+  public Point[][] getPolygonRings() {
+    return polygonRings;
   }
 
   public int[] getPolygonId() {

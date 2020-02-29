@@ -32,22 +32,15 @@ public final class Fft {
     int n = real.length;
     if (n != imag.length)
       throw new IllegalArgumentException("Mismatched lengths");
-    if (n == 0)
+    if (n == 0) {
       return;
-    else if ((n & (n - 1)) == 0)  // Is power of 2
+    }
+    if ((n & (n - 1)) == 0) { // Is power of 2
       transformRadix2(real, imag, cosTable, sinTable);
+    } else {
+      throw new IllegalArgumentException("Input length needs to be multiple of 2 but was " + n);
+    }
   }
-
-
-  /*
-   * Computes the inverse discrete Fourier transform (IDFT) of the given complex vector, storing the result back into the vector.
-   * The vector can have any length. This is a wrapper function. This transform does not perform scaling, so the inverse is not a true inverse.
-   */
-  public static void inverseTransform(double[] real, double[] imag, double[] cosTable, double[] sinTable) {
-    transform(imag, real, cosTable, sinTable);
-  }
-
-
   /*
    * Computes the discrete Fourier transform (DFT) of the given complex vector, storing the result back into the vector.
    * The vector's length must be a power of 2. Uses the Cooley-Tukey decimation-in-time radix-2 algorithm.

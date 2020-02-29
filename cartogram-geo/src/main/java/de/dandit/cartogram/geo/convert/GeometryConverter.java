@@ -54,20 +54,20 @@ public class GeometryConverter {
 
   public Region createFromMultiPolygon(Function<Integer, Double> valueProvider, int regionId, MultiPolygon multiPolygon) {
     multiPolygon.normalize();
-    List<Point[]> points = new ArrayList<>();
+    List<Point[]> rings = new ArrayList<>();
     List<Integer> ringsInPolygons = new ArrayList<>();
     for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
       Polygon polygon = (Polygon) multiPolygon.getGeometryN(i);
-      points.add(convertCoordinates(polygon.getExteriorRing()));
+      rings.add(convertCoordinates(polygon.getExteriorRing()));
       ringsInPolygons.add(-i - 1);
       for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
-        points.add(convertCoordinates(polygon.getInteriorRingN(j)));
+        rings.add(convertCoordinates(polygon.getInteriorRingN(j)));
         ringsInPolygons.add(i);
       }
     }
     return new Region(regionId,
       valueProvider.apply(regionId),
-      points.toArray(Point[][]::new),
+      rings.toArray(Point[][]::new),
       ringsInPolygons.stream().mapToInt(a -> a).toArray());
   }
 

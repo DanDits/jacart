@@ -10,16 +10,15 @@ public class MapGrid {
   private final double initialDeltaY;
   private final double initialScalingFactor;
   private final double absoluteTolerance;
-  private final double[] gridvx;
-  private final double[] gridvy;
-  private final Point[] proj;
-  private final Point[] proj2;
-  private final double[] rho_ft;
-  private final double[] rho_init;
-  private final int[][] xyhalfshift2reg;
-  private final FftPlan2D grid_fluxx_init;
-  private final FftPlan2D grid_fluxy_init;
-  private final FftPlan2D plan_fwd;
+  private final double[] gridSpeedX;
+  private final double[] gridSpeedY;
+  private final Point[] gridProjection;
+  private final Point[] gridProjectionSwapper;
+  private final double[] rhoFt;
+  private final double[] rhoInit;
+  private final int[][] gridIndexToRegionIndex;
+  private final FftPlan2D gridFluxInitX;
+  private final FftPlan2D gridFluxInitY;
   private final FftPlan2D rho;
 
   public MapGrid(FftPlanFactory fftPlanFactory, int lx, int ly, double initialDeltaX, double initialDeltaY, double initialScalingFactor) {
@@ -29,17 +28,16 @@ public class MapGrid {
     this.initialDeltaY = initialDeltaY;
     this.initialScalingFactor = initialScalingFactor;
     this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
-    this.gridvx = new double[lx * ly];
-    this.gridvy = new double[lx * ly];
-    this.proj = initProjectionOnGrid(lx, ly);
-    this.proj2 = initEmptyProjection(lx, ly);
-    this.rho_init = new double[lx * ly];
-    this.rho_ft = new double[lx * ly];
-    this.xyhalfshift2reg = new int[lx][ly];
-    this.grid_fluxx_init = fftPlanFactory.createDCT3_DST3_2D(lx, ly);
-    this.grid_fluxy_init = fftPlanFactory.createDST3_DCT3_2D(lx, ly);
-    this.plan_fwd = fftPlanFactory.createDCT2_2D(lx, ly, rho_init, rho_ft);
-    this.rho = fftPlanFactory.createDCT3_2D(lx, ly);
+    this.gridSpeedX = new double[lx * ly];
+    this.gridSpeedY = new double[lx * ly];
+    this.gridProjection = initProjectionOnGrid(lx, ly);
+    this.gridProjectionSwapper = initEmptyProjection(lx, ly);
+    this.rhoInit = new double[lx * ly];
+    this.rhoFt = new double[lx * ly];
+    this.gridIndexToRegionIndex = new int[lx][ly];
+    this.gridFluxInitX = fftPlanFactory.createDCT3_DST3_2D(lx, ly);
+    this.gridFluxInitY = fftPlanFactory.createDST3_DCT3_2D(lx, ly);
+    this.rho = fftPlanFactory.createDCT2_2D(lx, ly, rhoInit, rhoFt);
   }
 
   private static Point[] initEmptyProjection(int lx, int ly) {
@@ -72,12 +70,12 @@ public class MapGrid {
     return initialScalingFactor;
   }
 
-  public double[] getGridvx() {
-    return gridvx;
+  public double[] getGridSpeedX() {
+    return gridSpeedX;
   }
 
-  public double[] getGridvy() {
-    return gridvy;
+  public double[] getGridSpeedY() {
+    return gridSpeedY;
   }
 
   public int getLx() {
@@ -92,41 +90,35 @@ public class MapGrid {
     return absoluteTolerance;
   }
 
-  public Point[] getProj() {
-    return proj;
+  public Point[] getGridProjection() {
+    return gridProjection;
   }
 
-  public Point[] getProj2() {
-    return proj2;
+  public Point[] getGridProjectionSwapper() {
+    return gridProjectionSwapper;
   }
 
-  public double[] getRho_ft() {
-    return rho_ft;
+  public double[] getRhoFt() {
+    return rhoFt;
   }
 
-  public double[] getRho_init() {
-    return rho_init;
+  public double[] getRhoInit() {
+    return rhoInit;
   }
 
-  public int[][] getXyhalfshift2reg() {
-    return xyhalfshift2reg;
+  public int[][] getGridIndexToRegionIndex() {
+    return gridIndexToRegionIndex;
   }
 
-  public FftPlan2D getGrid_fluxx_init() {
-    return grid_fluxx_init;
+  public FftPlan2D getGridFluxInitX() {
+    return gridFluxInitX;
   }
 
-  public FftPlan2D getGrid_fluxy_init() {
-    return grid_fluxy_init;
-  }
-
-  public FftPlan2D getPlan_fwd() {
-    return plan_fwd;
+  public FftPlan2D getGridFluxInitY() {
+    return gridFluxInitY;
   }
 
   public FftPlan2D getRho() {
     return rho;
   }
-
-
 }
