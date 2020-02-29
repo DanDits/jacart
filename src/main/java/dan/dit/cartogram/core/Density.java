@@ -260,7 +260,7 @@ public class Density {
         }
       }
       if (smallRegionCounter <= 0) {
-        logging.debug("No regions below minimum threshold.\n\n"); // TODO what about washington DC? all its polygons are removed, use the min perimeter config?
+        logging.debug("No regions below minimum threshold.\n\n");
       }
     } else {
       logging.debug("Note: Not using scaled perimeter threshold.");
