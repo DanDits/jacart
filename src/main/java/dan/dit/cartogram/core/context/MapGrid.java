@@ -6,6 +6,9 @@ import dan.dit.cartogram.dft.FftPlan2D;
 public class MapGrid {
   private final int lx;
   private final int ly;
+  private final double initialDeltaX;
+  private final double initialDeltaY;
+  private final double initialScalingFactor;
   private final double absoluteTolerance;
   private final double[] gridvx;
   private final double[] gridvy;
@@ -19,9 +22,12 @@ public class MapGrid {
   private final FftPlan2D plan_fwd;
   private final FftPlan2D rho;
 
-  public MapGrid(FftPlanFactory fftPlanFactory, int lx, int ly) {
+  public MapGrid(FftPlanFactory fftPlanFactory, int lx, int ly, double initialDeltaX, double initialDeltaY, double initialScalingFactor) {
     this.lx = lx;
     this.ly = ly;
+    this.initialDeltaX = initialDeltaX;
+    this.initialDeltaY = initialDeltaY;
+    this.initialScalingFactor = initialScalingFactor;
     this.absoluteTolerance = Math.min(lx, ly) * 1e-6;
     this.gridvx = new double[lx * ly];
     this.gridvy = new double[lx * ly];
@@ -52,6 +58,18 @@ public class MapGrid {
       }
     }
     return proj;
+  }
+
+  public double getInitialDeltaX() {
+    return initialDeltaX;
+  }
+
+  public double getInitialDeltaY() {
+    return initialDeltaY;
+  }
+
+  public double getInitialScalingFactor() {
+    return initialScalingFactor;
   }
 
   public double[] getGridvx() {

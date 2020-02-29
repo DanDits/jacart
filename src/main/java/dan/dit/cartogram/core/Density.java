@@ -14,6 +14,7 @@ import dan.dit.cartogram.core.context.RegionData;
 import dan.dit.cartogram.core.pub.FftPlanFactory;
 import dan.dit.cartogram.core.pub.Logging;
 import dan.dit.cartogram.dft.FftPlan2D;
+import org.opengis.referencing.operation.Transformation;
 
 import static dan.dit.cartogram.core.Cartogram.calculateMaximumAreaError;
 
@@ -94,14 +95,14 @@ public class Density {
       "Using a {0} x {1} lattice with bounding box\n\t({2} {3} {4} {5}).\n",
       lx, ly, new_minx, new_miny, new_maxx, new_maxy);
 
+
     for (Point[] points : polycorn) {
       for (Point point : points) {
-        // TODO improve rescaling to original region setting by storing this transformation and applying the inverse
         point.x = (point.x - new_minx) / latt_const;
         point.y = (point.y - new_miny) / latt_const;
       }
     }
-    return new MapGrid(fftPlanFactory, lx, ly);
+    return new MapGrid(fftPlanFactory, lx, ly, new_minx, new_miny, latt_const);
   }
 
   public static void set_inside_values_for_polygon(int region, Point[] polycorn, int[][] inside) {
@@ -137,10 +138,6 @@ public class Density {
     Logging logging = config.getLogging();
     RegionData regionData = Polygon.processMap(logging, featureData, polygonData);
     logging.debug("Amount of regions: {0}", regionData.getRegionId().length);
-    double originalSummedArea = calculateMaximumAreaError(
-      regionData.getTarget_area(),
-      regionData.getPolyinreg(),
-      regionData.getPolycorn()).getSummedPolygonArea();
     MapGrid mapGrid = transformMapToLSpace(config.getFftPlanFactory(), logging, featureData, regionData.getPolycorn());
 
     int regionCount = regionData.getPolyinreg().length;
@@ -148,7 +145,7 @@ public class Density {
     boolean[] regionHasNaN = regionData.getRegion_na();
     if (regionCount == 1) {
       targetArea[0] = 1.0;
-      return new CartogramContext(logging, mapGrid, regionData, true, originalSummedArea);
+      return new CartogramContext(logging, mapGrid, regionData, true);
     }
 
     double[] density = new double[regionCount];
@@ -312,7 +309,7 @@ public class Density {
 
     mapGrid.getPlan_fwd().execute();
 
-    return new CartogramContext(logging, mapGrid, regionData, false, originalSummedArea);
+    return new CartogramContext(logging, mapGrid, regionData, false);
   }
 
   void fill_with_density2() {
