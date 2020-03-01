@@ -19,24 +19,31 @@ public class Integrate {
     this.context = context;
   }
 
+  // This is the bottleneck, it is in almost every inner loop! Find ways to improve it.
   static void interpolate(int lx, int ly, double x, double y, double[] gridX, double[] gridY, double[] outX, double[] outY, int outIndex) {
-    double xRounded = (long) (x + 0.5);
-    double yRounded = (long) (y + 0.5);
-    final double x0 = Math.max(0.0, xRounded - 0.5);
-    final double x1 = Math.min(lx, xRounded + 0.5);
-    final double y0 = Math.max(0.0, yRounded - 0.5);
-    final double y1 = Math.min(ly, yRounded + 0.5);
+    final double xRounded = (long) (x + 0.5) - 0.5;
+    final double yRounded = (long) (y + 0.5) - 0.5;
+    final double x0 = 0. >= xRounded ? 0. : xRounded;
+    final double x1 = lx <= xRounded + 1. ? lx : xRounded + 1.;
+    final double y0 = 0. >= yRounded ? 0. : yRounded;
+    final double y1 = ly <= yRounded + 1. ? ly : yRounded + 1.;
     final double delta_x = (x - x0) / (x1 - x0);
     final double delta_y = (y - y0) / (y1 - y0);
-    final int x0I = xRounded - 0.5 >= lx ? (lx - 1) : (int) x0;
-    final int x1I = xRounded >= lx ? (lx - 1) : (int) x1;
-    final int y0I = yRounded - 0.5 >= ly ? (ly - 1) : (int) y0;
-    final int y1I = yRounded >= ly ? (ly - 1) : (int) y1;
+    final int x0I = xRounded >= lx ? (lx - 1) : (int) x0;
+    final int x1I = xRounded + 0.5 >= lx ? (lx - 1) : (int) x1;
+    final int y0I = yRounded >= ly ? (ly - 1) : (int) y0;
+    final int y1I = yRounded + 0.5 >= ly ? (ly - 1) : (int) y1;
 
-    outX[outIndex] = (1 - delta_x) * (1 - delta_y) * gridX[x0I * lx + y0I] + (1 - delta_x) * delta_y * gridX[x0I * lx + y1I]
-      + delta_x * (1 - delta_y) * gridX[x1I * lx + y0I] + delta_x * delta_y * gridX[x1I * lx + y1I];
-    outY[outIndex] = (1 - delta_x) * (1 - delta_y) * gridY[x0I * lx + y0I] + (1 - delta_x) * delta_y * gridY[x0I * lx + y1I]
-      + delta_x * (1 - delta_y) * gridY[x1I * lx + y0I] + delta_x * delta_y * gridY[x1I * lx + y1I];
+    final double scale00 = (1 - delta_x) * (1 - delta_y);
+    final double scale01 = (1 - delta_x) * delta_y;
+    final double scale10 = delta_x * (1 - delta_y);
+    final double scale11 = delta_x * delta_y;
+    final int x0Offset = x0I * lx;
+    final int x1Offset = x1I * lx;
+    outX[outIndex] = scale00 * gridX[x0Offset + y0I] + scale01 * gridX[x0Offset + y1I]
+      + scale10 * gridX[x1Offset + y0I] + scale11 * gridX[x1Offset + y1I];
+    outY[outIndex] = scale00 * gridY[x0Offset + y0I] + scale01 * gridY[x0Offset + y1I]
+      + scale10 * gridY[x1Offset + y0I] + scale11 * gridY[x1Offset + y1I];
   }
 
   void init_gridv() {
