@@ -8,7 +8,7 @@ import java.util.Map;
 import de.dandit.cartogram.core.pub.Region;
 
 public class RegionData {
-  private final int[] regionId;
+  private final int[] regionId; // TODO maybe rather: ringRegionId as at index i regionId[i] is the region id of the region the ring belongs to
   private final boolean[] regionNaN;
   private final double[] regionPerimeter;
   private final int[][] ringInRegion;

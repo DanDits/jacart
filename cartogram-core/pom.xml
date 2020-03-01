@@ -6,7 +6,36 @@
 
     <groupId>de.dandit</groupId>
     <artifactId>cartogram-core</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+
+    <name>Cartogram core</name>
+    <description>The jacart core project for creating cartograms</description>
+    <url>https://github.com/DanDits/jacart</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://spdx.org/licenses/MIT.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Daniel Dittmar</name>
+            <email>dans.ditt@gmail.com</email>
+            <organization>Github</organization>
+            <organizationUrl>https://github.com/DanDits</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git:/github.com/DanDits/jacart.git</connection>
+        <developerConnection>scm:git:ssh://github.com:DanDits/jacart.git</developerConnection>
+        <url>https://github.com/DanDits/jacart/tree/master</url>
+    </scm>
+
     <build>
         <plugins>
             <plugin>
