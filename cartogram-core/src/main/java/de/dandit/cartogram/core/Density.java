@@ -3,17 +3,16 @@ package de.dandit.cartogram.core;
 import java.text.MessageFormat;
 import java.util.List;
 
-import de.dandit.cartogram.core.dft.FftPlan2D;
-import de.dandit.cartogram.core.pub.CartogramConfig;
 import de.dandit.cartogram.core.context.CartogramContext;
-import de.dandit.cartogram.core.pub.MapFeatureData;
 import de.dandit.cartogram.core.context.MapGrid;
-import de.dandit.cartogram.core.context.Point;
 import de.dandit.cartogram.core.context.PolygonData;
 import de.dandit.cartogram.core.context.Region;
 import de.dandit.cartogram.core.context.RegionData;
+import de.dandit.cartogram.core.dft.FftPlan2D;
+import de.dandit.cartogram.core.pub.CartogramConfig;
 import de.dandit.cartogram.core.pub.FftPlanFactory;
 import de.dandit.cartogram.core.pub.Logging;
+import de.dandit.cartogram.core.pub.MapFeatureData;
 
 public class Density {
   /**
@@ -43,23 +42,25 @@ public class Density {
   private static PolygonData initPolycornAndPolygonId(MapFeatureData featureData) {
     List<Region> regions = featureData.getRegions();
     int ringCount = regions.stream()
-      .mapToInt(region -> region.getPolygonRings().length)
+      .mapToInt(region -> region.getPolygonRingsX().length)
       .sum();
 
-    Point[][] rings = new Point[ringCount][];
-    int ringCounter = 0;
+    double[][] ringsX = new double[ringCount][];
+    double[][] ringsY = new double[ringCount][];
     int[] polygonId = new int[ringCount];
+    int ringCounter = 0;
     for (Region region : regions) {
-      for (Point[] ring : region.getPolygonRings()) {
-        rings[ringCounter] = ring;
+      for (int i = 0; i < region.getPolygonRingsX().length; i++) {
         polygonId[ringCounter] = region.getId();
+        ringsX[ringCounter] = region.getPolygonRingsX()[i];
+        ringsY[ringCounter] = region.getPolygonRingsY()[i];
         ringCounter++;
       }
     }
-    return new PolygonData(rings, polygonId);
+    return new PolygonData(ringsX, ringsY, polygonId);
   }
 
-  private static MapGrid transformMapToLSpace(FftPlanFactory fftPlanFactory, Logging logging, MapFeatureData featureData, Point[][] polycorn) {
+  private static MapGrid transformMapToLSpace(FftPlanFactory fftPlanFactory, Logging logging, MapFeatureData featureData, double[][] polycornX, double[][] polycornY) {
     double latt_const, new_maxx, new_maxy, new_minx, new_miny;
     int lx, ly;
     double map_minx = featureData.getMap_minx();
@@ -91,38 +92,42 @@ public class Density {
       lx, ly, new_minx, new_miny, new_maxx, new_maxy);
 
 
-    for (Point[] points : polycorn) {
-      for (Point point : points) {
-        point.x = (point.x - new_minx) / latt_const;
-        point.y = (point.y - new_miny) / latt_const;
+    for (double[] pointsX : polycornX) {
+      for (int i = 0; i < pointsX.length; i++) {
+        pointsX[i] = (pointsX[i] - new_minx) / latt_const;
+      }
+    }
+    for (double[] pointsY : polycornY) {
+      for (int i = 0; i < pointsY.length; i++) {
+        pointsY[i] = (pointsY[i] - new_miny) / latt_const;
       }
     }
     return new MapGrid(fftPlanFactory, lx, ly, new_minx, new_miny, latt_const);
   }
 
-  public static void set_inside_values_for_polygon(int region, Point[] polycorn, int[][] inside) {
-    double poly_minx = polycorn[0].x;
-    int n_polycorn = polycorn.length;
-    for (Point point : polycorn) {
-      poly_minx = Math.min(poly_minx, point.x);
+  public static void set_inside_values_for_polygon(int region, double[] polycornX, double[] polycornY, int[][] inside) {
+    double poly_minx = polycornX[0];
+    int n_polycorn = polycornX.length;
+    for (double point : polycornX) {
+      poly_minx = Math.min(poly_minx, point);
     }
     for (int k = 0, n = n_polycorn - 1; k < n_polycorn; n = k++) {
-      set_inside_values_between_points(region, polycorn[k], polycorn[n],
+      set_inside_values_between_points(region, polycornX[k], polycornY[k], polycornX[n], polycornY[n],
         poly_minx, inside);
     }
   }
 
-  private static void set_inside_values_between_points(int region, Point pk, Point pn,
+  private static void set_inside_values_between_points(int region, double pkX, double pkY, double pnX, double pnY,
                                                        double poly_minx, int[][] inside) {
-    for (int l = (int) Math.ceil(Math.min(pn.y, pk.y) - 0.5); l < Math.max(pn.y - 0.5, pk.y - 0.5); l++) {
-      set_inside_value_at_y(region, pk, pn, l, poly_minx, inside);
+    for (int l = (int) Math.ceil(Math.min(pnY, pkY) - 0.5); l < Math.max(pnY - 0.5, pkY - 0.5); l++) {
+      set_inside_value_at_y(region, pkX, pkY, pnX, pnY, l, poly_minx, inside);
     }
   }
 
-  private static void set_inside_value_at_y(int region, Point pk, Point pn, int l,
+  private static void set_inside_value_at_y(int region, double pkX, double pkY, double pnX, double pnY, int l,
                                             double poly_minx, int[][] inside) {
-    double intersection = (pn.x - 0.5 - (pk.x - 0.5)) * (l - (pk.y - 0.5)) /
-      (pn.y - 0.5 - (pk.y - 0.5)) + (pk.x - 0.5);
+    double intersection = (pnX - 0.5 - (pkX - 0.5)) * (l - (pkY - 0.5)) /
+      (pnY - 0.5 - (pkY - 0.5)) + (pkX - 0.5);
     for (int m = (int) poly_minx; m < intersection; m++) {
       inside[m][l] = region - inside[m][l] - 1;
     }
@@ -133,7 +138,7 @@ public class Density {
     Logging logging = config.getLogging();
     RegionData regionData = PolygonUtilities.processMap(logging, featureData, polygonData);
     logging.debug("Amount of regions: {0}", regionData.getRegionId().length);
-    MapGrid mapGrid = transformMapToLSpace(config.getFftPlanFactory(), logging, featureData, regionData.getRings());
+    MapGrid mapGrid = transformMapToLSpace(config.getFftPlanFactory(), logging, featureData, regionData.getRingsX(), regionData.getRingsY());
 
     int regionCount = regionData.getRingInRegion().length;
     double[] targetArea = regionData.getTargetArea();
@@ -170,15 +175,18 @@ public class Density {
     double tempTotalTargetArea = 0.0;
     double totalInitialArea = 0.0;
     int[][] polyinreg = regionData.getRingInRegion();
-    Point[][] polycorn = regionData.getRings();
+    double[][] polycornX = regionData.getRingsX();
+    double[][] polycornY = regionData.getRingsY();
     double[] regionPerimeter = regionData.getRegionPerimeter();
     for (int i = 0; i < regionCount; i++) {
       int[] polyI = polyinreg[i];
       if (!regionHasNaN[i]) {
         tempTotalTargetArea += targetArea[i];
       }
-      for (int j = 0; j < polyI.length; j++) {
-        initialArea[i] += PolygonUtilities.calculateOrientedArea(polycorn[polyI[j]]);
+      for (int value : polyI) {
+        initialArea[i] += PolygonUtilities.calculateOrientedArea(
+            polycornX[value],
+            polycornY[value]);
       }
       totalInitialArea += initialArea[i];
     }
@@ -187,8 +195,10 @@ public class Density {
 
     for (int i = 0; i < regionCount; i++) {
       int[] polyI = polyinreg[i];
-      for (int j = 0; j < polyI.length; j++) {
-        regionPerimeter[i] += PolygonUtilities.calculatePolygonPerimeter(polycorn[polyI[j]]);
+      for (int value : polyI) {
+        regionPerimeter[i] += PolygonUtilities.calculatePolygonPerimeter(
+            polycornX[value],
+            polycornY[value]);
       }
     }
     logging.displayDoubleArray( "region perimeter", regionPerimeter);
@@ -309,22 +319,24 @@ public class Density {
   }
 
   void fill_with_density2() {
-    double avg_dens, tot_target_area, tot_tmp_area;
+    double avg_dens;
     double[] dens, tmp_area;
-    int i, j;
 
     MapGrid mapGrid = context.getMapGrid();
     RegionData regionData = context.getRegionData();
-    Point[][] polycorn = regionData.getRings();
-    int n_poly = polycorn.length;
-    Point[][] cartcorn = regionData.getCartogramRings();
+    double[][] polycornX = regionData.getRingsX();
+    double[][] polycornY = regionData.getRingsY();
+    int n_poly = polycornX.length;
+    double[][] cartcornX = regionData.getCartogramRingsX();
+    double[][] cartcornY = regionData.getCartogramRingsY();
     double[] rho_init = mapGrid.getRhoInit();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
 
-    for (i = 0; i < n_poly; i++) {
-      for (j = 0; j < polycorn[i].length; j++) {
-        polycorn[i][j] = cartcorn[i][j].createCopy();
+    for (int i = 0; i < n_poly; i++) {
+      for (int j = 0; j < polycornX[i].length; j++) {
+        polycornX[i][j] = cartcornX[i][j];
+        polycornY[i][j] = cartcornY[i][j];
       }
     }
 
@@ -338,27 +350,33 @@ public class Density {
 
     interior(mapGrid, regionData);
 
-    for (i = 0; i < n_reg; i++) {
+    for (int i = 0; i < n_reg; i++) {
       int[] polyI = polyinreg[i];
-      for (j = 0; j < polyI.length; j++) {
-        tmp_area[i] += PolygonUtilities.calculateOrientedArea(polycorn[polyI[j]]);
+      for (int value : polyI) {
+        tmp_area[i] += PolygonUtilities.calculateOrientedArea(polycornX[value], polycornY[value]);
       }
     }
-    for (i = 0; i < n_reg; i++) dens[i] = target_area[i] / tmp_area[i];
+    for (int i = 0; i < n_reg; i++) dens[i] = target_area[i] / tmp_area[i];
 
-    for (i = 0, tot_tmp_area = 0.0; i < n_reg; i++)
+    double tot_tmp_area = 0.0;
+    for (int i = 0; i < n_reg; i++) {
       tot_tmp_area += tmp_area[i];
-    for (i = 0, tot_target_area = 0.0; i < n_reg; i++)
+    }
+    double tot_target_area = 0.0;
+    for (int i = 0; i < n_reg; i++) {
       tot_target_area += target_area[i];
+    }
     avg_dens = tot_target_area / tot_tmp_area;
 
-    for (i = 0; i < lx; i++)
-      for (j = 0; j < ly; j++) {
-        if (xyhalfshift2reg[i][j] == -1)
+    for (int i = 0; i < lx; i++) {
+      for (int j = 0; j < ly; j++) {
+        if (xyhalfshift2reg[i][j] == -1) {
           rho_init[i * ly + j] = avg_dens;
-        else
+        } else {
           rho_init[i * ly + j] = dens[xyhalfshift2reg[i][j]];
+        }
       }
+    }
     mapGrid.getRho().execute();
   }
 
@@ -367,7 +385,8 @@ public class Density {
 
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    Point[][] polycorn = regionData.getRings();
+    double[][] polycornX = regionData.getRingsX();
+    double[][] polycornY = regionData.getRingsY();
     int[][] xyhalfshift2reg = mapGrid.getGridIndexToRegionIndex();
     int[][] polyinreg = regionData.getRingInRegion();
     int n_reg = polyinreg.length;
@@ -381,7 +400,7 @@ public class Density {
       int[] polyI = polyinreg[i];
       for (j = 0; j < polyI.length; j++) {
         poly = polyI[j];
-        set_inside_values_for_polygon(i, polycorn[poly],
+        set_inside_values_for_polygon(i, polycornX[poly], polycornY[poly],
           xyhalfshift2reg);
       }
     }

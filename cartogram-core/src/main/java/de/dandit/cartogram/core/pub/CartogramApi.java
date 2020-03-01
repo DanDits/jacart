@@ -1,12 +1,14 @@
 package de.dandit.cartogram.core.pub;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import de.dandit.cartogram.core.Cartogram;
 import de.dandit.cartogram.core.ConvergenceGoalFailedException;
 import de.dandit.cartogram.core.Density;
 import de.dandit.cartogram.core.context.CartogramContext;
-import de.dandit.cartogram.core.context.Point;
-
-import java.util.*;
 
 public class CartogramApi {
 
@@ -17,43 +19,55 @@ public class CartogramApi {
     int[] regionIds = context.getRegionData().getRegionId();
     List<ResultRegion> resultRegions = new ArrayList<>();
     int[][] polyinreg = context.getRegionData().getRingInRegion();
-    Point[][] cartcorn = context.getRegionData().getCartogramRings();
+    double[][] cartcornX = context.getRegionData().getCartogramRingsX();
+    double[][] cartcornY = context.getRegionData().getCartogramRingsY();
     int[][] ringsInPolygonByRegion = context.getRegionData().getRingsInPolygonByRegion();
     boolean[] regionNa = context.getRegionData().getRegionNaN();
     for (int i = 0; i < regionIds.length; i++) {
-      ResultRegion resultRegion = createResultRegion(polyinreg[i], ringsInPolygonByRegion[i], cartcorn,
+      ResultRegion resultRegion = createResultRegion(polyinreg[i], ringsInPolygonByRegion[i], cartcornX, cartcornY,
         regionNa[i]);
       resultRegions.add(resultRegion);
     }
     return new CartogramResult(
       resultRegions,
-      cartogramContext.getMapGrid().getGridProjection(),
+      cartogramContext.getMapGrid().getGridProjectionX(),
+      cartogramContext.getMapGrid().getGridProjectionY(),
       cartogramContext.getMapGrid().getLx(),
       cartogramContext.getMapGrid().getLy());
   }
 
   private ResultRegion createResultRegion(int[] polyIndices,
                                           int[] ringIsHoleOfPolygon,
-                                          Point[][] cartcorn,
-                                          boolean regionNa) {
-    Map<Integer, List<Point>> shells = new HashMap<>();
-    Map<Integer, List<List<Point>>> holes = new HashMap<>();
+                                          double[][] cartcornX,
+                                          double[][] cartcornY,
+                                          boolean regionNaN) {
+    Map<Integer, double[]> shellsX = new HashMap<>();
+    Map<Integer, double[]> shellsY = new HashMap<>();
+    Map<Integer, List<double[]>> holesX = new HashMap<>();
+    Map<Integer, List<double[]>> holesY = new HashMap<>();
     for (int j = 0; j < polyIndices.length; j++) {
-      Point[] corners = cartcorn[polyIndices[j]];
+      double[] cornersX = cartcornX[polyIndices[j]];
+      double[] cornersY = cartcornY[polyIndices[j]];
       if (ringIsHoleOfPolygon[j] < 0) {
-        shells.put(-(ringIsHoleOfPolygon[j] + 1), Arrays.asList(corners));
+        int index = -(ringIsHoleOfPolygon[j] + 1);
+        shellsX.put(index, cornersX);
+        shellsY.put(index, cornersY);
       } else {
-        List<List<Point>> holesForShell = holes.computeIfAbsent(ringIsHoleOfPolygon[j], unused -> new ArrayList<>());
-        holesForShell.add(Arrays.asList(corners));
+        List<double[]> holesXForShell = holesX.computeIfAbsent(ringIsHoleOfPolygon[j], unused -> new ArrayList<>());
+        holesXForShell.add(cornersX);
+        List<double[]> holesYForShell = holesY.computeIfAbsent(ringIsHoleOfPolygon[j], unused -> new ArrayList<>());
+        holesYForShell.add(cornersY);
       }
     }
     List<ResultPolygon> polygons = new ArrayList<>();
-    for (var indexedShell : shells.entrySet()) {
+    for (var indexedShellX : shellsX.entrySet()) {
       polygons.add(new ResultPolygon(
-        indexedShell.getValue(),
-        holes.getOrDefault(indexedShell.getKey(), List.of())));
+        indexedShellX.getValue(),
+        shellsY.get(indexedShellX.getKey()),
+        holesX.getOrDefault(indexedShellX.getKey(), List.of()),
+        holesY.getOrDefault(indexedShellX.getKey(), List.of())));
     }
 
-    return new ResultRegion(polygons, regionNa);
+    return new ResultRegion(polygons, regionNaN);
   }
 }

@@ -1,12 +1,10 @@
 package de.dandit.cartogram.core;
 
-
 import java.util.Arrays;
 import java.util.Objects;
 
 import de.dandit.cartogram.core.context.CartogramContext;
 import de.dandit.cartogram.core.context.MapGrid;
-import de.dandit.cartogram.core.context.Point;
 import de.dandit.cartogram.core.context.RegionData;
 import de.dandit.cartogram.core.pub.ParallelismConfig;
 
@@ -31,48 +29,52 @@ public class Cartogram {
     AreaErrorResult initialAreaError = calculateMaximumAreaError(
       context.getRegionData().getTargetArea(),
       context.getRegionData().getRingInRegion(),
-      regionData.getRings());
+      regionData.getRingsX(),
+      regionData.getRingsY());
     if (initialAreaError.maximumAreaError <= maxPermittedAreaError) {
       context.getLogging().debug("Nothing to do, area already correct.");
-      Point[][] cartcorn = context.getRegionData().getCartogramRings();
-      Point[][] polycorn = context.getRegionData().getRings();
-      for (int i = 0; i < polycorn.length; i++) {
-        cartcorn[i] = Arrays.copyOf(polycorn[i], polycorn[i].length);
+      double[][] cartcornX = context.getRegionData().getCartogramRingsX();
+      double[][] cartcornY = context.getRegionData().getCartogramRingsY();
+      double[][] polycornX = context.getRegionData().getRingsX();
+      double[][] polycornY = context.getRegionData().getRingsY();
+      for (int i = 0; i < polycornX.length; i++) {
+        cartcornX[i] = Arrays.copyOf(polycornX[i], polycornX[i].length);
+        cartcornY[i] = Arrays.copyOf(polycornY[i], polycornY[i].length);
       }
       return context;
     }
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    Point[] proj = mapGrid.getGridProjection();
+    double[] projX = mapGrid.getGridProjectionX();
+    double[] projY = mapGrid.getGridProjectionY();
 
     context.getLogging().debug("Starting integration 1\n");
     integrate.ffb_integrate(parallelismConfig);
     project(false);
 
-    Point[][] cartcorn = regionData.getCartogramRings();
+    double[][] cartcornX = regionData.getCartogramRingsX();
+    double[][] cartcornY = regionData.getCartogramRingsY();
     AreaErrorResult error = calculateMaximumAreaError(
       context.getRegionData().getTargetArea(),
       context.getRegionData().getRingInRegion(),
-      cartcorn);
+      cartcornX,
+      cartcornY);
     double mae = error.maximumAreaError;
     context.getLogging().debug("max. abs. area error: {0}", mae);
 
-    Point[] proj2 = mapGrid.getGridProjectionSwapper();
+    double[] proj2X = mapGrid.getGridProjectionXSwapper();
+    double[] proj2Y = mapGrid.getGridProjectionYSwapper();
     int integration = 0;
     double lastMae = Double.POSITIVE_INFINITY;
     while (mae > maxPermittedAreaError && mae < lastMae) {
       density.fill_with_density2();
 
+      System.arraycopy(projX, 0, proj2X, 0, lx * ly);
+      System.arraycopy(projY, 0, proj2Y, 0, lx * ly);
       for (int i = 0; i < lx; i++) {
         for (int j = 0; j < ly; j++) {
-          proj2[i * ly + j].x = proj[i * ly + j].x;
-          proj2[i * ly + j].y = proj[i * ly + j].y;
-        }
-      }
-      for (int i = 0; i < lx; i++) {
-        for (int j = 0; j < ly; j++) {
-          proj[i * ly + j].x = i + 0.5;
-          proj[i * ly + j].y = j + 0.5;
+          projX[i * ly + j] = i + 0.5;
+          projY[i * ly + j] = j + 0.5;
         }
       }
       integration++;
@@ -80,17 +82,14 @@ public class Cartogram {
       integrate.ffb_integrate(parallelismConfig);
       project(true);
 
-      for (int i = 0; i < lx; i++) {
-        for (int j = 0; j < ly; j++) {
-          proj[i * ly + j].x = proj2[i * ly + j].x;
-          proj[i * ly + j].y = proj2[i * ly + j].y;
-        }
-      }
+      System.arraycopy(proj2X, 0, projX, 0, lx * ly);
+      System.arraycopy(proj2Y, 0, projY, 0, lx * ly);
       lastMae = mae;
       error = calculateMaximumAreaError(
         context.getRegionData().getTargetArea(),
         context.getRegionData().getRingInRegion(),
-        cartcorn);
+        cartcornX,
+        cartcornY);
       mae = error.maximumAreaError;
       context.getLogging().debug("max. abs. area error: {0}", mae);
       if (lastMae < mae) {
@@ -101,17 +100,19 @@ public class Cartogram {
     double initialArea = initialAreaError.summedCartogramArea;
     double correctionFactor = Math.sqrt(initialArea / error.summedCartogramArea);
     context.getLogging().debug("Scaling result with factor = {0}", correctionFactor);
-    for (Point[] points : cartcorn) {
-      scalePolygonsToMatchInitialTotalArea(correctionFactor, lx, ly, points);
+    for (int i = 0; i < cartcornX.length; i++) {
+      scalePolygonsToMatchInitialTotalArea(correctionFactor, lx, ly, cartcornX[i], cartcornY[i]);
     }
     if (scaleToOriginalPolygonRegion) {
       double scalingFactor = mapGrid.getInitialScalingFactor();
       double offsetX = mapGrid.getInitialDeltaX();
       double offsetY = mapGrid.getInitialDeltaY();
-      for (Point[] points : cartcorn) {
-        for (Point point : points) {
-          point.x = point.x * scalingFactor + offsetX;
-          point.y = point.y * scalingFactor + offsetY;
+      for (int i = 0; i < cartcornX.length; i++) {
+        double[] pX = cartcornX[i];
+        double[] pY = cartcornY[i];
+        for (int j = 0; j < pX.length; j++) {
+          pX[j] = pX[j] * scalingFactor + offsetX;
+          pY[j] = pY[j] * scalingFactor + offsetY;
         }
       }
     }
@@ -119,60 +120,64 @@ public class Cartogram {
     double final_max_area_error = calculateMaximumAreaError(
       context.getRegionData().getTargetArea(),
       context.getRegionData().getRingInRegion(),
-      cartcorn).maximumAreaError;
+      cartcornX,
+      cartcornY).maximumAreaError;
     context.getLogging().debug("Final error: {0}", final_max_area_error);
     return this.context;
   }
 
-  private void scalePolygonsToMatchInitialTotalArea(double correction_factor, int lx, int ly, Point[] points) {
-    for (Point point : points) {
-      point.x = correction_factor * (point.x - 0.5 * lx) + 0.5 * lx;
-      point.y = correction_factor * (point.y - 0.5 * ly) + 0.5 * ly;
+  private void scalePolygonsToMatchInitialTotalArea(double correction_factor, int lx, int ly, double[] pointsX, double[] pointsY) {
+    for (int i = 0; i < pointsX.length; i++) {
+      pointsX[i] = correction_factor * (pointsX[i] - 0.5 * lx) + 0.5 * lx;
+      pointsY[i] = correction_factor * (pointsY[i] - 0.5 * ly) + 0.5 * ly;
     }
   }
 
   void project(boolean proj_graticule) {
-    double x2, y2;
     double[] xdisp, ydisp;
     int i, j;
     MapGrid mapGrid = context.getMapGrid();
     RegionData regionData = context.getRegionData();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    Point[] proj = mapGrid.getGridProjection();
+    double[] projX = mapGrid.getGridProjectionX();
+    double[] projY = mapGrid.getGridProjectionY();
 
     xdisp = new double[lx * ly];
     ydisp = new double[lx * ly];
     for (i = 0; i < lx; i++) {
       for (j = 0; j < ly; j++) {
-        xdisp[i * ly + j] = proj[i * ly + j].x - i - 0.5;
-        ydisp[i * ly + j] = proj[i * ly + j].y - j - 0.5;
+        xdisp[i * ly + j] = projX[i * ly + j] - i - 0.5;
+        ydisp[i * ly + j] = projY[i * ly + j] - j - 0.5;
       }
     }
 
-    Point[][] polycorn = regionData.getRings();
-    int n_poly = polycorn.length;
-    Point[] proj2 = mapGrid.getGridProjectionSwapper();
-    Point[][] cartcorn = regionData.getCartogramRings();
+    double[][] polycornX = regionData.getRingsX();
+    double[][] polycornY = regionData.getRingsY();
+    int n_poly = polycornX.length;
+    double[] proj2X = mapGrid.getGridProjectionXSwapper();
+    double[] proj2Y = mapGrid.getGridProjectionYSwapper();
+    double[][] cartcornX = regionData.getCartogramRingsX();
+    double[][] cartcornY = regionData.getCartogramRingsY();
 
     for (i = 0; i < n_poly; i++) {
-      Point[] polyI = polycorn[i];
-      for (j = 0; j < polyI.length; j++) {
-        Point pointIJ = polyI[j];
-        Point p = cartcorn[i][j];
-        Integrate.interpolate(lx, ly, pointIJ.x, pointIJ.y, xdisp, ydisp, p);
-        p.x += pointIJ.x;
-        p.y += pointIJ.y;
+      double[] polyIX = polycornX[i];
+      double[] polyIY = polycornY[i];
+      for (j = 0; j < polyIX.length; j++) {
+        double pointIJX = polyIX[j];
+        double pointIJY = polyIY[j];
+        Integrate.interpolate(lx, ly, pointIJX, pointIJY, xdisp, ydisp, cartcornX[i], cartcornY[i], j);
+        cartcornX[i][j] += pointIJX;
+        cartcornY[i][j] += pointIJY;
       }
     }
     if (proj_graticule) {
-
       for (i = 0; i < lx * ly; i++) {
-        x2 = proj2[i].x;
-        y2 = proj2[i].y;
-        Integrate.interpolate(lx, ly, x2, y2, xdisp, ydisp, proj2[i]);
-        proj2[i].x += x2;
-        proj2[i].y += y2;
+        double x2 = proj2X[i];
+        double y2 = proj2Y[i];
+        Integrate.interpolate(lx, ly, x2, y2, xdisp, ydisp, proj2X, proj2Y, i);
+        proj2X[i] += x2;
+        proj2Y[i] += y2;
       }
     }
   }
@@ -185,13 +190,9 @@ public class Cartogram {
       this.maximumAreaError = maximumAreaError;
       this.summedCartogramArea = summedCartogramArea;
     }
-
-    public double getSummedPolygonArea() {
-      return summedCartogramArea;
-    }
   }
 
-  public static AreaErrorResult calculateMaximumAreaError(double[] target_area, int[][] polyinreg, Point[][] corn) {
+  public static AreaErrorResult calculateMaximumAreaError(double[] target_area, int[][] polyinreg, double[][] cornX, double[][] cornY) {
     double obj_area, sum_target_area;
     int i, j;
 
@@ -206,7 +207,7 @@ public class Cartogram {
       if (polyI.length > 0) {
         cart_area[i] = 0.0;
         for (j = 0; j < polyI.length; j++) {
-          cart_area[i] += PolygonUtilities.calculateOrientedArea(corn[polyI[j]]);
+          cart_area[i] += PolygonUtilities.calculateOrientedArea(cornX[polyI[j]], cornY[polyI[j]]);
         }
       } else {
         cart_area[i] = -1.0;

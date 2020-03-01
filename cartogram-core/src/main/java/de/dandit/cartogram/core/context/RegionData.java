@@ -1,5 +1,6 @@
 package de.dandit.cartogram.core.context;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,13 +11,16 @@ public class RegionData {
   private final double[] regionPerimeter;
   private final int[][] ringInRegion;
   private final double[] targetArea;
-  private final Point[][] rings;
-  private final Point[][] cartogramRings;
+  private final double[][] ringsX;
+  private final double[][] ringsY;
+  private final double[][] cartogramRingsX;
+  private final double[][] cartogramRingsY;
   private final int[][] ringsInPolygonByRegion;
   // TODO make naming consistent: ring, polygon, region,...
 
-  public RegionData(List<Region> regions, int[] polygonId, Point[][] rings) {
-    this.rings = rings;
+  public RegionData(List<Region> regions, int[] polygonId, double[][] ringsX, double[][] ringsY) {
+    this.ringsX = ringsX;
+    this.ringsY = ringsY;
     this.ringsInPolygonByRegion = regions.stream()
       .map(Region::getRingsInPolygons)
       .toArray(int[][]::new);
@@ -34,19 +38,18 @@ public class RegionData {
     this.regionPerimeter = new double[regionsCount];
     this.ringInRegion = initPolygonInRegions(regionIdInv, regionId, polygonId);
     this.targetArea = new double[regionsCount];
-    this.cartogramRings = initCartcorn(rings);
+    this.cartogramRingsX = initEmptyCartogramRings(ringsX);
+    this.cartogramRingsY = initEmptyCartogramRings(ringsX);
   }
 
-  private static Point[][] initCartcorn(Point[][] polycorn) {
-    int polygonCount = polycorn.length;
-    Point[][] cartcorn = new Point[polygonCount][];
-    for (int i = 0; i < polygonCount; i++) {
-      cartcorn[i] = new Point[polycorn[i].length];
-      for (int j = 0; j < cartcorn[i].length; j++) {
-        cartcorn[i][j] = new Point(Double.NaN, Double.NaN);
-      }
+  private static double[][] initEmptyCartogramRings(double[][] rings) {
+    int ringCount = rings.length;
+    double[][] cartogramRings = new double[ringCount][];
+    for (int i = 0; i < ringCount; i++) {
+      cartogramRings[i] = new double[rings[i].length];
+      Arrays.fill(cartogramRings[i], Double.NaN);
     }
-    return cartcorn;
+    return cartogramRings;
   }
 
   private static int regionIdToIndex(Map<Integer, Integer> regionIdInverse, int id) {
@@ -89,8 +92,12 @@ public class RegionData {
     return polyinreg;
   }
 
-  public Point[][] getRings() {
-    return rings;
+  public double[][] getRingsX() {
+    return ringsX;
+  }
+
+  public double[][] getRingsY() {
+    return ringsY;
   }
 
   public int[] getRegionId() {
@@ -113,8 +120,12 @@ public class RegionData {
     return targetArea;
   }
 
-  public Point[][] getCartogramRings() {
-    return cartogramRings;
+  public double[][] getCartogramRingsX() {
+    return cartogramRingsX;
+  }
+
+  public double[][] getCartogramRingsY() {
+    return cartogramRingsY;
   }
 
   public int[][] getRingsInPolygonByRegion() {

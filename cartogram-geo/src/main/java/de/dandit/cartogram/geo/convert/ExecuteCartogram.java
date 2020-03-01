@@ -1,60 +1,31 @@
 package de.dandit.cartogram.geo.convert;
 
-import de.dandit.cartogram.core.ConvergenceGoalFailedException;
-import de.dandit.cartogram.core.context.Region;
-import de.dandit.cartogram.core.pub.*;
-import de.dandit.cartogram.core.context.Point;
-import de.dandit.cartogram.geo.data.CsvData;
-import de.dandit.cartogram.geo.data.CsvDataImport;
-import de.dandit.cartogram.geo.data.GeoJsonIO;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Iterator;
+import java.util.List;
+
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
-import java.io.*;
-import java.util.*;
+import de.dandit.cartogram.core.ConvergenceGoalFailedException;
+import de.dandit.cartogram.core.context.Region;
+import de.dandit.cartogram.core.pub.CartogramApi;
+import de.dandit.cartogram.core.pub.CartogramConfig;
+import de.dandit.cartogram.core.pub.CartogramResult;
+import de.dandit.cartogram.core.pub.MapFeatureData;
+import de.dandit.cartogram.core.pub.ResultRegion;
+import de.dandit.cartogram.geo.data.CsvData;
+import de.dandit.cartogram.geo.data.CsvDataImport;
+import de.dandit.cartogram.geo.data.GeoJsonIO;
 
 public class ExecuteCartogram {
-
-  public static void main(String[] args) throws IOException, ConvergenceGoalFailedException {
-    Point[][] examplePolygons = new Point[1][];
-    examplePolygons[0] = new Point[]{new Point(-0.5, 1), new Point(0.5, 1), new Point(0.5, -1), new Point(-0.5, -1), new Point(-0.5, 1)};
-
-    String base = "/home/dd/Cartogram/out/";
-    List<ResultPolygon> polygons = new ArrayList<>();
-    for (Point[] examplePolygon : examplePolygons) {
-      polygons.add(new ResultPolygon(Arrays.asList(examplePolygon), List.of()));
-    }
-
-    FeatureConverter featureConverter = new FeatureConverter(new GeometryConverter(new GeometryFactory()));
-    outputPolycornToFile(featureConverter, List.of(new ResultRegion(polygons, false)), new FileOutputStream(new File(base + "example.json")));
-
-    InputStream geoJsonResource = ExecuteCartogram.class.getResourceAsStream("reordered_geo.json");
-    if (args.length > 1 && args[0].equals("-s")) {
-      FileOutputStream outpFile = new FileOutputStream(args[1]);
-      new GeoJsonIO().reWriteDataInIdOrder(geoJsonResource, outpFile);
-      return;
-    }
-    InputStream dataResource = ExecuteCartogram.class.getResourceAsStream("sample_usa_data.csv");
-    FileOutputStream epsOut = new FileOutputStream(new File("/home/dd/Cartogram/jacart/src/main/resources/dan/dit/cartogram/main/image.eps"));
-
-    FileOutputStream jsonOut = new FileOutputStream(new File(base + "transformed.json"));
-    createCartogramToEps(createDefaultConfig(), geoJsonResource, dataResource, epsOut);
-  }
-
-  private static CartogramConfig createDefaultConfig() {
-    return new CartogramConfig(
-      0.01,
-      true,
-      Logging.ofStandardOutput(),
-      FftPlanFactory.ofDefault(ParallelismConfig.ofCommonPool()),
-      false,
-      ParallelismConfig.ofCommonPool());
-  }
 
   public static void createCartogramToEps(CartogramConfig config, InputStream geoJsonResource, InputStream dataResource,
                                           OutputStream epsOut) throws IOException, ConvergenceGoalFailedException {
@@ -65,7 +36,8 @@ public class ExecuteCartogram {
       result.getGridSizeX(),
       result.getGridSizeY(),
       result.getResultRegions(),
-      result.getGridProjection(),
+      result.getGridProjectionX(),
+      result.getGridProjectionY(),
       true);
   }
 

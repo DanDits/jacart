@@ -1,23 +1,33 @@
 package de.dandit.cartogram.core.pub;
 
-import de.dandit.cartogram.core.context.Point;
-
 import java.util.List;
 
 public class ResultPolygon {
-  private final List<Point> exteriorRing; // clockwise orientation
-  private final List<List<Point>> interiorRings; // counter-clockwise orientation
+  private final double[] exteriorRingX; // clockwise orientation
+  private final double[] exteriorRingY; // clockwise orientation
+  private final List<double[]> interiorRingsX; // counter-clockwise orientation
+  private final List<double[]> interiorRingsY; // counter-clockwise orientation
 
-  public ResultPolygon(List<Point> exteriorRing, List<List<Point>> interiorRings) {
-    this.exteriorRing = exteriorRing;
-    this.interiorRings = interiorRings;
+  public ResultPolygon(double[] exteriorRingX, double[] exteriorRingY, List<double[]> interiorRingsX, List<double[]> interiorRingsY) {
+    this.exteriorRingX = exteriorRingX;
+    this.exteriorRingY = exteriorRingY;
+    this.interiorRingsX = interiorRingsX;
+    this.interiorRingsY = interiorRingsY;
   }
 
-  public List<Point> getExteriorRing() {
-    return exteriorRing;
+  public double[] getExteriorRingX() {
+    return exteriorRingX;
   }
 
-  public List<List<Point>> getInteriorRings() {
-    return interiorRings;
+  public double[] getExteriorRingY() {
+    return exteriorRingY;
+  }
+
+  public List<double[]> getInteriorRingsX() {
+    return interiorRingsX;
+  }
+
+  public List<double[]> getInteriorRingsY() {
+    return interiorRingsY;
   }
 }

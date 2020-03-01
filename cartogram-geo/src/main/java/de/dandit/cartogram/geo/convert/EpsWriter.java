@@ -1,18 +1,18 @@
 package de.dandit.cartogram.geo.convert;
 
-import de.dandit.cartogram.core.context.Point;
-import de.dandit.cartogram.core.pub.ResultPolygon;
-import de.dandit.cartogram.core.pub.ResultRegion;
-
-import java.io.*;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
 
+import de.dandit.cartogram.core.pub.ResultPolygon;
+import de.dandit.cartogram.core.pub.ResultRegion;
+
 public class EpsWriter {
   public static final int GRAT_LINES = 64;
 
-  public void ps_figure(OutputStream out, int lx, int ly, List<ResultRegion> regions, Point[] prj, boolean plotGraticule) {
+  public void ps_figure(OutputStream out, int lx, int ly, List<ResultRegion> regions, double[] prjX, double[] prjY, boolean plotGraticule) {
 
     Locale.setDefault(Locale.US); // required for writig EPS correctly for now
     PrintWriter printWriter = new PrintWriter(out);
@@ -32,10 +32,11 @@ public class EpsWriter {
     printWriter.println("0.7 SLW");
     for (ResultRegion resultRegion : regions) {
       for (ResultPolygon polygon : resultRegion.getPolygons()) {
-        List<Point> ring = polygon.getExteriorRing();
-        drawRing(printWriter, resultRegion, ring, "0.96 0.92 0.70");
-        for (List<Point> hole : polygon.getInteriorRings()) {
-          drawRing(printWriter, resultRegion, hole, "1 1 1");
+        double[] ringX = polygon.getExteriorRingX();
+        double[] ringY = polygon.getExteriorRingY();
+        drawRing(printWriter, resultRegion, ringX, ringY, "0.96 0.92 0.70");
+        for (int i = 0; i < polygon.getInteriorRingsX().size(); i++) {
+          drawRing(printWriter, resultRegion, polygon.getInteriorRingsX().get(i), polygon.getInteriorRingsY().get(i), "1 1 1");
         }
       }
     }
@@ -43,16 +44,16 @@ public class EpsWriter {
     if (plotGraticule) {
       printWriter.println("0.3 SLW 0 0 1 SRGB");
       for (int j = 0; j < ly; j += Math.max(lx, ly) / GRAT_LINES) {
-        printWriter.println(MessageFormat.format("{0} {1} m", prj[j].x, prj[j].y));
+        printWriter.println(MessageFormat.format("{0} {1} m", prjX[j], prjY[j]));
         for (int i = 1; i < lx; i++) {
-          printWriter.println(MessageFormat.format("{0} {1} l", prj[i * ly + j].x, prj[i * ly + j].y));
+          printWriter.println(MessageFormat.format("{0} {1} l", prjX[i * ly + j], prjY[i * ly + j]));
         }
         printWriter.println("s");
       }
       for (int i = 0; i < lx; i += Math.max(lx, ly) / GRAT_LINES) {
-        printWriter.println(MessageFormat.format("{0} {1} m", prj[i * ly].x, prj[i * ly].y));
+        printWriter.println(MessageFormat.format("{0} {1} m", prjX[i * ly], prjY[i * ly]));
         for (int j = 1; j < ly; j++) {
-          printWriter.println(MessageFormat.format("{0} {1} l", prj[i * ly + j].x, prj[i * ly + j].y));
+          printWriter.println(MessageFormat.format("{0} {1} l", prjX[i * ly + j], prjY[i * ly + j]));
         }
         printWriter.println("s");
       }
@@ -62,12 +63,12 @@ public class EpsWriter {
     printWriter.flush();
   }
 
-  private void drawRing(PrintWriter printWriter, ResultRegion resultRegion, List<Point> points, String color) {
+  private void drawRing(PrintWriter printWriter, ResultRegion resultRegion, double[] pointsX, double[] pointsY, String color) {
     printWriter.println("n");
-    printWriter.println(MessageFormat.format("{0} {1} m", points.get(0).x, points.get(0).y));
-    points.stream()
-      .skip(1)
-      .forEach(point -> printWriter.println(MessageFormat.format("{0} {1} l", point.x, point.y)));
+    printWriter.println(MessageFormat.format("{0} {1} m", pointsX[0], pointsY[0]));
+    for (int i = 1; i < pointsX.length; i++) {
+      printWriter.println(MessageFormat.format("{0} {1} l", pointsX[i], pointsY[i]));
+    }
     printWriter.println("c");
     if (!resultRegion.isNaN()) {
       printWriter.println("gsave\n" + color + " SRGB f\ngrestore\n0 SGRY s");

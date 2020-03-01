@@ -1,13 +1,13 @@
 package de.dandit.cartogram.core;
 
-import de.dandit.cartogram.core.dft.FftPlan2D;
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 import de.dandit.cartogram.core.context.CartogramContext;
 import de.dandit.cartogram.core.context.MapGrid;
-import de.dandit.cartogram.core.context.Point;
+import de.dandit.cartogram.core.dft.FftPlan2D;
 import de.dandit.cartogram.core.pub.Logging;
 import de.dandit.cartogram.core.pub.ParallelismConfig;
-
-import java.util.stream.IntStream;
 
 public class Integrate {
   private static final double INC_AFTER_ACC = 1.1;
@@ -38,28 +38,6 @@ public class Integrate {
     outY[outIndex] = (1 - delta_x) * (1 - delta_y) * gridY[x0I * lx + y0I] + (1 - delta_x) * delta_y * gridY[x0I * lx + y1I]
       + delta_x * (1 - delta_y) * gridY[x1I * lx + y0I] + delta_x * delta_y * gridY[x1I * lx + y1I];
   }
-
-  static void interpolate(int lx, int ly, double x, double y, double[] gridX, double[] gridY, Point result) {
-    double xRounded = (long) (x + 0.5);
-    double yRounded = (long) (y + 0.5);
-    final double x0 = Math.max(0.0, xRounded - 0.5);
-    final double x1 = Math.min(lx, xRounded + 0.5);
-    final double y0 = Math.max(0.0, yRounded - 0.5);
-    final double y1 = Math.min(ly, yRounded + 0.5);
-    final double delta_x = (x - x0) / (x1 - x0);
-    final double delta_y = (y - y0) / (y1 - y0);
-    final int x0I = xRounded - 0.5 >= lx ? (lx - 1) : (int) x0;
-    final int x1I = xRounded >= lx ? (lx - 1) : (int) x1;
-    final int y0I = yRounded - 0.5 >= ly ? (ly - 1) : (int) y0;
-    final int y1I = yRounded >= ly ? (ly - 1) : (int) y1;
-
-    result.x = (1 - delta_x) * (1 - delta_y) * gridX[x0I * lx + y0I] + (1 - delta_x) * delta_y * gridX[x0I * lx + y1I]
-      + delta_x * (1 - delta_y) * gridX[x1I * lx + y0I] + delta_x * delta_y * gridX[x1I * lx + y1I];
-    result.y = (1 - delta_x) * (1 - delta_y) * gridY[x0I * lx + y0I] + (1 - delta_x) * delta_y * gridY[x0I * lx + y1I]
-      + delta_x * (1 - delta_y) * gridY[x1I * lx + y0I] + delta_x * delta_y * gridY[x1I * lx + y1I];
-  }
-
-
 
   void init_gridv() {
     MapGrid mapGrid = context.getMapGrid();
@@ -110,25 +88,24 @@ public class Integrate {
     double delta_t, t;
     double[] vx_intp, vx_intp_half, vy_intp, vy_intp_half;
     int iter;
-    Point[] eul, mid;
 
     MapGrid mapGrid = context.getMapGrid();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    Point[] proj = mapGrid.getGridProjection();
+    double[] projX = mapGrid.getGridProjectionX();
+    double[] projY = mapGrid.getGridProjectionY();
 
     double[] gridvx = mapGrid.getGridSpeedX();
     double[] gridvy = mapGrid.getGridSpeedY();
 
-    eul = new Point[lx * ly];
-    for (int i = 0; i < eul.length; i++) {
-      eul[i] = new Point(Double.NaN, Double.NaN);
-    }
-
-    mid = new Point[lx * ly];
-    for (int i = 0; i < mid.length; i++) {
-      mid[i] = new Point(Double.NaN, Double.NaN);
-    }
+    double[] eulX = new double[lx * ly];
+    Arrays.fill(eulX, Double.NaN);
+    double[] eulY = new double[lx * ly];
+    Arrays.fill(eulY, Double.NaN);
+    double[] midX = new double[lx * ly];
+    Arrays.fill(midX, Double.NaN);
+    double[] midY = new double[lx * ly];
+    Arrays.fill(midY, Double.NaN);
 
     vx_intp = new double[lx * ly];
     vy_intp = new double[lx * ly];
@@ -144,7 +121,7 @@ public class Integrate {
     Logging logging = context.getLogging();
     do {
       calculateSpeedOnGrid(t, parallelismConfig);
-      interpolateSpeed(parallelismConfig, vx_intp, vy_intp, lx, ly, proj, gridvx, gridvy);
+      interpolateSpeed(parallelismConfig, vx_intp, vy_intp, lx, ly, projX, projY, gridvx, gridvy);
       accept = false;
       while (!accept) {
         if (delta_t < SLOW_CONVERGENCE_DELTA_T_THRESHOLD) {
@@ -154,18 +131,18 @@ public class Integrate {
         double currentTimeStep = delta_t;
         IntStream.range(0, lx * ly)
             .forEach(k -> {
-              eul[k].x = proj[k].x + vx_intp[k] * currentTimeStep;
-              eul[k].y = proj[k].y + vy_intp[k] * currentTimeStep;
+              eulX[k] = projX[k] + vx_intp[k] * currentTimeStep;
+              eulY[k] = projY[k] + vy_intp[k] * currentTimeStep;
             });
 
         calculateSpeedOnGrid(t + 0.5 * delta_t, parallelismConfig);
 
         accept = true;
         for (int k = 0; k < lx * ly; k++) {
-          if (proj[k].x + 0.5 * delta_t * vx_intp[k] < 0.0 ||
-            proj[k].x + 0.5 * delta_t * vx_intp[k] > lx ||
-            proj[k].y + 0.5 * delta_t * vy_intp[k] < 0.0 ||
-            proj[k].y + 0.5 * delta_t * vy_intp[k] > ly) {
+          if (projX[k] + 0.5 * delta_t * vx_intp[k] < 0.0 ||
+            projX[k] + 0.5 * delta_t * vx_intp[k] > lx ||
+            projY[k] + 0.5 * delta_t * vy_intp[k] < 0.0 ||
+            projY[k] + 0.5 * delta_t * vy_intp[k] > ly) {
             accept = false;
             non_accepted_dts_count++;
             delta_t *= DEC_AFTER_NOT_ACC;
@@ -180,11 +157,14 @@ public class Integrate {
             vx_intp_half,
             vy_intp,
             vy_intp_half,
-            eul,
-            mid,
+            eulX,
+            eulY,
+            midX,
+            midY,
             lx,
             ly,
-            proj,
+            projX,
+            projY,
             gridvx,
             gridvy,
             mapGrid.getAbsoluteTolerance());
@@ -200,10 +180,8 @@ public class Integrate {
       }
       t += delta_t;
       iter++;
-      for (int k = 0; k < lx * ly; k++) {
-        proj[k].x = mid[k].x;
-        proj[k].y = mid[k].y;
-      }
+      System.arraycopy(midX, 0, projX, 0, lx * ly);
+      System.arraycopy(midY, 0, projY, 0, lx * ly);
       delta_t *= INC_AFTER_ACC;
 
     } while (t < 1.0);
@@ -222,11 +200,14 @@ public class Integrate {
     double[] vx_intp_half,
     double[] vy_intp,
     double[] vy_intp_half,
-    Point[] eul,
-    Point[] mid,
+    double[] eulX,
+    double[] eulY,
+    double[] midX,
+    double[] midY,
     int lx,
     int ly,
-    Point[] proj,
+    double[] projX,
+    double[] projY,
     double[] gridvx,
     double[] gridvy,
     double absTol) {
@@ -235,24 +216,24 @@ public class Integrate {
         interpolate(
           lx,
           ly,
-          proj[k].x + 0.5 * delta_t * vx_intp[k],
-          proj[k].y + 0.5 * delta_t * vy_intp[k],
+          projX[k] + 0.5 * delta_t * vx_intp[k],
+          projY[k] + 0.5 * delta_t * vy_intp[k],
           gridvx,
           gridvy,
           vx_intp_half,
           vy_intp_half,
           k);
-        mid[k].x = proj[k].x + vx_intp_half[k] * delta_t;
-        mid[k].y = proj[k].y + vy_intp_half[k] * delta_t;
+        midX[k] = projX[k] + vx_intp_half[k] * delta_t;
+        midY[k] = projY[k] + vy_intp_half[k] * delta_t;
 
-        double midX = mid[k].x;
-        double midY = mid[k].y;
-        double midEulDiffX = midX - eul[k].x;
-        double midEulDiffY = midY - eul[k].y;
+        double midXK = midX[k];
+        double midYK = midY[k];
+        double midEulDiffX = midXK - eulX[k];
+        double midEulDiffY = midYK - eulY[k];
         boolean withinTolerance = !(midEulDiffX * midEulDiffX +
           midEulDiffY * midEulDiffY > absTol);
-        boolean inBoundX = !(midX < 0.0) && !(midX > lx);
-        boolean inBoundY = !(midY < 0.0) && !(midY > ly);
+        boolean inBoundX = !(midXK < 0.0) && !(midXK > lx);
+        boolean inBoundY = !(midYK < 0.0) && !(midYK > ly);
         return withinTolerance && inBoundX && inBoundY;
       });
   }
@@ -263,11 +244,12 @@ public class Integrate {
     double[] vy_intp,
     int lx,
     int ly,
-    Point[] proj,
+    double[] projX,
+    double[] projY,
     double[] gridvx,
     double[] gridvy) {
     parallelismConfig.apply(IntStream.range(0, lx * ly))
-      .forEach(k -> interpolate(lx, ly, proj[k].x, proj[k].y, gridvx, gridvy, vx_intp, vy_intp, k));
+      .forEach(k -> interpolate(lx, ly, projX[k], projY[k], gridvx, gridvy, vx_intp, vy_intp, k));
   }
 
   void calculateSpeedOnGrid(double t, ParallelismConfig parallelismConfig) {

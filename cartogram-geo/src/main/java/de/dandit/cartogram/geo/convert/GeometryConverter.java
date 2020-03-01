@@ -1,6 +1,5 @@
 package de.dandit.cartogram.geo.convert;
 
-import de.dandit.cartogram.core.context.Point;
 import de.dandit.cartogram.core.context.Region;
 import de.dandit.cartogram.core.pub.ResultPolygon;
 import org.locationtech.jts.geom.*;
@@ -18,63 +17,76 @@ public class GeometryConverter {
     this.geometryFactory = Objects.requireNonNull(geometryFactory);
   }
 
-  public Polygon asPolygon(List<Point> points, List<List<Point>> holes) {
-    LinearRing outerRing = asRing(points);
-    LinearRing[] jtsHoles = new LinearRing[holes.size()];
-    for (int i = 0; i < holes.size(); i++) {
-      jtsHoles[i] = asRing(holes.get(i));
+  public Polygon asPolygon(double[] pointsX, double[] pointsY, List<double[]> holesX, List<double[]> holesY) {
+    LinearRing outerRing = asRing(pointsX, pointsY);
+    LinearRing[] jtsHoles = new LinearRing[holesX.size()];
+    for (int i = 0; i < holesX.size(); i++) {
+      jtsHoles[i] = asRing(holesX.get(i), holesY.get(i));
     }
     return geometryFactory.createPolygon(outerRing, jtsHoles);
   }
 
-  private LinearRing asRing(List<Point> points) {
-    Coordinate[] coords = new Coordinate[points.size()];
-    for (int i = 0; i < points.size(); i++) {
-      Point p = points.get(i);
-      coords[i] = new Coordinate(p.x, p.y);
+  private LinearRing asRing(double[] pointsX, double[] pointsY) {
+    Coordinate[] coords = new Coordinate[pointsX.length];
+    for (int i = 0; i < coords.length; i++) {
+      coords[i] = new Coordinate(pointsX[i], pointsY[i]);
     }
     return geometryFactory.createLinearRing(coords);
   }
 
   public Region createFromPolygon(Function<Integer, Double> valueProvider, int regionId, Polygon polygon) {
     polygon.normalize();
-    Point[][] points = new Point[1 + polygon.getNumInteriorRing()][];
-    points[0] = convertCoordinates(polygon.getExteriorRing());
+    double[][] pointsX = new double[1 + polygon.getNumInteriorRing()][];
+    double[][] pointsY = new double[1 + polygon.getNumInteriorRing()][];
+    pointsX[0] = convertCoordinatesX(polygon.getExteriorRing());
+    pointsY[0] = convertCoordinatesY(polygon.getExteriorRing());
     List<Integer> ringsInPolygons = new ArrayList<>();
     ringsInPolygons.add(-1);
     for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
-      points[1 + j] = convertCoordinates(polygon.getInteriorRingN(j));
+      pointsX[1 + j] = convertCoordinatesX(polygon.getInteriorRingN(j));
+      pointsY[1 + j] = convertCoordinatesY(polygon.getInteriorRingN(j));
       ringsInPolygons.add(0);
     }
     return new Region(regionId,
       valueProvider.apply(regionId),
-      points,
+      pointsX,
+      pointsY,
       ringsInPolygons.stream().mapToInt(a -> a).toArray());
   }
 
   public Region createFromMultiPolygon(Function<Integer, Double> valueProvider, int regionId, MultiPolygon multiPolygon) {
     multiPolygon.normalize();
-    List<Point[]> rings = new ArrayList<>();
+    List<double[]> ringsX = new ArrayList<>();
+    List<double[]> ringsY = new ArrayList<>();
     List<Integer> ringsInPolygons = new ArrayList<>();
     for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
       Polygon polygon = (Polygon) multiPolygon.getGeometryN(i);
-      rings.add(convertCoordinates(polygon.getExteriorRing()));
+      ringsX.add(convertCoordinatesX(polygon.getExteriorRing()));
+      ringsY.add(convertCoordinatesY(polygon.getExteriorRing()));
       ringsInPolygons.add(-i - 1);
       for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
-        rings.add(convertCoordinates(polygon.getInteriorRingN(j)));
+        ringsX.add(convertCoordinatesX(polygon.getInteriorRingN(j)));
+        ringsY.add(convertCoordinatesY(polygon.getInteriorRingN(j)));
         ringsInPolygons.add(i);
       }
     }
     return new Region(regionId,
       valueProvider.apply(regionId),
-      rings.toArray(Point[][]::new),
+      ringsX.toArray(double[][]::new),
+      ringsY.toArray(double[][]::new),
       ringsInPolygons.stream().mapToInt(a -> a).toArray());
   }
 
-  private static Point[] convertCoordinates(LineString lineString) {
+  private static double[] convertCoordinatesX(LineString lineString) {
     return Arrays.stream(lineString.getCoordinates())
-      .map(coord -> new Point(coord.x, coord.y))
-      .toArray(Point[]::new);
+        .mapToDouble(coord -> coord.x)
+        .toArray();
+  }
+
+  private static double[] convertCoordinatesY(LineString lineString) {
+    return Arrays.stream(lineString.getCoordinates())
+        .mapToDouble(coord -> coord.y)
+        .toArray();
   }
 
   public Geometry createGeometry(List<ResultPolygon> resultPolygons) {
@@ -83,12 +95,12 @@ public class GeometryConverter {
       geometry = geometryFactory.createPolygon();
     } else if (resultPolygons.size() == 1) {
       ResultPolygon polygon = resultPolygons.get(0);
-      geometry = asPolygon(polygon.getExteriorRing(), polygon.getInteriorRings());
+      geometry = asPolygon(polygon.getExteriorRingX(), polygon.getExteriorRingY(), polygon.getInteriorRingsX(), polygon.getInteriorRingsY());
     } else {
       Polygon[] polygons = new Polygon[resultPolygons.size()];
       for (int i = 0; i < resultPolygons.size(); i++) {
         ResultPolygon p = resultPolygons.get(i);
-        Polygon polygon = asPolygon(p.getExteriorRing(), p.getInteriorRings());
+        Polygon polygon = asPolygon(p.getExteriorRingX(), p.getExteriorRingY(), p.getInteriorRingsX(), p.getInteriorRingsY());
         polygons[i] = polygon;
       }
       geometry = geometryFactory.createMultiPolygon(polygons);
