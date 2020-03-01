@@ -12,7 +12,7 @@ import de.dandit.cartogram.core.pub.ResultRegion;
 public class EpsWriter {
   public static final int GRAT_LINES = 64;
 
-  public void ps_figure(OutputStream out, int lx, int ly, List<ResultRegion> regions, double[] prjX, double[] prjY, boolean plotGraticule) {
+  public void createFigure(OutputStream out, int lx, int ly, List<ResultRegion> regions, double[] prjX, double[] prjY, boolean plotGraticule) {
 
     Locale.setDefault(Locale.US); // required for writig EPS correctly for now
     PrintWriter printWriter = new PrintWriter(out);

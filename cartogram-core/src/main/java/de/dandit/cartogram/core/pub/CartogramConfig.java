@@ -10,9 +10,30 @@ public class CartogramConfig {
    * If true then extremely small regions are scaled up
    */
   private final boolean usePerimeterThreshold;
+
+  /**
+   * Allows different logging behaviors and offers an entry point to plug in an existing logging
+   * framework without ourselves depending on a specific log4j version.
+   */
   private final Logging logging;
+
+  /**
+   * Allows configuring a FftPlan factory to allow different implementations. At the moment
+   * Fft is not the bottleneck of execution, so it's not required for performance tuning.
+   */
   private final FftPlanFactory fftPlanFactory;
+
+  /**
+   * If true the resulting regions (the polygonal geometries that they are built of) are scaled
+   * and transformed to best match the initial size and position. This is likely wanted when
+   * using the result as actual geometries in a map. If the result is just used in a chart or image
+   * then this scaling is unnecessary.
+   */
   private final boolean scaleToOriginalPolygonRegion;
+
+  /**
+   * Allows tuning the parallelism: e.g. turning parallel streams on and off
+   */
   private final ParallelismConfig parallelismConfig;
 
   /**

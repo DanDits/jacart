@@ -16,7 +16,7 @@ public class PolygonUtilities {
 
   public static RegionData processMap(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
     polygonData = removeTinyPolygonsInNonLSpace(logging, mapData, polygonData);
-    return make_region(mapData, polygonData);
+    return createRegionData(mapData, polygonData);
   }
 
   // positive for clockwise oriented order, negative for ccw oriented order
@@ -42,7 +42,7 @@ public class PolygonUtilities {
       (ringY[0] - ringY[pointCount - 1]) * (ringY[0] - ringY[pointCount - 1]));
   }
 
-  private static RegionData make_region(MapFeatureData mapData, PolygonData polygonData) {
+  private static RegionData createRegionData(MapFeatureData mapData, PolygonData polygonData) {
     return new RegionData(mapData.getRegions(), polygonData.getPolygonId(), polygonData.getPolygonRingsX(), polygonData.getPolygonRingsY());
   }
 
@@ -51,13 +51,13 @@ public class PolygonUtilities {
     double[][] ringsY = polygonData.getPolygonRingsY();
     int ringCount = ringsX.length;
 
-    double map_maxx = mapData.getMap_maxx();
-    double map_maxy = mapData.getMap_maxy();
-    double map_minx = mapData.getMap_minx();
-    double map_miny = mapData.getMap_miny();
+    double mapMinX = mapData.getMapMinX();
+    double mapMinY = mapData.getMapMinY();
+    double mapMaxX = mapData.getMapMaxX();
+    double mapMaxY = mapData.getMapMaxY();
 
     boolean[] ringHasTinyArea = new boolean[ringCount];
-    double relativeTinyAreaThreshold = AREA_THRESHOLD * (map_maxx - map_minx) * (map_maxy - map_miny);
+    double relativeTinyAreaThreshold = AREA_THRESHOLD * (mapMaxX - mapMinX) * (mapMaxY - mapMinY);
     logging.debug("Amount of polygons: {0}", ringCount);
     logging.debug("Relative area threshold: {0}", relativeTinyAreaThreshold);
     for (int ringIndex = 0; ringIndex < ringCount; ringIndex++) {
@@ -77,62 +77,62 @@ public class PolygonUtilities {
     if (nonTinyRingCount < ringCount) {
       logging.debug("Removing tiny polygons.");
 
-      int[] n_non_tiny_polycorn = new int[nonTinyRingCount];
-      int[] non_tiny_polygon_id = new int[nonTinyRingCount];
+      int[] nonTinyRingsCount = new int[nonTinyRingCount];
+      int[] nonTinyRingId = new int[nonTinyRingCount];
       nonTinyRingCount = 0;
-      int[] polygon_id = polygonData.getPolygonId();
-      for (int poly_indx = 0; poly_indx < ringCount; poly_indx++) {
-        if (!ringHasTinyArea[poly_indx]) {
-          n_non_tiny_polycorn[nonTinyRingCount] = ringsX[poly_indx].length;
-          non_tiny_polygon_id[nonTinyRingCount] = polygon_id[poly_indx];
+      int[] polygonId = polygonData.getPolygonId();
+      for (int ringIndex = 0; ringIndex < ringCount; ringIndex++) {
+        if (!ringHasTinyArea[ringIndex]) {
+          nonTinyRingsCount[nonTinyRingCount] = ringsX[ringIndex].length;
+          nonTinyRingId[nonTinyRingCount] = polygonId[ringIndex];
           nonTinyRingCount++;
         }
       }
-      double[][] non_tiny_polycornX = new double[nonTinyRingCount][];
-      double[][] non_tiny_polycornY = new double[nonTinyRingCount][];
-      for (int poly_indx = 0; poly_indx < nonTinyRingCount; poly_indx++) {
-        non_tiny_polycornX[poly_indx] = new double[n_non_tiny_polycorn[poly_indx]];
-        non_tiny_polycornY[poly_indx] = new double[n_non_tiny_polycorn[poly_indx]];
+      double[][] nonTinyRingsX = new double[nonTinyRingCount][];
+      double[][] nonTinyRingsY = new double[nonTinyRingCount][];
+      for (int ringIndex = 0; ringIndex < nonTinyRingCount; ringIndex++) {
+        nonTinyRingsX[ringIndex] = new double[nonTinyRingsCount[ringIndex]];
+        nonTinyRingsY[ringIndex] = new double[nonTinyRingsCount[ringIndex]];
       }
       nonTinyRingCount = 0;
-      for (int poly_indx = 0; poly_indx < ringCount; poly_indx++) {
-        if (!ringHasTinyArea[poly_indx]) {
-          for (int corn_indx = 0;
-               corn_indx < ringsX[poly_indx].length;
-               corn_indx++) {
-            non_tiny_polycornX[nonTinyRingCount][corn_indx]
-              = ringsX[poly_indx][corn_indx];
-            non_tiny_polycornY[nonTinyRingCount][corn_indx]
-                = ringsY[poly_indx][corn_indx];
+      for (int ringIndex = 0; ringIndex < ringCount; ringIndex++) {
+        if (!ringHasTinyArea[ringIndex]) {
+          for (int pointIndex = 0;
+               pointIndex < ringsX[ringIndex].length;
+               pointIndex++) {
+            nonTinyRingsX[nonTinyRingCount][pointIndex]
+              = ringsX[ringIndex][pointIndex];
+            nonTinyRingsY[nonTinyRingCount][pointIndex]
+                = ringsY[ringIndex][pointIndex];
           }
           nonTinyRingCount++;
         }
       }
 
 
-      return createOverridenPolygons(nonTinyRingCount, non_tiny_polycornX, non_tiny_polycornY, n_non_tiny_polycorn, non_tiny_polygon_id);
+      return createOverridenPolygons(nonTinyRingCount, nonTinyRingsX, nonTinyRingsY, nonTinyRingsCount, nonTinyRingId);
     }
     return polygonData;
   }
 
-  private static PolygonData createOverridenPolygons(int n_non_tiny_poly, double[][] non_tiny_polycornX, double[][] non_tiny_polycornY,
-                                                     int[] n_non_tiny_polycorn, int[] non_tiny_polygon_id) {
-    int[] polygonId = new int[n_non_tiny_poly];
-    int[] n_polycorn = new int[n_non_tiny_poly];
-    for (int poly_indx = 0; poly_indx < n_non_tiny_poly; poly_indx++) {
-      polygonId[poly_indx] = non_tiny_polygon_id[poly_indx];
-      n_polycorn[poly_indx] = n_non_tiny_polycorn[poly_indx];
+  private static PolygonData createOverridenPolygons(int nonTinyRingCount, double[][] nonTinyRingX,
+      double[][] nonTinyRingY, int[] nonTinyRingsCount, int[] nonTinyPolygonId) {
+    int[] polygonId = new int[nonTinyRingCount];
+    int[] ringCount = new int[nonTinyRingCount];
+    for (int ringIndex = 0; ringIndex < nonTinyRingCount; ringIndex++) {
+      polygonId[ringIndex] = nonTinyPolygonId[ringIndex];
+      ringCount[ringIndex] = nonTinyRingsCount[ringIndex];
     }
-    double[][] polycornX = new double[n_non_tiny_poly][];
-    double[][] polycornY = new double[n_non_tiny_poly][];
-    for (int poly_indx = 0; poly_indx < n_non_tiny_poly; poly_indx++) {
-      polycornX[poly_indx] = new double[n_polycorn[poly_indx]];
-      polycornY[poly_indx] = new double[n_polycorn[poly_indx]];
+    double[][] polycornX = new double[nonTinyRingCount][];
+    double[][] polycornY = new double[nonTinyRingCount][];
+    for (int ringIndex = 0; ringIndex < nonTinyRingCount; ringIndex++) {
+      polycornX[ringIndex] = new double[ringCount[ringIndex]];
+      polycornY[ringIndex] = new double[ringCount[ringIndex]];
     }
-    for (int poly_indx = 0; poly_indx < n_non_tiny_poly; poly_indx++) {
-      for (int corn_indx = 0; corn_indx < n_polycorn[poly_indx]; corn_indx++) {
-        polycornX[poly_indx][corn_indx] = non_tiny_polycornX[poly_indx][corn_indx];
-        polycornY[poly_indx][corn_indx] = non_tiny_polycornY[poly_indx][corn_indx];
+    for (int ringIndex = 0; ringIndex < nonTinyRingCount; ringIndex++) {
+      for (int pointIndex = 0; pointIndex < ringCount[ringIndex]; pointIndex++) {
+        polycornX[ringIndex][pointIndex] = nonTinyRingX[ringIndex][pointIndex];
+        polycornY[ringIndex][pointIndex] = nonTinyRingY[ringIndex][pointIndex];
       }
     }
     return new PolygonData(polycornX, polycornY, polygonId);

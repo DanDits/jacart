@@ -3,6 +3,7 @@ package de.dandit.cartogram.core.dft;
 /*
  * Free FFT and convolution (Java)
  *
+ * Copyright (c) 2020 Daniel Dittmar - Project Jacart. (MIT License)
  * Copyright (c) 2017 Project Nayuki. (MIT License)
  * https://www.nayuki.io/page/free-small-fft-in-multiple-languages
  *

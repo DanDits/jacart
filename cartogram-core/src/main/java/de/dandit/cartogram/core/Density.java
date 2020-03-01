@@ -1,12 +1,13 @@
 package de.dandit.cartogram.core;
 
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.List;
 
 import de.dandit.cartogram.core.context.CartogramContext;
 import de.dandit.cartogram.core.context.MapGrid;
 import de.dandit.cartogram.core.context.PolygonData;
-import de.dandit.cartogram.core.context.Region;
+import de.dandit.cartogram.core.pub.Region;
 import de.dandit.cartogram.core.context.RegionData;
 import de.dandit.cartogram.core.dft.FftPlan2D;
 import de.dandit.cartogram.core.pub.CartogramConfig;
@@ -61,74 +62,74 @@ public class Density {
   }
 
   private static MapGrid transformMapToLSpace(FftPlanFactory fftPlanFactory, Logging logging, MapFeatureData featureData, double[][] polycornX, double[][] polycornY) {
-    double latt_const, new_maxx, new_maxy, new_minx, new_miny;
-    int lx, ly;
-    double map_minx = featureData.getMap_minx();
-    double map_miny = featureData.getMap_miny();
-    double map_maxx = featureData.getMap_maxx();
-    double map_maxy = featureData.getMap_maxy();
+    double mapMinX = featureData.getMapMinX();
+    double mapMinY = featureData.getMapMinY();
+    double mapMaxX = featureData.getMapMaxX();
+    double mapMaxY = featureData.getMapMaxY();
 
-    new_maxx = 0.5 * ((1.0 + PADDING) * map_maxx + (1.0 - PADDING) * map_minx);
-    new_minx = 0.5 * ((1.0 - PADDING) * map_maxx + (1.0 + PADDING) * map_minx);
-    new_maxy = 0.5 * ((1.0 + PADDING) * map_maxy + (1.0 - PADDING) * map_miny);
-    new_miny = 0.5 * ((1.0 - PADDING) * map_maxy + (1.0 + PADDING) * map_miny);
+    double newMaxX = 0.5 * ((1.0 + PADDING) * mapMaxX + (1.0 - PADDING) * mapMinX);
+    double newMinX = 0.5 * ((1.0 - PADDING) * mapMaxX + (1.0 + PADDING) * mapMinX);
+    double newMaxY = 0.5 * ((1.0 + PADDING) * mapMaxY + (1.0 - PADDING) * mapMinY);
+    double newMinY = 0.5 * ((1.0 - PADDING) * mapMaxY + (1.0 + PADDING) * mapMinY);
 
     // retain aspect ratio, setting either lx or ly to the maximum L
-    if (map_maxx - map_minx > map_maxy - map_miny) {
+    double scale;
+    int lx, ly;
+    if (mapMaxX - mapMinX > mapMaxY - mapMinY) {
       lx = L;
-      latt_const = (new_maxx - new_minx) / L;
-      ly = 1 << ((int) Math.ceil(Math.log((new_maxy - new_miny) / latt_const) / Math.log(2)));
-      new_maxy = 0.5 * (map_maxy + map_miny) + 0.5 * ly * latt_const;
-      new_miny = 0.5 * (map_maxy + map_miny) - 0.5 * ly * latt_const;
+      scale = (newMaxX - newMinX) / L;
+      ly = 1 << ((int) Math.ceil(Math.log((newMaxY - newMinY) / scale) / Math.log(2)));
+      newMaxY = 0.5 * (mapMaxY + mapMinY) + 0.5 * ly * scale;
+      newMinY = 0.5 * (mapMaxY + mapMinY) - 0.5 * ly * scale;
     } else {
       ly = L;
-      latt_const = (new_maxy - new_miny) / L;
-      lx = 1 << ((int) Math.ceil(Math.log((new_maxx - new_minx) / latt_const) / Math.log(2)));
-      new_maxx = 0.5 * (map_maxx + map_minx) + 0.5 * lx * latt_const;
-      new_minx = 0.5 * (map_maxx + map_minx) - 0.5 * lx * latt_const;
+      scale = (newMaxY - newMinY) / L;
+      lx = 1 << ((int) Math.ceil(Math.log((newMaxX - newMinX) / scale) / Math.log(2)));
+      newMaxX = 0.5 * (mapMaxX + mapMinX) + 0.5 * lx * scale;
+      newMinX = 0.5 * (mapMaxX + mapMinX) - 0.5 * lx * scale;
     }
     logging.debug(
       "Using a {0} x {1} lattice with bounding box\n\t({2} {3} {4} {5}).\n",
-      lx, ly, new_minx, new_miny, new_maxx, new_maxy);
+      lx, ly, newMinX, newMinY, newMaxX, newMaxY);
 
 
     for (double[] pointsX : polycornX) {
       for (int i = 0; i < pointsX.length; i++) {
-        pointsX[i] = (pointsX[i] - new_minx) / latt_const;
+        pointsX[i] = (pointsX[i] - newMinX) / scale;
       }
     }
     for (double[] pointsY : polycornY) {
       for (int i = 0; i < pointsY.length; i++) {
-        pointsY[i] = (pointsY[i] - new_miny) / latt_const;
+        pointsY[i] = (pointsY[i] - newMinY) / scale;
       }
     }
-    return new MapGrid(fftPlanFactory, lx, ly, new_minx, new_miny, latt_const);
+    return new MapGrid(fftPlanFactory, lx, ly, newMinX, newMinY, scale);
   }
 
-  public static void set_inside_values_for_polygon(int region, double[] polycornX, double[] polycornY, int[][] inside) {
-    double poly_minx = polycornX[0];
-    int n_polycorn = polycornX.length;
-    for (double point : polycornX) {
-      poly_minx = Math.min(poly_minx, point);
+  public static void setInsideValuesForPolygon(int region, double[] ringX, double[] ringY, int[][] inside) {
+    double minX = ringX[0];
+    int pointCount = ringX.length;
+    for (double point : ringX) {
+      minX = Math.min(minX, point);
     }
-    for (int k = 0, n = n_polycorn - 1; k < n_polycorn; n = k++) {
-      set_inside_values_between_points(region, polycornX[k], polycornY[k], polycornX[n], polycornY[n],
-        poly_minx, inside);
+    for (int k = 0, n = pointCount - 1; k < pointCount; n = k++) {
+      setInsideValuesBetweenPoints(region, ringX[k], ringY[k], ringX[n], ringY[n],
+        minX, inside);
     }
   }
 
-  private static void set_inside_values_between_points(int region, double pkX, double pkY, double pnX, double pnY,
-                                                       double poly_minx, int[][] inside) {
+  private static void setInsideValuesBetweenPoints(int region, double pkX, double pkY, double pnX, double pnY,
+                                                       double ringMinX, int[][] inside) {
     for (int l = (int) Math.ceil(Math.min(pnY, pkY) - 0.5); l < Math.max(pnY - 0.5, pkY - 0.5); l++) {
-      set_inside_value_at_y(region, pkX, pkY, pnX, pnY, l, poly_minx, inside);
+      setInsideValueAtY(region, pkX, pkY, pnX, pnY, l, ringMinX, inside);
     }
   }
 
-  private static void set_inside_value_at_y(int region, double pkX, double pkY, double pnX, double pnY, int l,
-                                            double poly_minx, int[][] inside) {
+  private static void setInsideValueAtY(int region, double pkX, double pkY, double pnX, double pnY, int l,
+                                            double ringMinX, int[][] inside) {
     double intersection = (pnX - 0.5 - (pkX - 0.5)) * (l - (pkY - 0.5)) /
       (pnY - 0.5 - (pkY - 0.5)) + (pkX - 0.5);
-    for (int m = (int) poly_minx; m < intersection; m++) {
+    for (int m = (int) ringMinX; m < intersection; m++) {
       inside[m][l] = region - inside[m][l] - 1;
     }
   }
@@ -170,35 +171,35 @@ public class Density {
           MessageFormat.format("ERROR: No target area for region {0}", regionId[i]));
       }
     }
-    logging.displayDoubleArray( "target_area", targetArea);
+    logging.displayDoubleArray( "targetArea", targetArea);
 
     double tempTotalTargetArea = 0.0;
     double totalInitialArea = 0.0;
-    int[][] polyinreg = regionData.getRingInRegion();
-    double[][] polycornX = regionData.getRingsX();
-    double[][] polycornY = regionData.getRingsY();
+    int[][] ringInRegion = regionData.getRingInRegion();
+    double[][] ringsX = regionData.getRingsX();
+    double[][] ringsY = regionData.getRingsY();
     double[] regionPerimeter = regionData.getRegionPerimeter();
     for (int i = 0; i < regionCount; i++) {
-      int[] polyI = polyinreg[i];
+      int[] polyI = ringInRegion[i];
       if (!regionHasNaN[i]) {
         tempTotalTargetArea += targetArea[i];
       }
       for (int value : polyI) {
         initialArea[i] += PolygonUtilities.calculateOrientedArea(
-            polycornX[value],
-            polycornY[value]);
+            ringsX[value],
+            ringsY[value]);
       }
       totalInitialArea += initialArea[i];
     }
     logging.debug("Total init area= {0}", totalInitialArea);
-    logging.displayDoubleArray( "init_area", initialArea);
+    logging.displayDoubleArray( "initial area", initialArea);
 
     for (int i = 0; i < regionCount; i++) {
-      int[] polyI = polyinreg[i];
+      int[] polyI = ringInRegion[i];
       for (int value : polyI) {
         regionPerimeter[i] += PolygonUtilities.calculatePolygonPerimeter(
-            polycornX[value],
-            polycornY[value]);
+            ringsX[value],
+            ringsY[value]);
       }
     }
     logging.displayDoubleArray( "region perimeter", regionPerimeter);
@@ -211,8 +212,8 @@ public class Density {
       }
     }
 
-    double total_NA_area = (totalNaNRatio * tempTotalTargetArea) / (1 - totalNaNRatio);
-    tempTotalTargetArea += total_NA_area;
+    double totalNanArea = (totalNaNRatio * tempTotalTargetArea) / (1 - totalNaNRatio);
+    tempTotalTargetArea += totalNanArea;
 
     for (int i = 0; i < regionCount; i++) {
       if (regionHasNaN[i]) {
@@ -220,160 +221,194 @@ public class Density {
           logging.debug("Setting area for NaN regions:");
           firstRegion = false;
         }
-        targetArea[i] = (initialArea[i] / totalInitialArea) / totalNaNRatio * total_NA_area;
+        targetArea[i] = (initialArea[i] / totalInitialArea) / totalNaNRatio * totalNanArea;
         logging.debug("\tRegion id {0}: {1}", regionId[i], targetArea[i]);
       }
     }
 
     if (config.isUsePerimeterThreshold()) {
-      logging.debug("Note: Enlarging extremely small regions using scaled perimeter threshold.");
-      boolean[] regionIsSmall = new boolean[regionCount];
-      int smallRegionCounter = 0;
-      double tot_region_small_area = 0, total_perimeter = 0, totalThreshold = 0;
-      double[] region_threshold = new double[regionCount];
-      double[] region_threshold_area = new double[regionCount];
-      for (int i = 0; i < regionCount; i++) {
-        total_perimeter += regionPerimeter[i];
-      }
-      for (int i = 0; i < regionCount; i++) {
-        region_threshold[i] = Math.max((regionPerimeter[i] / total_perimeter) * MIN_PERIMETER_FAC, 0.00025);
-        if (!regionHasNaN[i] && (targetArea[i] / tempTotalTargetArea < region_threshold[i])) {
-          regionIsSmall[i] = true;
-          smallRegionCounter++;
-          tot_region_small_area += targetArea[i];
-        }
-      }
-      for (int i = 0; i < regionCount; i++) {
-        if (regionIsSmall[i]) {
-          totalThreshold += region_threshold[i];
-        }
-      }
-      double total_threshold_area = (totalThreshold * (tempTotalTargetArea - tot_region_small_area)) / (1 - totalThreshold);
-
-      if (smallRegionCounter > 0) {
-        logging.debug("Enlarging small regions:");
-      }
-
-      for (int i = 0; i < regionCount; i++) {
-        if (regionIsSmall[i]) {
-          region_threshold_area[i] = (region_threshold[i] / totalThreshold) * total_threshold_area;
-          double oldTargetArea = targetArea[i];
-          targetArea[i] = region_threshold_area[i];
-          tempTotalTargetArea += targetArea[i];
-          tempTotalTargetArea -= oldTargetArea;
-          logging.debug("Enlarging region id {0}: from {1} to {2}", regionId[i], oldTargetArea, targetArea[i]);
-        }
-      }
-      if (smallRegionCounter <= 0) {
-        logging.debug("No regions below minimum threshold.\n\n");
-      }
+      applyScaledPerimeterThreshold(
+          logging,
+          regionCount,
+          targetArea,
+          regionHasNaN,
+          regionId,
+          tempTotalTargetArea,
+          regionPerimeter);
     } else {
-      logging.debug("Note: Not using scaled perimeter threshold.");
-      double minimumArea = Double.MAX_VALUE;
-      for (int i = 1; i < regionCount; i++) {
-        if (targetArea[i] > 0.0) {
-          if (minimumArea <= 0.0) {
-            minimumArea = targetArea[i];
-          } else {
-            minimumArea = Math.min(minimumArea, targetArea[i]);
-          }
-        }
-      }
-      for (int i = 0; i < regionCount; i++) {
-        if (targetArea[i] == 0.0) {
-          targetArea[i] = MIN_POP_FAC * minimumArea;
-        }
-      }
+      applyRegularTargetArea(logging, regionCount, targetArea);
     }
-    logging.displayDoubleArray( "target_area", targetArea);
+    logging.displayDoubleArray( "targetArea", targetArea);
 
     for (int i = 0; i < regionCount; i++) {
       density[i] = targetArea[i] / initialArea[i];
     }
 
-    double tot_target_area = 0.;
-    for (int i = 0; i < regionCount; i++) {
-      tot_target_area += targetArea[i];
-    }
-    double averageDensity = tot_target_area / totalInitialArea;
-
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
-    int[][] gridIndexToRegionIndex = mapGrid.getGridIndexToRegionIndex();
-    double[] rho_init = mapGrid.getRhoInit();
-    for (int i = 0; i < lx; i++) {
-      for (int j = 0; j < ly; j++) {
-        if (gridIndexToRegionIndex[i][j] == -1) {
-          rho_init[i * ly + j] = averageDensity;
-        } else {
-          rho_init[i * ly + j] = density[gridIndexToRegionIndex[i][j]];
-        }
-      }
-    }
 
-    gaussian_blur(config.getFftPlanFactory(), mapGrid, totalInitialArea, averageDensity);
-
+    initializeRhoWithDensity(
+        mapGrid,
+        regionCount,
+        targetArea,
+        density,
+        totalInitialArea,
+        lx,
+        ly);
+    gaussianBlur(config.getFftPlanFactory(), lx, ly, mapGrid.getRhoInit(), mapGrid.getRhoFt(), mapGrid.getRho());
     mapGrid.getRho().execute();
-
     return new CartogramContext(logging, mapGrid, regionData, false);
   }
 
-  void fill_with_density2() {
-    double avg_dens;
-    double[] dens, tmp_area;
+  private static void initializeRhoWithDensity(
+      MapGrid mapGrid,
+      int regionCount,
+      double[] targetArea, double[] density, double totalInitialArea, int lx, int ly) {
+    double summedTargetArea = 0.;
+    for (int i = 0; i < regionCount; i++) {
+      summedTargetArea += targetArea[i];
+    }
+    double averageDensity = summedTargetArea / totalInitialArea;
 
+    int[][] gridIndexToRegionIndex = mapGrid.getGridIndexToRegionIndex();
+    double[] rhoInit = mapGrid.getRhoInit();
+    for (int i = 0; i < lx; i++) {
+      for (int j = 0; j < ly; j++) {
+        if (gridIndexToRegionIndex[i][j] == -1) {
+          rhoInit[i * ly + j] = averageDensity;
+        } else {
+          rhoInit[i * ly + j] = density[gridIndexToRegionIndex[i][j]];
+        }
+      }
+    }
+  }
+
+  private static void applyRegularTargetArea(
+      Logging logging,
+      int regionCount,
+      double[] targetArea) {
+    logging.debug("Note: Not using scaled perimeter threshold.");
+    double minimumArea = Double.MAX_VALUE;
+    for (int i = 1; i < regionCount; i++) {
+      if (targetArea[i] > 0.0) {
+        if (minimumArea <= 0.0) {
+          minimumArea = targetArea[i];
+        } else {
+          minimumArea = Math.min(minimumArea, targetArea[i]);
+        }
+      }
+    }
+    for (int i = 0; i < regionCount; i++) {
+      if (targetArea[i] == 0.0) {
+        targetArea[i] = MIN_POP_FAC * minimumArea;
+      }
+    }
+  }
+
+  private static void applyScaledPerimeterThreshold(
+      Logging logging,
+      int regionCount,
+      double[] targetArea,
+      boolean[] regionHasNaN,
+      int[] regionId,
+      double tempTotalTargetArea,
+      double[] regionPerimeter) {
+    logging.debug("Note: Enlarging extremely small regions using scaled perimeter threshold.");
+    boolean[] regionIsSmall = new boolean[regionCount];
+    int smallRegionCounter = 0;
+    double totRegionSmallArea = 0, summedPerimeter = 0, summedThreshold = 0;
+    double[] regionThreshold = new double[regionCount];
+    double[] regionThresholdArea = new double[regionCount];
+    for (int i = 0; i < regionCount; i++) {
+      summedPerimeter += regionPerimeter[i];
+    }
+    for (int i = 0; i < regionCount; i++) {
+      regionThreshold[i] = Math.max((regionPerimeter[i] / summedPerimeter) * MIN_PERIMETER_FAC, 0.00025);
+      if (!regionHasNaN[i] && (targetArea[i] / tempTotalTargetArea < regionThreshold[i])) {
+        regionIsSmall[i] = true;
+        smallRegionCounter++;
+        totRegionSmallArea += targetArea[i];
+      }
+    }
+    for (int i = 0; i < regionCount; i++) {
+      if (regionIsSmall[i]) {
+        summedThreshold += regionThreshold[i];
+      }
+    }
+    double totalThresholdArea = (summedThreshold * (tempTotalTargetArea - totRegionSmallArea)) / (1 - summedThreshold);
+
+    if (smallRegionCounter > 0) {
+      logging.debug("Enlarging small regions:");
+    }
+
+    for (int i = 0; i < regionCount; i++) {
+      if (regionIsSmall[i]) {
+        regionThresholdArea[i] = (regionThreshold[i] / summedThreshold) * totalThresholdArea;
+        double oldTargetArea = targetArea[i];
+        targetArea[i] = regionThresholdArea[i];
+        tempTotalTargetArea += targetArea[i];
+        tempTotalTargetArea -= oldTargetArea;
+        logging.debug("Enlarging region id {0}: from {1} to {2}", regionId[i], oldTargetArea, targetArea[i]);
+      }
+    }
+    if (smallRegionCounter <= 0) {
+      logging.debug("No regions below minimum threshold.\n\n");
+    }
+  }
+
+  void fillWithDensity() {
     MapGrid mapGrid = context.getMapGrid();
     RegionData regionData = context.getRegionData();
-    double[][] polycornX = regionData.getRingsX();
-    double[][] polycornY = regionData.getRingsY();
-    int n_poly = polycornX.length;
-    double[][] cartcornX = regionData.getCartogramRingsX();
-    double[][] cartcornY = regionData.getCartogramRingsY();
-    double[] rho_init = mapGrid.getRhoInit();
+    double[][] ringsX = regionData.getRingsX();
+    double[][] ringsY = regionData.getRingsY();
+    int ringsCount = ringsX.length;
+    double[][] cartogramRingsX = regionData.getCartogramRingsX();
+    double[][] cartogramRingsY = regionData.getCartogramRingsY();
+    double[] rhoInit = mapGrid.getRhoInit();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
 
-    for (int i = 0; i < n_poly; i++) {
-      for (int j = 0; j < polycornX[i].length; j++) {
-        polycornX[i][j] = cartcornX[i][j];
-        polycornY[i][j] = cartcornY[i][j];
+    for (int i = 0; i < ringsCount; i++) {
+      for (int j = 0; j < ringsX[i].length; j++) {
+        ringsX[i][j] = cartogramRingsX[i][j];
+        ringsY[i][j] = cartogramRingsY[i][j];
       }
     }
 
-    int[][] polyinreg = regionData.getRingInRegion();
-    int n_reg = polyinreg.length;
-    double[] target_area = regionData.getTargetArea();
-    int[][] xyhalfshift2reg = mapGrid.getGridIndexToRegionIndex();
+    int[][] ringInRegion = regionData.getRingInRegion();
+    int regionCount = ringInRegion.length;
+    double[] targetArea = regionData.getTargetArea();
+    int[][] gridIndexToRegionIndex = mapGrid.getGridIndexToRegionIndex();
 
-    dens = new double[n_reg];
-    tmp_area = new double[n_reg];
+    double[] dens = new double[regionCount];
+    double[] tempArea = new double[regionCount];
 
     interior(mapGrid, regionData);
 
-    for (int i = 0; i < n_reg; i++) {
-      int[] polyI = polyinreg[i];
+    for (int i = 0; i < regionCount; i++) {
+      int[] polyI = ringInRegion[i];
       for (int value : polyI) {
-        tmp_area[i] += PolygonUtilities.calculateOrientedArea(polycornX[value], polycornY[value]);
+        tempArea[i] += PolygonUtilities.calculateOrientedArea(ringsX[value], ringsY[value]);
       }
     }
-    for (int i = 0; i < n_reg; i++) dens[i] = target_area[i] / tmp_area[i];
+    for (int i = 0; i < regionCount; i++) dens[i] = targetArea[i] / tempArea[i];
 
-    double tot_tmp_area = 0.0;
-    for (int i = 0; i < n_reg; i++) {
-      tot_tmp_area += tmp_area[i];
+    double summedTempArea = 0.0;
+    for (int i = 0; i < regionCount; i++) {
+      summedTempArea += tempArea[i];
     }
-    double tot_target_area = 0.0;
-    for (int i = 0; i < n_reg; i++) {
-      tot_target_area += target_area[i];
+    double totalTargetArea = 0.0;
+    for (int i = 0; i < regionCount; i++) {
+      totalTargetArea += targetArea[i];
     }
-    avg_dens = tot_target_area / tot_tmp_area;
+    double averageDensity = totalTargetArea / summedTempArea;
 
     for (int i = 0; i < lx; i++) {
       for (int j = 0; j < ly; j++) {
-        if (xyhalfshift2reg[i][j] == -1) {
-          rho_init[i * ly + j] = avg_dens;
+        if (gridIndexToRegionIndex[i][j] == -1) {
+          rhoInit[i * ly + j] = averageDensity;
         } else {
-          rho_init[i * ly + j] = dens[xyhalfshift2reg[i][j]];
+          rhoInit[i * ly + j] = dens[gridIndexToRegionIndex[i][j]];
         }
       }
     }
@@ -381,63 +416,43 @@ public class Density {
   }
 
   private static void interior(MapGrid mapGrid, RegionData regionData) {
-    int i, j, poly;
-
-    int lx = mapGrid.getLx();
-    int ly = mapGrid.getLy();
-    double[][] polycornX = regionData.getRingsX();
-    double[][] polycornY = regionData.getRingsY();
-    int[][] xyhalfshift2reg = mapGrid.getGridIndexToRegionIndex();
-    int[][] polyinreg = regionData.getRingInRegion();
-    int n_reg = polyinreg.length;
-    for (i = 0; i < lx; i++) {
-      for (j = 0; j < ly; j++) {
-        xyhalfshift2reg[i][j] = -1;
-      }
+    double[][] ringsX = regionData.getRingsX();
+    double[][] ringsY = regionData.getRingsY();
+    int[][] gridIndexToRegionIndex = mapGrid.getGridIndexToRegionIndex();
+    int[][] ringsInRegion = regionData.getRingInRegion();
+    int regionCount = ringsInRegion.length;
+    for (int[] indexToRegionIndex : gridIndexToRegionIndex) {
+      Arrays.fill(indexToRegionIndex, -1);
     }
 
-    for (i = 0; i < n_reg; i++) {
-      int[] polyI = polyinreg[i];
-      for (j = 0; j < polyI.length; j++) {
-        poly = polyI[j];
-        set_inside_values_for_polygon(i, polycornX[poly], polycornY[poly],
-          xyhalfshift2reg);
+    for (int i = 0; i < regionCount; i++) {
+      int[] polyI = ringsInRegion[i];
+      for (int poly : polyI) {
+        setInsideValuesForPolygon(i, ringsX[poly], ringsY[poly],
+            gridIndexToRegionIndex);
       }
     }
   }
 
-  private static void gaussian_blur(FftPlanFactory fftPlanFactory, MapGrid mapGrid, double tot_init_area, double avg_dens) {
-    FftPlan2D plan_bwd;
-    int lx = mapGrid.getLx();
-    int ly = mapGrid.getLy();
-    double[] rho_init = mapGrid.getRhoInit();
-    double[] rho_ft = mapGrid.getRhoFt();
-
-    plan_bwd = fftPlanFactory.createDCT3_2D(lx, ly, rho_ft, rho_init);
-
-    for (int i = 0; i < lx * ly; i++)
-      rho_init[i] /= 4 * lx * ly;
-
-    mapGrid.getRho().execute();
-
-    gaussianBlur(lx, ly, rho_ft);
-    plan_bwd.execute();
-
+  private static void gaussianBlur(FftPlanFactory fftPlanFactory,
+      int lx, int ly, double[] rhoInit, double[] rhoFt, FftPlan2D rho) {
+    FftPlan2D backwardPlan = fftPlanFactory.createDCT3_2D(lx, ly, rhoFt, rhoInit);
+    for (int i = 0; i < lx * ly; i++) {
+      rhoInit[i] /= 4 * lx * ly;
+    }
+    rho.execute();
+    gaussianBlur(lx, ly, rhoFt);
+    backwardPlan.execute();
   }
 
-  private static void gaussianBlur(int lx, int ly, double[] rho_ft) {
-    double prefactor;
-    int i;
-    double scale_i;
-    int j;
-    double scale_j;
-    prefactor = -0.5 * BLUR_WIDTH * BLUR_WIDTH * Math.PI * Math.PI;
-    for (i = 0; i < lx; i++) {
-      scale_i = (double) i / lx;
-      for (j = 0; j < ly; j++) {
-        scale_j = (double) j / ly;
-        rho_ft[i * ly + j] *=
-          Math.exp(prefactor * (scale_i * scale_i + scale_j * scale_j));
+  private static void gaussianBlur(int lx, int ly, double[] rhoFt) {
+    double scale = -0.5 * BLUR_WIDTH * BLUR_WIDTH * Math.PI * Math.PI;
+    for (int i = 0; i < lx; i++) {
+      double scaleI = (double) i / lx;
+      for (int j = 0; j < ly; j++) {
+        double scaleJ = (double) j / ly;
+        rhoFt[i * ly + j] *=
+          Math.exp(scale * (scaleI * scaleI + scaleJ * scaleJ));
       }
     }
   }

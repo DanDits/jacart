@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.dandit.cartogram.core.pub.Region;
+
 public class RegionData {
   private final int[] regionId;
   private final boolean[] regionNaN;

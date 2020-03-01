@@ -14,16 +14,16 @@ public class FftPlan2D {
   private final double[] sinTableWidth;
   private final double[] cosTableHeight;
   private final double[] sinTableHeight;
-  private final InplaceDftAlgorithm inplaceAlgorithmRows;
-  private final InplaceDftAlgorithm inplaceAlgorithmColumns;
+  private final InPlaceDftAlgorithm inplaceAlgorithmRows;
+  private final InPlaceDftAlgorithm inplaceAlgorithmColumns;
   private final ParallelismConfig parallelismConfig;
 
   public FftPlan2D(
     ParallelismConfig parallelismConfig, int width, int height,
     double[] inputTabularData,
     double[] outputTabularData,
-    InplaceDftAlgorithm inplaceAlgorithmRows,
-    InplaceDftAlgorithm inplaceAlgorithmColumns) {
+    InPlaceDftAlgorithm inplaceAlgorithmRows,
+    InPlaceDftAlgorithm inplaceAlgorithmColumns) {
     this.parallelismConfig = parallelismConfig;
     if (width * height != inputTabularData.length) {
       throw new IllegalArgumentException("Array size does not match width*height!");

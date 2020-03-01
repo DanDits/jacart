@@ -3,6 +3,7 @@ package de.dandit.cartogram.core.dft;
 /*
  * Fast discrete cosine transform algorithms (Java)
  *
+ * Copyright (c) 2020 Daniel Dittmar - Project Jacart. (MIT License)
  * Copyright (c) 2017 Project Nayuki. (MIT License)
  * https://www.nayuki.io/page/fast-discrete-cosine-transform-algorithms
  *
@@ -87,7 +88,7 @@ public final class DCT {
 
     int halfLen = len / 2;
     for (int i = 0; i < halfLen; i++) {
-      vector[i * 2 + 0] = real[i];
+      vector[i * 2] = real[i];
       vector[i * 2 + 1] = real[len - 1 - i];
     }
     if (len % 2 == 1)

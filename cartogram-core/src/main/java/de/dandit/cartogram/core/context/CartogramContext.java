@@ -2,7 +2,6 @@ package de.dandit.cartogram.core.context;
 
 import de.dandit.cartogram.core.pub.Logging;
 
-// TODO add copyright header into my source files
 public class CartogramContext {
 
   private final MapGrid mapGrid;

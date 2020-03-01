@@ -1,10 +1,7 @@
 package de.dandit.cartogram.core.dft;
 
 import de.dandit.cartogram.core.pub.Fft2DPlanner;
-import de.dandit.cartogram.core.pub.Logging;
 import de.dandit.cartogram.core.pub.ParallelismConfig;
-
-import java.util.Arrays;
 
 /**
  * For computing FFTs we have quite a range of possibilities:
@@ -26,80 +23,6 @@ public class DefaultFftPlanner implements Fft2DPlanner {
 
   public DefaultFftPlanner(ParallelismConfig parallelismConfig) {
     this.parallelismConfig = parallelismConfig;
-  }
-
-  public static void main(String[] args) {
-    Logging logging = Logging.ofStandardOutput();
-    logging.debug("DCT3_2D:");
-
-    ParallelismConfig parallelismConfig = ParallelismConfig.ofCommonPool();
-    for (int i = 2; i <= 1024; i *= 2) {
-      double[] test = new double[i * i];
-      double[] target = new double[i * i];
-      Arrays.fill(test, 1.);
-      logging.displayDoubleArray(i + " test (before)", test);
-      var plan_bwd = new DefaultFftPlanner(parallelismConfig).createDCT3_2D(i, i, test, target);
-      plan_bwd.execute();
-      logging.displayDoubleArray( i + " target (after)", target);
-      logging.debug("");
-    }
-
-
-    logging.debug("createDCT3_DST3_2D:");
-
-    int i = 2;
-    for (int j = 0; j < i * i; j++) {
-      double[] test = new double[i * i];
-      double[] target = new double[i * i];
-      test[j] = 2;
-      logging.displayDoubleArray(i + " test (before)", test);
-      var plan_bwd = new DefaultFftPlanner(parallelismConfig).createDCT3_DST3_2D(i, i, test, target);
-      plan_bwd.execute();
-      logging.displayDoubleArray(i + " target (after)", target);
-      logging.debug("");
-    }
-
-    logging.debug("createDST3_DCT3_2D:");
-
-    i = 2;
-    for (int j = 0; j < i * i; j++) {
-      double[] test = new double[i * i];
-      double[] target = new double[i * i];
-      test[j] = 2;
-      logging.displayDoubleArray(i + " test (before)", test);
-      var plan_bwd = new DefaultFftPlanner(parallelismConfig).createDST3_DCT3_2D(i, i, test, target);
-      plan_bwd.execute();
-      logging.displayDoubleArray(i + " target (after)", target);
-      logging.debug("");
-    }
-
-    logging.debug("DST-III");
-
-    i = 2;
-    for (int j = 0; j < i * i; j++) {
-      double[] test = new double[i * i];
-      test[j] = 2;
-      logging.displayDoubleArray(i + " test (before)", test);
-      DST.inverseTransform(test, initCosTable(test.length), initSinTable(test.length));
-      logging.displayDoubleArray(i + " target (after)", test);
-      logging.debug("");
-    }
-  }
-
-  private static double[] initCosTable(int n) {
-    double[] cosTable = new double[n / 2];
-    for (int i = 0; i < n / 2; i++) {
-      cosTable[i] = Math.cos(2 * Math.PI * i / n);
-    }
-    return cosTable;
-  }
-
-  private static double[] initSinTable(int n) {
-    double[] sinTable = new double[n / 2];
-    for (int i = 0; i < n / 2; i++) {
-      sinTable[i] = Math.sin(2 * Math.PI * i / n);
-    }
-    return sinTable;
   }
 
   @Override

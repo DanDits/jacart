@@ -15,7 +15,7 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
 import de.dandit.cartogram.core.ConvergenceGoalFailedException;
-import de.dandit.cartogram.core.context.Region;
+import de.dandit.cartogram.core.pub.Region;
 import de.dandit.cartogram.core.pub.CartogramApi;
 import de.dandit.cartogram.core.pub.CartogramConfig;
 import de.dandit.cartogram.core.pub.CartogramResult;
@@ -31,7 +31,7 @@ public class ExecuteCartogram {
                                           OutputStream epsOut) throws IOException, ConvergenceGoalFailedException {
     FeatureConverter featureConverter = new FeatureConverter(new GeometryConverter(new GeometryFactory()));
     CartogramResult result = createMapFeatureData(config, featureConverter, geoJsonResource, dataResource);
-    new EpsWriter().ps_figure(
+    new EpsWriter().createFigure(
       epsOut,
       result.getGridSizeX(),
       result.getGridSizeY(),
@@ -82,7 +82,7 @@ public class ExecuteCartogram {
       bounds.getMaxY(),
       regions,
       targetAreaPerRegion);
-    return new CartogramApi().calculateGastnerCartogram(mapFeatureData, config);
+    return new CartogramApi().calculateGaSeMoCartogram(mapFeatureData, config);
   }
 
   private static int extractFeatureId(SimpleFeature feature) {
