@@ -27,16 +27,16 @@ public class Integrate {
     final double x1 = lx <= xRounded + 1. ? lx : xRounded + 1.;
     final double y0 = 0. >= yRounded ? 0. : yRounded;
     final double y1 = ly <= yRounded + 1. ? ly : yRounded + 1.;
-    final double deltaX = (x - x0) / (x1 - x0);
-    final double deltaY = (y - y0) / (y1 - y0);
+    final double deltaX = x - x0;
+    final double deltaY = y - y0;
     final int x0I = xRounded >= lx ? (lx - 1) : (int) x0;
     final int x1I = xRounded + 0.5 >= lx ? (lx - 1) : (int) x1;
     final int y0I = yRounded >= ly ? (ly - 1) : (int) y0;
     final int y1I = yRounded + 0.5 >= ly ? (ly - 1) : (int) y1;
 
-    final double scale00 = (1 - deltaX) * (1 - deltaY);
-    final double scale01 = (1 - deltaX) * deltaY;
-    final double scale10 = deltaX * (1 - deltaY);
+    final double scale00 = (1. - deltaX) * (1. - deltaY);
+    final double scale01 = (1. - deltaX) * deltaY;
+    final double scale10 = deltaX * (1. - deltaY);
     final double scale11 = deltaX * deltaY;
     final int x0Offset = x0I * lx;
     final int x1Offset = x1I * lx;
@@ -227,18 +227,23 @@ public class Integrate {
           interpolatedHalfGridSpeedX,
           interpolatedHalfGridSpeedY,
           k);
-        midX[k] = projX[k] + interpolatedHalfGridSpeedX[k] * deltaT;
-        midY[k] = projY[k] + interpolatedHalfGridSpeedY[k] * deltaT;
-
-        double midXK = midX[k];
-        double midYK = midY[k];
+        double midXK = projX[k] + interpolatedHalfGridSpeedX[k] * deltaT;
         double midEulDiffX = midXK - eulX[k];
-        double midEulDiffY = midYK - eulY[k];
-        boolean withinTolerance = !(midEulDiffX * midEulDiffX +
-          midEulDiffY * midEulDiffY > absoluteTolerance);
         boolean inBoundX = !(midXK < 0.0) && !(midXK > lx);
+        if (!inBoundX) {
+          return false;
+        }
+
+        double midYK = projY[k] + interpolatedHalfGridSpeedY[k] * deltaT;
+        double midEulDiffY = midYK - eulY[k];
         boolean inBoundY = !(midYK < 0.0) && !(midYK > ly);
-        return withinTolerance && inBoundX && inBoundY;
+        if (!inBoundY) {
+          return false;
+        }
+        midX[k] = midXK;
+        midY[k] = midYK;
+
+        return midEulDiffX * midEulDiffX + midEulDiffY * midEulDiffY <= absoluteTolerance;
       });
   }
 
@@ -262,16 +267,17 @@ public class Integrate {
     int ly = mapGrid.getLy();
     double[] gridSpeedX = mapGrid.getGridSpeedX();
     double[] gridSpeedY = mapGrid.getGridSpeedY();
-    double[] rhoFt = mapGrid.getRhoFt();
     double[] rhoInit = mapGrid.getRhoInit();
     double[] gridFluxInitX = mapGrid.getGridFluxInitX().getOutputData();
     double[] gridFluxInitY = mapGrid.getGridFluxInitY().getOutputData();
+    double rhoFt0 = -mapGrid.getRhoFt()[0];
+    double remainingT = 1. - t;
 
     parallelismConfig.apply(IntStream.range(0, lx * ly))
       .forEach(k -> {
-        double rho = rhoFt[0] + (1.0 - t) * (rhoInit[k] - rhoFt[0]);
-        gridSpeedX[k] = -gridFluxInitX[k] / rho;
-        gridSpeedY[k] = -gridFluxInitY[k] / rho;
+        double rho = rhoFt0 + remainingT * (-rhoInit[k] - rhoFt0);
+        gridSpeedX[k] = gridFluxInitX[k] / rho;
+        gridSpeedY[k] = gridFluxInitY[k] / rho;
       });
   }
 }
