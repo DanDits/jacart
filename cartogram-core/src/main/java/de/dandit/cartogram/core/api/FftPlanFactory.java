@@ -65,11 +65,11 @@ public class FftPlanFactory {
   }
 
   private static void validatePlannerPerformDCT3_DST3_2DNonSquare(Fft2DPlanner planner) {
-    double[] input = new double[] {1, 1};
-    double[] output = new double[] {Double.NaN, Double.NaN};
-    FftPlan2D plan = planner.createDCT3_DST3_2D(1, 2, input, output);
+    double[] input = new double[] {1, 1, 1, 1, 1, 1, 1, 1};
+    double[] output = new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+    FftPlan2D plan = planner.createDCT3_DST3_2D(2, 4, input, output);
     plan.execute();
-    boolean inputUnchanged = Arrays.equals(input, new double[] {1, 1});
+    boolean inputUnchanged = Arrays.equals(input, new double[] {1, 1, 1, 1, 1, 1, 1, 1});
     String baseFailure = "Given planner did not perform DCT3_DST3_2D (NonSquare) as expected: ";
     if (!inputUnchanged) {
       throw new IllegalArgumentException(baseFailure + "Input was modified.");
@@ -77,7 +77,7 @@ public class FftPlanFactory {
     if (plan.getOutputData() != output) {
       throw new IllegalArgumentException(baseFailure + "Output data array must be identical to the given output data array.");
     }
-    double[] expectedOutput = {2.414213562373095, -0.41421356237309515};
+    double[] expectedOutput = {12.13707118454409, -3.6131259297527527, 1.6131259297527527, -0.48021693505171026, 2.0823922002923947, -0.619914404421775, 0.2767686539141552, -0.08239220029239402};
     if (!arraysAlmostEqual(expectedOutput, output)) {
       throw new IllegalArgumentException(
           MessageFormat.format(baseFailure + "Expected output {0} but was {1}",
