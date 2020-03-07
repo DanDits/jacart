@@ -1,5 +1,5 @@
 Region.Id:Integer,Region.Data:Double,Region.Name:String
-13,2000,A
--13,2000,B
-505055005,600,C
-123,1500,D
+13,200000000,A
+-13,200000,B
+505055005,1,C
+123,3,D

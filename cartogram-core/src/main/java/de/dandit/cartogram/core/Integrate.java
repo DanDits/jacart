@@ -39,8 +39,8 @@ public class Integrate {
     final double scale01 = (1. - deltaX) * deltaY;
     final double scale10 = deltaX * (1. - deltaY);
     final double scale11 = deltaX * deltaY;
-    final int x0Offset = x0I * lx;
-    final int x1Offset = x1I * lx;
+    final int x0Offset = x0I * ly;
+    final int x1Offset = x1I * ly;
     outX[outIndex] = scale00 * gridX[x0Offset + y0I] + scale01 * gridX[x0Offset + y1I]
       + scale10 * gridX[x1Offset + y0I] + scale11 * gridX[x1Offset + y1I];
     outY[outIndex] = scale00 * gridY[x0Offset + y0I] + scale01 * gridY[x0Offset + y1I]

@@ -64,6 +64,7 @@ public class ExecuteCartogramTest {
       "sample5_geo.json, sample5_data.csv, result5.eps", // single region: no transformation
       "sample6_geo.json, sample6_data.csv, result6.eps", // testing handling of two missing values
       "sample6_geo.json, sample7_data.csv, result7.eps", // testing handling of single missing value
+      "sample8_geo.json, sample8_data.csv, result8.eps", // portrait mode, testing non square mode with lx!=ly
       "sample8_geo.json, sample9_data.csv, result9.eps", // portrait mode, testing non square mode with lx!=ly
       "sample10_geo.json, sample10_data.csv, result10.eps", // regions with very small areas that should be enhanced
       "sample11_geo.json, sample11_data.csv, result11.eps", // multipolygon with holes
@@ -102,7 +103,7 @@ public class ExecuteCartogramTest {
   @DisplayName("Divergence creating cartogram to EPS")
   @ParameterizedTest(name = "processing \"{0}\" with \"{1}\" is expect to not converge")
   @CsvSource({
-    "sample8_geo.json, sample8_data.csv", // portrait mode, testing non square mode with lx!=ly, does not converge // TODO test 8+9 in gocart and see how the eps file looks like
+      "sample13_geo.json, sample13_data.csv", // portrait mode, testing non square mode with lx!=ly, does not converge
   })
   public void creatingCartogramFailsConvergenceGoal(
     String geoJsonResource,
