@@ -13,6 +13,11 @@
   <description>The jacart project for creating cartograms</description>
   <url>https://github.com/DanDits/jacart</url>
 
+  <modules>
+    <module>cartogram-core</module>
+    <module>cartogram-geo</module>
+  </modules>
+
   <licenses>
     <license>
       <name>MIT License</name>
