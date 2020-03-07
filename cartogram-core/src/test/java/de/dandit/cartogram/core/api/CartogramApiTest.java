@@ -15,7 +15,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import de.dandit.cartogram.core.PolygonUtilities;
 
-class CartogramApiTest {
+public class CartogramApiTest {
 
   @Test
   public void handlesNaNValueWithOnlyOneValidRegion() throws ConvergenceGoalFailedException {

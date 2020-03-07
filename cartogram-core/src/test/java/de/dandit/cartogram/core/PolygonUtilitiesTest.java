@@ -3,7 +3,7 @@ package de.dandit.cartogram.core;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class PolygonUtilitiesTest {
+public class PolygonUtilitiesTest {
 
   @Test
   public void getCWOrientedArea() {

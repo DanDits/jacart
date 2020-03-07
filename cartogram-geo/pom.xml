@@ -3,64 +3,31 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>de.dandit</groupId>
+        <artifactId>cartogram</artifactId>
+        <version>0.1.0</version>
+    </parent>
 
-    <groupId>de.dandit</groupId>
     <artifactId>cartogram-geo</artifactId>
-    <version>0.1.0</version>
     <packaging>jar</packaging>
 
     <name>Cartogram geo</name>
     <description>The jacart geo project for integrating geotools and jts with cartogram creation</description>
-    <url>https://github.com/DanDits/jacart</url>
-
-    <licenses>
-        <license>
-            <name>MIT License</name>
-            <url>https://spdx.org/licenses/MIT.html</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <developers>
-        <developer>
-            <name>Daniel Dittmar</name>
-            <email>dans.ditt@gmail.com</email>
-            <organization>Github</organization>
-            <organizationUrl>https://github.com/DanDits</organizationUrl>
-        </developer>
-    </developers>
-
-    <scm>
-        <connection>scm:git:git:/github.com/DanDits/jacart.git</connection>
-        <developerConnection>scm:git:ssh://github.com:DanDits/jacart.git</developerConnection>
-        <url>https://github.com/DanDits/jacart/tree/master</url>
-    </scm>
 
     <repositories>
+        <!-- Required for the gt-main and gt-geojson dependencies from org.geotools-->
         <repository>
             <id>OSGeo</id>
             <url>https://download.osgeo.org/webdav/geotools/</url>
         </repository>
     </repositories>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>11</source>
-                    <target>11</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
     <dependencies>
         <dependency>
             <groupId>de.dandit</groupId>
             <artifactId>cartogram-core</artifactId>
-            <version>0.1.0</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -77,7 +44,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.6.0</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

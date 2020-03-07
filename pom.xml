@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>de.dandit</groupId>
+  <artifactId>cartogram</artifactId>
+  <version>0.1.0</version>
+  <packaging>pom</packaging>
+
+  <name>Cartogram Parent</name>
+  <description>The jacart project for creating cartograms</description>
+  <url>https://github.com/DanDits/jacart</url>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://spdx.org/licenses/MIT.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Daniel Dittmar</name>
+      <email>dans.ditt@gmail.com</email>
+      <organization>Github</organization>
+      <organizationUrl>https://github.com/DanDits</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git:/github.com/DanDits/jacart.git</connection>
+    <developerConnection>scm:git:ssh://github.com:DanDits/jacart.git</developerConnection>
+    <url>https://github.com/DanDits/jacart/tree/master</url>
+  </scm>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>11</source>
+          <target>11</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.2</version>
+      </plugin>
+    </plugins>
+  </build>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <junit.version>5.6.0</junit.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
