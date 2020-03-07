@@ -1,6 +1,6 @@
 package de.dandit.cartogram.core.context;
 
-import de.dandit.cartogram.core.pub.Logging;
+import de.dandit.cartogram.core.api.Logging;
 
 public class CartogramContext {
 

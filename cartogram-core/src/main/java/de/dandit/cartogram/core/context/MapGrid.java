@@ -3,7 +3,7 @@ package de.dandit.cartogram.core.context;
 import java.util.Arrays;
 
 import de.dandit.cartogram.core.dft.FftPlan2D;
-import de.dandit.cartogram.core.pub.FftPlanFactory;
+import de.dandit.cartogram.core.api.FftPlanFactory;
 
 public class MapGrid {
   private final int lx;

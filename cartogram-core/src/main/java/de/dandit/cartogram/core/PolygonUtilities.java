@@ -2,8 +2,8 @@ package de.dandit.cartogram.core;
 
 import de.dandit.cartogram.core.context.PolygonData;
 import de.dandit.cartogram.core.context.RegionData;
-import de.dandit.cartogram.core.pub.Logging;
-import de.dandit.cartogram.core.pub.MapFeatureData;
+import de.dandit.cartogram.core.api.Logging;
+import de.dandit.cartogram.core.api.MapFeatureData;
 
 
 public class PolygonUtilities {
@@ -110,12 +110,12 @@ public class PolygonUtilities {
       }
 
 
-      return createOverridenPolygons(nonTinyRingCount, nonTinyRingsX, nonTinyRingsY, nonTinyRingsCount, nonTinyRingId);
+      return createOverriddenPolygons(nonTinyRingCount, nonTinyRingsX, nonTinyRingsY, nonTinyRingsCount, nonTinyRingId);
     }
     return polygonData;
   }
 
-  private static PolygonData createOverridenPolygons(int nonTinyRingCount, double[][] nonTinyRingX,
+  private static PolygonData createOverriddenPolygons(int nonTinyRingCount, double[][] nonTinyRingX,
       double[][] nonTinyRingY, int[] nonTinyRingsCount, int[] nonTinyPolygonId) {
     int[] polygonId = new int[nonTinyRingCount];
     int[] ringCount = new int[nonTinyRingCount];
@@ -123,18 +123,18 @@ public class PolygonUtilities {
       polygonId[ringIndex] = nonTinyPolygonId[ringIndex];
       ringCount[ringIndex] = nonTinyRingsCount[ringIndex];
     }
-    double[][] polycornX = new double[nonTinyRingCount][];
-    double[][] polycornY = new double[nonTinyRingCount][];
+    double[][] ringsX = new double[nonTinyRingCount][];
+    double[][] ringsY = new double[nonTinyRingCount][];
     for (int ringIndex = 0; ringIndex < nonTinyRingCount; ringIndex++) {
-      polycornX[ringIndex] = new double[ringCount[ringIndex]];
-      polycornY[ringIndex] = new double[ringCount[ringIndex]];
+      ringsX[ringIndex] = new double[ringCount[ringIndex]];
+      ringsY[ringIndex] = new double[ringCount[ringIndex]];
     }
     for (int ringIndex = 0; ringIndex < nonTinyRingCount; ringIndex++) {
       for (int pointIndex = 0; pointIndex < ringCount[ringIndex]; pointIndex++) {
-        polycornX[ringIndex][pointIndex] = nonTinyRingX[ringIndex][pointIndex];
-        polycornY[ringIndex][pointIndex] = nonTinyRingY[ringIndex][pointIndex];
+        ringsX[ringIndex][pointIndex] = nonTinyRingX[ringIndex][pointIndex];
+        ringsY[ringIndex][pointIndex] = nonTinyRingY[ringIndex][pointIndex];
       }
     }
-    return new PolygonData(polycornX, polycornY, polygonId);
+    return new PolygonData(ringsX, ringsY, polygonId);
   }
 }

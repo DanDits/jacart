@@ -1,4 +1,4 @@
-package de.dandit.cartogram.core.pub;
+package de.dandit.cartogram.core.api;
 
 /*
  * Published interfaces/classes that offer injection points/hooks to modify behavior and implementation.

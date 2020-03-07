@@ -14,13 +14,13 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
-import de.dandit.cartogram.core.ConvergenceGoalFailedException;
-import de.dandit.cartogram.core.pub.Region;
-import de.dandit.cartogram.core.pub.CartogramApi;
-import de.dandit.cartogram.core.pub.CartogramConfig;
-import de.dandit.cartogram.core.pub.CartogramResult;
-import de.dandit.cartogram.core.pub.MapFeatureData;
-import de.dandit.cartogram.core.pub.ResultRegion;
+import de.dandit.cartogram.core.api.ConvergenceGoalFailedException;
+import de.dandit.cartogram.core.api.Region;
+import de.dandit.cartogram.core.api.CartogramApi;
+import de.dandit.cartogram.core.api.CartogramConfig;
+import de.dandit.cartogram.core.api.CartogramResult;
+import de.dandit.cartogram.core.api.MapFeatureData;
+import de.dandit.cartogram.core.api.ResultRegion;
 import de.dandit.cartogram.geo.data.CsvData;
 import de.dandit.cartogram.geo.data.CsvDataImport;
 import de.dandit.cartogram.geo.data.GeoJsonIO;
@@ -45,7 +45,7 @@ public class ExecuteCartogram {
                                           OutputStream jsonOut) throws IOException, ConvergenceGoalFailedException {
     FeatureConverter featureConverter = new FeatureConverter(new GeometryConverter(new GeometryFactory()));
     CartogramResult result = createMapFeatureData(config, featureConverter, geoJsonResource, dataResource);
-    outputPolycornToFile(featureConverter, result.getResultRegions(), jsonOut);
+    outputRegionsToFile(featureConverter, result.getResultRegions(), jsonOut);
   }
 
   private static Double extractData(CsvData data, int regionIdColumnIndex, int regionDataColumnIndex, Integer id) {
@@ -107,7 +107,7 @@ public class ExecuteCartogram {
     };
   }
 
-  private static void outputPolycornToFile(FeatureConverter featureConverter, List<ResultRegion> polygons, OutputStream jsonOut) throws IOException {
+  private static void outputRegionsToFile(FeatureConverter featureConverter, List<ResultRegion> polygons, OutputStream jsonOut) throws IOException {
     DefaultFeatureCollection resultAsGeo = featureConverter.convertToFeatureCollection(polygons);
     new GeoJsonIO().exportData(
       resultAsGeo,

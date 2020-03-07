@@ -6,7 +6,8 @@ import java.util.Objects;
 import de.dandit.cartogram.core.context.CartogramContext;
 import de.dandit.cartogram.core.context.MapGrid;
 import de.dandit.cartogram.core.context.RegionData;
-import de.dandit.cartogram.core.pub.ParallelismConfig;
+import de.dandit.cartogram.core.api.ConvergenceGoalFailedException;
+import de.dandit.cartogram.core.api.ParallelismConfig;
 
 public class Cartogram {
   private final Integrate integrate;
@@ -19,7 +20,8 @@ public class Cartogram {
     this.density = new Density(context);
   }
 
-  public CartogramContext calculate(ParallelismConfig parallelismConfig, boolean scaleToOriginalPolygonRegion, double maxPermittedAreaError) throws ConvergenceGoalFailedException {
+  public CartogramContext calculate(ParallelismConfig parallelismConfig, boolean scaleToOriginalPolygonRegion, double maxPermittedAreaError) throws
+      ConvergenceGoalFailedException {
     boolean onlyOneRegionExists = context.isSingleRegion();
     if (onlyOneRegionExists) {
       context.getLogging().debug("Hint: Only one region exists, output will only be an affine transformation.");
@@ -28,7 +30,7 @@ public class Cartogram {
     RegionData regionData = context.getRegionData();
     AreaErrorResult initialAreaError = calculateMaximumAreaError(
       context.getRegionData().getTargetArea(),
-      context.getRegionData().getRingInRegion(),
+      context.getRegionData().getRingsInRegion(),
       regionData.getRingsX(),
       regionData.getRingsY());
     if (initialAreaError.maximumAreaError <= maxPermittedAreaError) {
@@ -59,7 +61,7 @@ public class Cartogram {
     double[][] cartogramRingsY = regionData.getCartogramRingsY();
     AreaErrorResult error = calculateMaximumAreaError(
       context.getRegionData().getTargetArea(),
-      context.getRegionData().getRingInRegion(),
+      context.getRegionData().getRingsInRegion(),
       cartogramRingsX,
       cartogramRingsY);
     double maximumAreaError = error.maximumAreaError;
@@ -90,7 +92,7 @@ public class Cartogram {
       lastMaximumAreaError = maximumAreaError;
       error = calculateMaximumAreaError(
         context.getRegionData().getTargetArea(),
-        context.getRegionData().getRingInRegion(),
+        context.getRegionData().getRingsInRegion(),
         cartogramRingsX,
         cartogramRingsY);
       maximumAreaError = error.maximumAreaError;
@@ -112,7 +114,7 @@ public class Cartogram {
 
     double finalMaxAreaError = calculateMaximumAreaError(
       context.getRegionData().getTargetArea(),
-      context.getRegionData().getRingInRegion(),
+      context.getRegionData().getRingsInRegion(),
       cartogramRingsX,
       cartogramRingsY).maximumAreaError;
     context.getLogging().debug("Final error: {0}", finalMaxAreaError);
@@ -214,38 +216,38 @@ public class Cartogram {
     }
   }
 
-  public static AreaErrorResult calculateMaximumAreaError(double[] targetArea, int[][] ringInRegion, double[][] cornX, double[][] cornY) {
-    int ringCount = ringInRegion.length;
+  public static AreaErrorResult calculateMaximumAreaError(double[] targetArea, int[][] ringsInRegion, double[][] ringsX, double[][] ringsY) {
+    int ringCount = ringsInRegion.length;
     double[] areaError = new double[ringCount];
-    double[] cartogramArea = new double[ringCount];
+    double[] ringsArea = new double[ringCount];
     for (int i = 0; i < ringCount; i++) {
       // if all polygons in a region were tiny they will be removed and thus it will be impossible for
       // the cartogram area to reach the target area (e.g.: Washington D.C.)
       // or we could also remove the region and ignore it completely
-      int[] polyI = ringInRegion[i];
-      if (polyI.length > 0) {
-        cartogramArea[i] = 0.0;
-        for (int value : polyI) {
-          cartogramArea[i] += PolygonUtilities.calculateOrientedArea(cornX[value], cornY[value]);
+      int[] ringInRegionI = ringsInRegion[i];
+      if (ringInRegionI.length > 0) {
+        ringsArea[i] = 0.0;
+        for (int value : ringInRegionI) {
+          ringsArea[i] += PolygonUtilities.calculateOrientedArea(ringsX[value], ringsY[value]);
         }
       } else {
-        cartogramArea[i] = -1.;
+        ringsArea[i] = -1.;
       }
     }
     double summedTargetArea = 0.;
     for (int i = 0; i < ringCount; i++) {
       summedTargetArea += targetArea[i];
     }
-    double summedCartogramArea = 0.;
+    double totalRingArea = 0.;
     for (int i = 0; i < ringCount; i++) {
-      if (cartogramArea[i] >= 0) {
-        summedCartogramArea += cartogramArea[i];
+      if (ringsArea[i] >= 0) {
+        totalRingArea += ringsArea[i];
       }
     }
     for (int i = 0; i < ringCount; i++) {
-      if (cartogramArea[i] >= 0) {
-        double relativeArea = targetArea[i] * (summedCartogramArea) / summedTargetArea;
-        areaError[i] = cartogramArea[i] / relativeArea - 1.;
+      if (ringsArea[i] >= 0) {
+        double relativeArea = targetArea[i] * (totalRingArea) / summedTargetArea;
+        areaError[i] = ringsArea[i] / relativeArea - 1.;
       } else {
         areaError[i] = 0; // ignore the region
       }
@@ -254,6 +256,6 @@ public class Cartogram {
     for (int i = 0; i < ringCount; i++) {
       max = Math.max(max, Math.abs(areaError[i]));
     }
-    return new AreaErrorResult(max, summedCartogramArea);
+    return new AreaErrorResult(max, totalRingArea);
   }
 }

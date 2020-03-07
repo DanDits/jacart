@@ -1,4 +1,4 @@
-package de.dandit.cartogram.core.pub;
+package de.dandit.cartogram.core.api;
 
 /**
  * Describes a region that is the central unit in the cartogram transformation:

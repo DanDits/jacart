@@ -1,8 +1,8 @@
 package de.dandit.cartogram.geo.convert;
 
-import de.dandit.cartogram.core.pub.Region;
-import de.dandit.cartogram.core.pub.ResultPolygon;
-import de.dandit.cartogram.core.pub.ResultRegion;
+import de.dandit.cartogram.core.api.Region;
+import de.dandit.cartogram.core.api.ResultPolygon;
+import de.dandit.cartogram.core.api.ResultRegion;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;

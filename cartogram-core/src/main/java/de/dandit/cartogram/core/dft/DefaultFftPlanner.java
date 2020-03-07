@@ -1,7 +1,7 @@
 package de.dandit.cartogram.core.dft;
 
-import de.dandit.cartogram.core.pub.Fft2DPlanner;
-import de.dandit.cartogram.core.pub.ParallelismConfig;
+import de.dandit.cartogram.core.api.Fft2DPlanner;
+import de.dandit.cartogram.core.api.ParallelismConfig;
 
 /**
  * For computing FFTs we have quite a range of possibilities:

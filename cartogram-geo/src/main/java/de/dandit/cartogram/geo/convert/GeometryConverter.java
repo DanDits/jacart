@@ -1,7 +1,7 @@
 package de.dandit.cartogram.geo.convert;
 
-import de.dandit.cartogram.core.pub.Region;
-import de.dandit.cartogram.core.pub.ResultPolygon;
+import de.dandit.cartogram.core.api.Region;
+import de.dandit.cartogram.core.api.ResultPolygon;
 import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;

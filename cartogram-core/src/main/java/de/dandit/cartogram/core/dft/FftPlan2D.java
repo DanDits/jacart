@@ -1,6 +1,6 @@
 package de.dandit.cartogram.core.dft;
 
-import de.dandit.cartogram.core.pub.ParallelismConfig;
+import de.dandit.cartogram.core.api.ParallelismConfig;
 
 import java.util.stream.IntStream;
 

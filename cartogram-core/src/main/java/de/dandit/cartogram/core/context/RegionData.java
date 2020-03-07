@@ -5,10 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.dandit.cartogram.core.pub.Region;
+import de.dandit.cartogram.core.api.Region;
 
 public class RegionData {
-  private final int[] regionId; // TODO maybe rather: ringRegionId as at index i regionId[i] is the region id of the region the ring belongs to
+  private final int[] regionId;
   private final boolean[] regionNaN;
   private final double[] regionPerimeter;
   private final int[][] ringInRegion;
@@ -18,7 +18,6 @@ public class RegionData {
   private final double[][] cartogramRingsX;
   private final double[][] cartogramRingsY;
   private final int[][] ringsInPolygonByRegion;
-  // TODO make naming consistent: ring, polygon, region,...
 
   public RegionData(List<Region> regions, int[] polygonId, double[][] ringsX, double[][] ringsY) {
     this.ringsX = ringsX;
@@ -60,7 +59,7 @@ public class RegionData {
 
   private static int[][] initPolygonInRegions(Map<Integer, Integer> regionIdInverse, int[] regionId, int[] polygonId) {
     int regionCount = regionId.length;
-    int[][] polyinreg = new int[regionCount][];
+    int[][] ringsInRegion = new int[regionCount][];
     int lastId = polygonId[0];
     int[] ringsInRegionCount = new int[regionCount];
     double polygonCount = polygonId.length;
@@ -73,7 +72,7 @@ public class RegionData {
       }
     }
     for (int j = 0; j < regionCount; j++) {
-      polyinreg[j] = new int[ringsInRegionCount[j]];
+      ringsInRegion[j] = new int[ringsInRegionCount[j]];
     }
     for (int j = 0; j < regionCount; j++) {
       ringsInRegionCount[j] = 0;
@@ -82,16 +81,16 @@ public class RegionData {
     for (int j = 0; j < polygonCount; j++) {
       if (polygonId[j] != -99999) {
         int regionIndex = regionIdToIndex(regionIdInverse, polygonId[j]);
-        polyinreg[regionIndex]
+        ringsInRegion[regionIndex]
           [ringsInRegionCount[regionIndex]++] = j;
         lastId = polygonId[j];
       } else {
         int regionIndex = regionIdToIndex(regionIdInverse, lastId);
-        polyinreg[regionIndex]
+        ringsInRegion[regionIndex]
           [ringsInRegionCount[regionIndex]++] = j;
       }
     }
-    return polyinreg;
+    return ringsInRegion;
   }
 
   public double[][] getRingsX() {
@@ -114,7 +113,7 @@ public class RegionData {
     return regionPerimeter;
   }
 
-  public int[][] getRingInRegion() {
+  public int[][] getRingsInRegion() {
     return ringInRegion;
   }
 

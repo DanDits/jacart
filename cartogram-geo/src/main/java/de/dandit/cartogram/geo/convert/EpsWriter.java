@@ -6,8 +6,8 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
 
-import de.dandit.cartogram.core.pub.ResultPolygon;
-import de.dandit.cartogram.core.pub.ResultRegion;
+import de.dandit.cartogram.core.api.ResultPolygon;
+import de.dandit.cartogram.core.api.ResultRegion;
 
 public class EpsWriter {
   public static final int GRAT_LINES = 64;

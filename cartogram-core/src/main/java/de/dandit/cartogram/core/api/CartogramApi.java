@@ -1,4 +1,4 @@
-package de.dandit.cartogram.core.pub;
+package de.dandit.cartogram.core.api;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.dandit.cartogram.core.Cartogram;
-import de.dandit.cartogram.core.ConvergenceGoalFailedException;
 import de.dandit.cartogram.core.Density;
 import de.dandit.cartogram.core.context.CartogramContext;
 
@@ -40,20 +39,20 @@ public class CartogramApi {
 
     double maximumAreaError = Cartogram.calculateMaximumAreaError(
         context.getRegionData().getTargetArea(),
-        context.getRegionData().getRingInRegion(),
+        context.getRegionData().getRingsInRegion(),
         context.getRegionData().getCartogramRingsX(),
         context.getRegionData().getCartogramRingsY())
         .getMaximumAreaError();
 
     int[] regionIds = context.getRegionData().getRegionId();
     List<ResultRegion> resultRegions = new ArrayList<>();
-    int[][] polyinreg = context.getRegionData().getRingInRegion();
-    double[][] cartcornX = context.getRegionData().getCartogramRingsX();
-    double[][] cartcornY = context.getRegionData().getCartogramRingsY();
+    int[][] ringsInRegion = context.getRegionData().getRingsInRegion();
+    double[][] cartogramRingsX = context.getRegionData().getCartogramRingsX();
+    double[][] cartogramRingsY = context.getRegionData().getCartogramRingsY();
     int[][] ringsInPolygonByRegion = context.getRegionData().getRingsInPolygonByRegion();
     boolean[] regionNaN = context.getRegionData().getRegionNaN();
     for (int i = 0; i < regionIds.length; i++) {
-      ResultRegion resultRegion = createResultRegion(polyinreg[i], ringsInPolygonByRegion[i], cartcornX, cartcornY,
+      ResultRegion resultRegion = createResultRegion(ringsInRegion[i], ringsInPolygonByRegion[i], cartogramRingsX, cartogramRingsY,
         regionNaN[i]);
       resultRegions.add(resultRegion);
     }
@@ -68,16 +67,16 @@ public class CartogramApi {
 
   private ResultRegion createResultRegion(int[] polyIndices,
                                           int[] ringIsHoleOfPolygon,
-                                          double[][] cartcornX,
-                                          double[][] cartcornY,
+                                          double[][] cartogramRingsX,
+                                          double[][] cartogramRingsY,
                                           boolean regionNaN) {
     Map<Integer, double[]> shellsX = new HashMap<>();
     Map<Integer, double[]> shellsY = new HashMap<>();
     Map<Integer, List<double[]>> holesX = new HashMap<>();
     Map<Integer, List<double[]>> holesY = new HashMap<>();
     for (int j = 0; j < polyIndices.length; j++) {
-      double[] cornersX = cartcornX[polyIndices[j]];
-      double[] cornersY = cartcornY[polyIndices[j]];
+      double[] cornersX = cartogramRingsX[polyIndices[j]];
+      double[] cornersY = cartogramRingsY[polyIndices[j]];
       if (ringIsHoleOfPolygon[j] < 0) {
         int index = -(ringIsHoleOfPolygon[j] + 1);
         shellsX.put(index, cornersX);

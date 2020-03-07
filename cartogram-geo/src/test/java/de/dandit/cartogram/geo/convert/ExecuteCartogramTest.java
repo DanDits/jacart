@@ -1,10 +1,10 @@
 package de.dandit.cartogram.geo.convert;
 
-import de.dandit.cartogram.core.ConvergenceGoalFailedException;
-import de.dandit.cartogram.core.pub.CartogramConfig;
-import de.dandit.cartogram.core.pub.FftPlanFactory;
-import de.dandit.cartogram.core.pub.Logging;
-import de.dandit.cartogram.core.pub.ParallelismConfig;
+import de.dandit.cartogram.core.api.ConvergenceGoalFailedException;
+import de.dandit.cartogram.core.api.CartogramConfig;
+import de.dandit.cartogram.core.api.FftPlanFactory;
+import de.dandit.cartogram.core.api.Logging;
+import de.dandit.cartogram.core.api.ParallelismConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;

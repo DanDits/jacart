@@ -1,4 +1,4 @@
-package de.dandit.cartogram.core.pub;
+package de.dandit.cartogram.core.api;
 
 import de.dandit.cartogram.core.dft.FftPlan2D;
 

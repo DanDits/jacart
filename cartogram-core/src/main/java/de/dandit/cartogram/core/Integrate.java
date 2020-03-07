@@ -6,8 +6,9 @@ import java.util.stream.IntStream;
 import de.dandit.cartogram.core.context.CartogramContext;
 import de.dandit.cartogram.core.context.MapGrid;
 import de.dandit.cartogram.core.dft.FftPlan2D;
-import de.dandit.cartogram.core.pub.Logging;
-import de.dandit.cartogram.core.pub.ParallelismConfig;
+import de.dandit.cartogram.core.api.ConvergenceGoalFailedException;
+import de.dandit.cartogram.core.api.Logging;
+import de.dandit.cartogram.core.api.ParallelismConfig;
 
 public class Integrate {
   private static final double INC_AFTER_ACC = 1.1;
