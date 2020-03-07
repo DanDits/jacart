@@ -37,11 +37,11 @@ public class DefaultFftPlanner implements Fft2DPlanner {
 
   @Override
   public FftPlan2D createDCT3_DST3_2D(int width, int height, double[] inputData, double[] outputData) {
-    return new FftPlan2D(parallelismConfig, width, height, inputData, outputData, DCT::inverseTransform, DST::inverseTransform);
+    return new FftPlan2D(parallelismConfig, width, height, inputData, outputData, DST::inverseTransform, DCT::inverseTransform);
   }
 
   @Override
   public FftPlan2D createDST3_DCT3_2D(int width, int height, double[] inputData, double[] outputData) {
-    return new FftPlan2D(parallelismConfig, width, height, inputData, outputData, DST::inverseTransform, DCT::inverseTransform);
+    return new FftPlan2D(parallelismConfig, width, height, inputData, outputData, DCT::inverseTransform, DST::inverseTransform);
   }
 }

@@ -5,4 +5,6 @@ module de.dandit.cartogram.geo {
   requires org.locationtech.jts;
 
   requires de.dandit.cartogram.core;
+
+  exports de.dandit.cartogram.geo.convert;
 }

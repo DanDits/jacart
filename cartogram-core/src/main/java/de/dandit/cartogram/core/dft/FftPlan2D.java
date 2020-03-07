@@ -8,8 +8,8 @@ public class FftPlan2D {
 
   private final int width;
   private final int height;
-  private final double[] inputTabularData; // row-major layout (so: first width elements are the first row)
-  private final double[] outputTabularData; // row-major layout (so: first width elements are the first row)
+  private final double[] inputTabularData; // column-major layout (so: first height elements are the first column)
+  private final double[] outputTabularData; // column-major layout (so: first height elements are the first column)
   private final double[] cosTableWidth;
   private final double[] sinTableWidth;
   private final double[] cosTableHeight;
@@ -19,7 +19,9 @@ public class FftPlan2D {
   private final ParallelismConfig parallelismConfig;
 
   public FftPlan2D(
-    ParallelismConfig parallelismConfig, int width, int height,
+    ParallelismConfig parallelismConfig,
+    int width,
+    int height,
     double[] inputTabularData,
     double[] outputTabularData,
     InPlaceDftAlgorithm inplaceAlgorithmRows,
@@ -71,13 +73,10 @@ public class FftPlan2D {
     parallelismConfig.apply(IntStream.range(0, width))
         .forEach(col -> {
           double[] heightBuffer = new double[height];
-          for (int row = 0; row < height; row++) {
-            heightBuffer[row] = outputTabularData[row * width + col];
-          }
+          int indexOffset = col * height;
+          System.arraycopy(outputTabularData, indexOffset, heightBuffer, 0, heightBuffer.length);
           inplaceAlgorithmColumns.execute(heightBuffer, cosTableHeight, sinTableHeight);
-          for (int row = 0; row < height; row++) {
-            outputTabularData[row * width + col] = heightBuffer[row];
-          }
+          System.arraycopy(heightBuffer, 0, outputTabularData, indexOffset, heightBuffer.length);
         });
   }
 
@@ -85,13 +84,16 @@ public class FftPlan2D {
     parallelismConfig.apply(IntStream.range(0, height))
         .forEach(row -> {
           double[] widthBuffer = new double[width];
-          int indexOffset = row * width;
-          System.arraycopy(outputTabularData, indexOffset, widthBuffer, 0, widthBuffer.length);
+          for (int col = 0; col < width; col++) {
+            widthBuffer[col] = outputTabularData[col * height + row];
+          }
           inplaceAlgorithmRows.execute(
               widthBuffer,
               cosTableWidth,
               sinTableWidth);
-          System.arraycopy(widthBuffer, 0, outputTabularData, indexOffset, widthBuffer.length);
+          for (int col = 0; col < width; col++) {
+            outputTabularData[col * height + row] = widthBuffer[col];
+          }
         });
   }
 
