@@ -52,11 +52,9 @@ public class Integrate {
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
     double[] rhoFt = mapGrid.getRhoFt();
-    double di;
-    int i, j;
 
     int initialRhoFt = 4 * lx * ly;
-    for (i = 0; i < lx * ly; i++) {
+    for (int i = 0; i < lx * ly; i++) {
       rhoFt[i] /= initialRhoFt;
     }
 
@@ -64,36 +62,37 @@ public class Integrate {
     FftPlan2D gridFluxInitYPlan = mapGrid.getGridFluxInitY();
     double[] gridFluxInitX = gridFluxInitXPlan.getOutputData();
     double[] gridFluxInitY = gridFluxInitYPlan.getOutputData();
-    for (i = 0; i < lx - 1; i++) {
-      di = i;
-      for (j = 0; j < ly; j++)
+    for (int i = 0; i < lx - 1; i++) {
+      double di = i;
+      for (int j = 0; j < ly; j++) {
         gridFluxInitX[i * ly + j] =
-          -rhoFt[(i + 1) * ly + j] /
-            (Math.PI * ((di + 1) / (double) lx + (j / (di + 1))
-              * (j / (double) ly)
-              * ((double) lx / (double) ly)));
+            -rhoFt[(i + 1) * ly + j] /
+                (Math.PI * ((di + 1) / (double) lx + (j / (di + 1))
+                    * (j / (double) ly)
+                    * ((double) lx / (double) ly)));
+      }
     }
-    for (j = 0; j < ly; j++)
+    for (int j = 0; j < ly; j++) {
       gridFluxInitX[(lx - 1) * ly + j] = 0.0;
-    for (i = 0; i < lx; i++) {
-      di = i;
-      for (j = 0; j < ly - 1; j++)
-        gridFluxInitY[i * ly + j] =
-          -rhoFt[i * ly + j + 1] /
-            (Math.PI * ((di / (j + 1)) * (di / (double) lx) * ((double) ly / (double) lx)
-              + (j + 1) / (double) ly));
     }
-    for (i = 0; i < lx; i++)
+    for (int i = 0; i < lx; i++) {
+      double di = i;
+      for (int j = 0; j < ly - 1; j++) {
+        gridFluxInitY[i * ly + j] =
+            -rhoFt[i * ly + j + 1] /
+                (Math.PI * ((di / (j + 1)) * (di / (double) lx) * ((double) ly / (double) lx)
+                    + (j + 1) / (double) ly));
+      }
+    }
+    for (int i = 0; i < lx; i++) {
       gridFluxInitY[i * ly + ly - 1] = 0.0;
-
+    }
 
     gridFluxInitXPlan.execute();
     gridFluxInitYPlan.execute();
   }
 
   void ffbIntegrate(ParallelismConfig parallelismConfig) throws ConvergenceGoalFailedException {
-    double[]   interpolatedGridSpeedX,   interpolatedHalfGridSpeedX,   interpolatedGridSpeedY, interpolatedHalfGridSpeedY;
-
     MapGrid mapGrid = context.getMapGrid();
     int lx = mapGrid.getLx();
     int ly = mapGrid.getLy();
@@ -112,11 +111,11 @@ public class Integrate {
     double[] midY = new double[lx * ly];
     Arrays.fill(midY, Double.NaN);
 
-      interpolatedGridSpeedX = new double[lx * ly];
-      interpolatedGridSpeedY = new double[lx * ly];
+    double[] interpolatedGridSpeedX = new double[lx * ly];
+    double[] interpolatedGridSpeedY = new double[lx * ly];
 
-      interpolatedHalfGridSpeedX = new double[lx * ly];
-    interpolatedHalfGridSpeedY = new double[lx * ly];
+    double[] interpolatedHalfGridSpeedX = new double[lx * ly];
+    double[] interpolatedHalfGridSpeedY = new double[lx * ly];
 
     initGridSpeed();
     double t = 0.0;
