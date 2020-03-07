@@ -33,23 +33,32 @@ public class CartogramApi {
    * @throws ConvergenceGoalFailedException If convergence fails or is too slow. Can happen when tiny regions
    * need to be scaled to huge regions or vice versa.
    */
-  public CartogramResult calculateGaSeMoCartogram(MapFeatureData mapFeatureData, CartogramConfig config) throws ConvergenceGoalFailedException {
+  public CartogramResult calculateGaSeMo(MapFeatureData mapFeatureData, CartogramConfig config) throws ConvergenceGoalFailedException {
     CartogramContext cartogramContext = Density.initializeContext(mapFeatureData, config);
     CartogramContext context = new Cartogram(cartogramContext)
       .calculate(config.getParallelismConfig(), config.isScaleToOriginalPolygonRegion(), config.getMaxPermittedAreaError());
+
+    double maximumAreaError = Cartogram.calculateMaximumAreaError(
+        context.getRegionData().getTargetArea(),
+        context.getRegionData().getRingInRegion(),
+        context.getRegionData().getCartogramRingsX(),
+        context.getRegionData().getCartogramRingsY())
+        .getMaximumAreaError();
+
     int[] regionIds = context.getRegionData().getRegionId();
     List<ResultRegion> resultRegions = new ArrayList<>();
     int[][] polyinreg = context.getRegionData().getRingInRegion();
     double[][] cartcornX = context.getRegionData().getCartogramRingsX();
     double[][] cartcornY = context.getRegionData().getCartogramRingsY();
     int[][] ringsInPolygonByRegion = context.getRegionData().getRingsInPolygonByRegion();
-    boolean[] regionNa = context.getRegionData().getRegionNaN();
+    boolean[] regionNaN = context.getRegionData().getRegionNaN();
     for (int i = 0; i < regionIds.length; i++) {
       ResultRegion resultRegion = createResultRegion(polyinreg[i], ringsInPolygonByRegion[i], cartcornX, cartcornY,
-        regionNa[i]);
+        regionNaN[i]);
       resultRegions.add(resultRegion);
     }
     return new CartogramResult(
+      maximumAreaError,
       resultRegions,
       cartogramContext.getMapGrid().getGridProjectionX(),
       cartogramContext.getMapGrid().getGridProjectionY(),

@@ -4,7 +4,7 @@ import java.util.List;
 
 public class ResultRegion {
   private final List<ResultPolygon> polygons;
-  private final boolean isNaN; // TODO create a test for NaN
+  private final boolean isNaN;
 
   public ResultRegion(List<ResultPolygon> polygons, boolean isNaN) {
     this.polygons = polygons;

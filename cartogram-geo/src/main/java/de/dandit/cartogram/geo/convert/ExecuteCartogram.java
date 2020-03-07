@@ -82,7 +82,7 @@ public class ExecuteCartogram {
       bounds.getMaxY(),
       regions,
       targetAreaPerRegion);
-    return new CartogramApi().calculateGaSeMoCartogram(mapFeatureData, config);
+    return new CartogramApi().calculateGaSeMo(mapFeatureData, config);
   }
 
   private static int extractFeatureId(SimpleFeature feature) {

@@ -41,6 +41,9 @@ public class Cartogram {
         cartogramRingsX[i] = Arrays.copyOf(polygonRingsX[i], polygonRingsX[i].length);
         cartogramRingsY[i] = Arrays.copyOf(polygonRingsY[i], polygonRingsY[i].length);
       }
+      if (scaleToOriginalPolygonRegion) {
+        scaleToOriginalPolygonRegion(mapGrid, cartogramRingsX, cartogramRingsY);
+      }
       return context;
     }
     int lx = mapGrid.getLx();
@@ -204,6 +207,10 @@ public class Cartogram {
     private AreaErrorResult(double maximumAreaError, double summedCartogramArea) {
       this.maximumAreaError = maximumAreaError;
       this.summedCartogramArea = summedCartogramArea;
+    }
+
+    public double getMaximumAreaError() {
+      return maximumAreaError;
     }
   }
 
