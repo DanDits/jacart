@@ -4,12 +4,12 @@ import java.util.List;
 
 /**
  * Following is the input and how it is understood:
- * <p>
- * mapMinX: The minimum x value of the bounding box of all features.
- * mapMaxX: The maximum x value of the bounding box of all features.
- * mapMinY: The minimum y value of the bounding box of all features.
- * mapMaxY: The maximum y value of the bounding box of all features.
- * <p>
+ * <ul>
+ * <li>mapMinX: The minimum x value of the bounding box of all features.</li>
+ * <li>mapMaxX: The maximum x value of the bounding box of all features.</li>
+ * <li>mapMinY: The minimum y value of the bounding box of all features.</li>
+ * <li>mapMaxY: The maximum y value of the bounding box of all features.</li>
+ * </ul>
  */
 public class MapFeatureData {
 
