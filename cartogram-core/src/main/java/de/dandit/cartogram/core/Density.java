@@ -23,6 +23,10 @@ public class Density {
 
   /**
    * Defines a padding for placing the initial polygons within the grid.
+   * If too low (<=1) it forces data to be almost at the border which will reject many
+   * integration time steps anc convergence will be slow. If too big (<=3) convergence will also be slow
+   * because there is a huge padding and a lot of the grid is wasted since only some parts actually
+   * participate to transform the data.
    */
   private static final double PADDING = 1.5;
 
