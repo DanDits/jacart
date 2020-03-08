@@ -24,3 +24,7 @@ mvn clean deploy -P release # deploy and use release profile to include plugins 
 
 #Note: credentials to pgp key must not be in the settings.xml, my system at least will prompt me.
 #Note:
+ The nexus repository manager: https://oss.sonatype.org/
+ The initial ticket for claiming coordinates: https://issues.sonatype.org/browse/OSSRH-55492
+ The published data: https://repo1.maven.org/maven2/de/dandit/
+ Finding it for users: https://mvnrepository.com/search?q=de.dandit
