@@ -4,16 +4,12 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
 
+import de.dandit.cartogram.core.api.*;
 import de.dandit.cartogram.core.context.CartogramContext;
 import de.dandit.cartogram.core.context.MapGrid;
 import de.dandit.cartogram.core.context.PolygonData;
-import de.dandit.cartogram.core.api.Region;
 import de.dandit.cartogram.core.context.RegionData;
 import de.dandit.cartogram.core.dft.FftPlan2D;
-import de.dandit.cartogram.core.api.CartogramConfig;
-import de.dandit.cartogram.core.api.FftPlanFactory;
-import de.dandit.cartogram.core.api.Logging;
-import de.dandit.cartogram.core.api.MapFeatureData;
 
 public class Density {
   /**
@@ -47,22 +43,47 @@ public class Density {
   private static PolygonData initPolygonData(MapFeatureData featureData) {
     List<Region> regions = featureData.getRegions();
     int ringCount = regions.stream()
-      .mapToInt(region -> region.getPolygonRingsX().length)
+      .mapToInt(region -> getRingCount(region.getPolygons()))
       .sum();
 
     double[][] ringsX = new double[ringCount][];
     double[][] ringsY = new double[ringCount][];
     int[] polygonId = new int[ringCount];
+    int[][] ringsInPolygonByRegion = new int[regions.size()][];
     int ringCounter = 0;
+    int regionCounter = 0;
     for (Region region : regions) {
-      for (int i = 0; i < region.getPolygonRingsX().length; i++) {
+      int[] ringsInPolygon = new int[getRingCount(region.getPolygons())];
+      int currentPolygonIndex = 0;
+      int currentRingCounter = 0;
+      for (LightPolygon polygon : region.getPolygons()) {
+        ringsX[ringCounter] = polygon.getExteriorRingX();
+        ringsY[ringCounter] = polygon.getExteriorRingY();
         polygonId[ringCounter] = region.getId();
-        ringsX[ringCounter] = region.getPolygonRingsX()[i];
-        ringsY[ringCounter] = region.getPolygonRingsY()[i];
+        ringsInPolygon[currentRingCounter] = -(currentPolygonIndex + 1);
         ringCounter++;
+        currentRingCounter++;
+
+        for (int i = 0; i < polygon.getInteriorRingsX().size(); i++) {
+          ringsX[ringCounter] = polygon.getInteriorRingsX().get(i);
+          ringsY[ringCounter] = polygon.getInteriorRingsY().get(i);
+          polygonId[ringCounter] = region.getId();
+          ringsInPolygon[currentRingCounter] = currentPolygonIndex;
+          ringCounter++;
+          currentRingCounter++;
+        }
+        currentPolygonIndex++;
       }
+      ringsInPolygonByRegion[regionCounter] = ringsInPolygon;
+      regionCounter++;
     }
-    return new PolygonData(ringsX, ringsY, polygonId);
+    return new PolygonData(ringsX, ringsY, polygonId, ringsInPolygonByRegion);
+  }
+
+  private static int getRingCount(List<LightPolygon> polygons) {
+    return polygons.stream()
+      .mapToInt(polygon -> polygon.getInteriorRingsX().size() + 1)
+      .sum();
   }
 
   private static MapGrid transformMapToLSpace(FftPlanFactory fftPlanFactory, Logging logging, MapFeatureData featureData, double[][] ringsX, double[][] ringsY) {

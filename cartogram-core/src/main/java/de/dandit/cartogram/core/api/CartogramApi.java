@@ -52,7 +52,7 @@ public class CartogramApi {
     int[][] ringsInPolygonByRegion = context.getRegionData().getRingsInPolygonByRegion();
     boolean[] regionNaN = context.getRegionData().getRegionNaN();
     for (int i = 0; i < regionIds.length; i++) {
-      ResultRegion resultRegion = createResultRegion(ringsInRegion[i], ringsInPolygonByRegion[i], cartogramRingsX, cartogramRingsY,
+      ResultRegion resultRegion = createResultRegion(regionIds[i], ringsInRegion[i], ringsInPolygonByRegion[i], cartogramRingsX, cartogramRingsY,
         regionNaN[i]);
       resultRegions.add(resultRegion);
     }
@@ -65,7 +65,7 @@ public class CartogramApi {
       cartogramContext.getMapGrid().getLy());
   }
 
-  private ResultRegion createResultRegion(int[] polyIndices,
+  private ResultRegion createResultRegion(int regionId, int[] polyIndices,
                                           int[] ringIsHoleOfPolygon,
                                           double[][] cartogramRingsX,
                                           double[][] cartogramRingsY,
@@ -88,15 +88,15 @@ public class CartogramApi {
         holesYForShell.add(cornersY);
       }
     }
-    List<ResultPolygon> polygons = new ArrayList<>();
+    List<LightPolygon> polygons = new ArrayList<>();
     for (var indexedShellX : shellsX.entrySet()) {
-      polygons.add(new ResultPolygon(
+      polygons.add(new LightPolygon(
         indexedShellX.getValue(),
         shellsY.get(indexedShellX.getKey()),
         holesX.getOrDefault(indexedShellX.getKey(), List.of()),
         holesY.getOrDefault(indexedShellX.getKey(), List.of())));
     }
 
-    return new ResultRegion(polygons, regionNaN);
+    return new ResultRegion(regionId, polygons, regionNaN);
   }
 }

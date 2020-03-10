@@ -1,7 +1,7 @@
 package de.dandit.cartogram.geo.convert;
 
 import de.dandit.cartogram.core.api.Region;
-import de.dandit.cartogram.core.api.ResultPolygon;
+import de.dandit.cartogram.core.api.LightPolygon;
 import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
@@ -35,46 +35,34 @@ public class GeometryConverter {
   }
 
   public Region createFromPolygon(Function<Integer, Double> valueProvider, int regionId, Polygon polygon) {
-    polygon.normalize();
-    double[][] pointsX = new double[1 + polygon.getNumInteriorRing()][];
-    double[][] pointsY = new double[1 + polygon.getNumInteriorRing()][];
-    pointsX[0] = convertCoordinatesX(polygon.getExteriorRing());
-    pointsY[0] = convertCoordinatesY(polygon.getExteriorRing());
-    List<Integer> ringsInPolygons = new ArrayList<>();
-    ringsInPolygons.add(-1);
-    for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
-      pointsX[1 + j] = convertCoordinatesX(polygon.getInteriorRingN(j));
-      pointsY[1 + j] = convertCoordinatesY(polygon.getInteriorRingN(j));
-      ringsInPolygons.add(0);
-    }
-    return new Region(regionId,
+    return new Region(
+      regionId,
       valueProvider.apply(regionId),
-      pointsX,
-      pointsY,
-      ringsInPolygons.stream().mapToInt(a -> a).toArray());
+      List.of(asLightPolygon(polygon)));
   }
 
   public Region createFromMultiPolygon(Function<Integer, Double> valueProvider, int regionId, MultiPolygon multiPolygon) {
     multiPolygon.normalize();
-    List<double[]> ringsX = new ArrayList<>();
-    List<double[]> ringsY = new ArrayList<>();
-    List<Integer> ringsInPolygons = new ArrayList<>();
+    List<LightPolygon> polygons = new ArrayList<>();
     for (int i = 0; i < multiPolygon.getNumGeometries(); i++) {
-      Polygon polygon = (Polygon) multiPolygon.getGeometryN(i);
-      ringsX.add(convertCoordinatesX(polygon.getExteriorRing()));
-      ringsY.add(convertCoordinatesY(polygon.getExteriorRing()));
-      ringsInPolygons.add(-i - 1);
-      for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
-        ringsX.add(convertCoordinatesX(polygon.getInteriorRingN(j)));
-        ringsY.add(convertCoordinatesY(polygon.getInteriorRingN(j)));
-        ringsInPolygons.add(i);
-      }
+      polygons.add(asLightPolygon((Polygon) multiPolygon.getGeometryN(i)));
     }
     return new Region(regionId,
       valueProvider.apply(regionId),
-      ringsX.toArray(double[][]::new),
-      ringsY.toArray(double[][]::new),
-      ringsInPolygons.stream().mapToInt(a -> a).toArray());
+      polygons);
+  }
+
+  private LightPolygon asLightPolygon(Polygon polygon) {
+    polygon.normalize();
+    List<double[]> interiorRingsX = new ArrayList<>(polygon.getNumInteriorRing());
+    List<double[]> interiorRingsY = new ArrayList<>(polygon.getNumInteriorRing());
+    double[] exteriorRingX  = convertCoordinatesX(polygon.getExteriorRing());
+    double[] exteriorRingY = convertCoordinatesY(polygon.getExteriorRing());
+    for (int j = 0; j < polygon.getNumInteriorRing(); j++) {
+      interiorRingsX.add(convertCoordinatesX(polygon.getInteriorRingN(j)));
+      interiorRingsY.add(convertCoordinatesY(polygon.getInteriorRingN(j)));
+    }
+    return new LightPolygon(exteriorRingX, exteriorRingY, interiorRingsX, interiorRingsY);
   }
 
   private static double[] convertCoordinatesX(LineString lineString) {
@@ -89,17 +77,17 @@ public class GeometryConverter {
         .toArray();
   }
 
-  public Geometry createGeometry(List<ResultPolygon> resultPolygons) {
+  public Geometry createGeometry(List<LightPolygon> resultPolygons) {
     Geometry geometry;
     if (resultPolygons.size() == 0) {
       geometry = geometryFactory.createPolygon();
     } else if (resultPolygons.size() == 1) {
-      ResultPolygon polygon = resultPolygons.get(0);
+      LightPolygon polygon = resultPolygons.get(0);
       geometry = asPolygon(polygon.getExteriorRingX(), polygon.getExteriorRingY(), polygon.getInteriorRingsX(), polygon.getInteriorRingsY());
     } else {
       Polygon[] polygons = new Polygon[resultPolygons.size()];
       for (int i = 0; i < resultPolygons.size(); i++) {
-        ResultPolygon p = resultPolygons.get(i);
+        LightPolygon p = resultPolygons.get(i);
         Polygon polygon = asPolygon(p.getExteriorRingX(), p.getExteriorRingY(), p.getInteriorRingsX(), p.getInteriorRingsY());
         polygons[i] = polygon;
       }

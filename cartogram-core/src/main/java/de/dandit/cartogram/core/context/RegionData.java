@@ -17,14 +17,18 @@ public class RegionData {
   private final double[][] ringsY;
   private final double[][] cartogramRingsX;
   private final double[][] cartogramRingsY;
+
+  /*
+   * Describes a mapping to know if the ring with a given index is A) an exterior or interior ring
+   * and B) to which polygon (by index) the ring belongs. For a single input Polygon with 2 holes (in this order) this would be [-1,0,0]
+   * with negative values i marking an exterior ring of the polygon with index -(i+1).
+   */
   private final int[][] ringsInPolygonByRegion;
 
-  public RegionData(List<Region> regions, int[] polygonId, double[][] ringsX, double[][] ringsY) {
+  public RegionData(List<Region> regions, int[] polygonId, double[][] ringsX, double[][] ringsY, int[][] ringsInPolygonByRegion) {
     this.ringsX = ringsX;
     this.ringsY = ringsY;
-    this.ringsInPolygonByRegion = regions.stream()
-      .map(Region::getRingsInPolygons)
-      .toArray(int[][]::new);
+    this.ringsInPolygonByRegion = ringsInPolygonByRegion;
     int regionsCount = regions.size();
     this.regionId = regions.stream()
       .mapToInt(Region::getId)

@@ -1,7 +1,7 @@
 package de.dandit.cartogram.geo.convert;
 
 import de.dandit.cartogram.core.api.Region;
-import de.dandit.cartogram.core.api.ResultPolygon;
+import de.dandit.cartogram.core.api.LightPolygon;
 import de.dandit.cartogram.core.api.ResultRegion;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -37,7 +37,7 @@ public class FeatureConverter {
     return resultAsGeo;
   }
 
-  private SimpleFeature createFeature(int id, List<ResultPolygon> resultPolygons, boolean isMultiPolygon) {
+  private SimpleFeature createFeature(int id, List<LightPolygon> resultPolygons, boolean isMultiPolygon) {
     Geometry geometry = geometryConverter.createGeometry(resultPolygons);
     SimpleFeatureType simpleFeatureType = createSimpleFeatureType(isMultiPolygon);
     return new SimpleFeatureBuilder(simpleFeatureType)

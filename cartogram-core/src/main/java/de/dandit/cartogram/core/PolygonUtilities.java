@@ -43,7 +43,7 @@ public class PolygonUtilities {
   }
 
   private static RegionData createRegionData(MapFeatureData mapData, PolygonData polygonData) {
-    return new RegionData(mapData.getRegions(), polygonData.getPolygonId(), polygonData.getPolygonRingsX(), polygonData.getPolygonRingsY());
+    return new RegionData(mapData.getRegions(), polygonData.getPolygonId(), polygonData.getPolygonRingsX(), polygonData.getPolygonRingsY(), polygonData.getRingsInPolygonByRegion());
   }
 
   public static PolygonData removeTinyPolygonsInNonLSpace(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
@@ -74,7 +74,7 @@ public class PolygonUtilities {
         nonTinyRingCount++;
       }
     }
-    if (nonTinyRingCount < ringCount) {
+    if (false) {
       logging.debug("Removing tiny polygons.");
 
       int[] nonTinyRingsCount = new int[nonTinyRingCount];
@@ -109,14 +109,14 @@ public class PolygonUtilities {
         }
       }
 
-
-      return createOverriddenPolygons(nonTinyRingCount, nonTinyRingsX, nonTinyRingsY, nonTinyRingsCount, nonTinyRingId);
+      // TODO the ring ids are now wrong. Also what should we do about polygons where the complete region is too small?
+      return createOverriddenPolygons(nonTinyRingCount, nonTinyRingsX, nonTinyRingsY, nonTinyRingsCount, nonTinyRingId, polygonData.getRingsInPolygonByRegion());
     }
     return polygonData;
   }
 
   private static PolygonData createOverriddenPolygons(int nonTinyRingCount, double[][] nonTinyRingX,
-      double[][] nonTinyRingY, int[] nonTinyRingsCount, int[] nonTinyPolygonId) {
+                                                      double[][] nonTinyRingY, int[] nonTinyRingsCount, int[] nonTinyPolygonId, int[][] ringsInPolygonByRegion) {
     int[] polygonId = new int[nonTinyRingCount];
     int[] ringCount = new int[nonTinyRingCount];
     for (int ringIndex = 0; ringIndex < nonTinyRingCount; ringIndex++) {
@@ -135,6 +135,6 @@ public class PolygonUtilities {
         ringsY[ringIndex][pointIndex] = nonTinyRingY[ringIndex][pointIndex];
       }
     }
-    return new PolygonData(ringsX, ringsY, polygonId);
+    return new PolygonData(ringsX, ringsY, polygonId, ringsInPolygonByRegion);
   }
 }

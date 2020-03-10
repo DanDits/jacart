@@ -6,7 +6,7 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
 
-import de.dandit.cartogram.core.api.ResultPolygon;
+import de.dandit.cartogram.core.api.LightPolygon;
 import de.dandit.cartogram.core.api.ResultRegion;
 
 public class EpsWriter {
@@ -31,7 +31,7 @@ public class EpsWriter {
 
     printWriter.println("0.7 SLW");
     for (ResultRegion resultRegion : regions) {
-      for (ResultPolygon polygon : resultRegion.getPolygons()) {
+      for (LightPolygon polygon : resultRegion.getPolygons()) {
         double[] ringX = polygon.getExteriorRingX();
         double[] ringY = polygon.getExteriorRingY();
         drawRing(printWriter, resultRegion, ringX, ringY, "0.96 0.92 0.70");

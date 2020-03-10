@@ -22,15 +22,19 @@ public class CartogramApiTest {
     Region region1 = new Region(
         13,
         5,
-        new double[][] {{2,5,5,2,2}},
-        new double[][] {{8,8,4,4,8}},
-        new int[] {-1});
+        List.of(new LightPolygon(
+          new double[] {2,5,5,2,2},
+          new double[] {8,8,4,4,8},
+          List.of(),
+          List.of())));
     Region region2 = new Region(
         1337,
         10,
-        new double[][] {{5,6,6,5,5}},
-        new double[][] {{8,8,4,4,8}},
-        new int[] {-1});
+      List.of(new LightPolygon(
+        new double[] {5,6,6,5,5},
+        new double[] {8,8,4,4,8},
+        List.of(),
+        List.of())));
     double[] targetAreas = new double[] {Double.NaN, 9000};
     double originalBoxMinX = 1;
     double originalBoxMinY = 3;
@@ -55,9 +59,9 @@ public class CartogramApiTest {
     assertEquals(2, resultRegions.size());
     assertTrue(resultRegions.get(0).isNaN());
     assertFalse(resultRegions.get(1).isNaN());
-    List<ResultPolygon> polygons = resultRegions.get(0).getPolygons();
+    List<LightPolygon> polygons = resultRegions.get(0).getPolygons();
     assertEquals(1, polygons.size());
-    ResultPolygon polygon1 = polygons.get(0);
+    LightPolygon polygon1 = polygons.get(0);
     assertTrue(polygon1.getInteriorRingsX().isEmpty());
     assertTrue(polygon1.getInteriorRingsY().isEmpty());
     assertArrayEquals(new double[] {2,5,5,2,2}, resultRegions.get(0).getPolygons().get(0).getExteriorRingX(), 0.);
@@ -72,23 +76,29 @@ public class CartogramApiTest {
     Region region1 = new Region(
         13,
         5,
-        new double[][] {{2,4.5,4.5,2,2}},
-        new double[][] {{8,8,4,4,8}},
-        new int[] {-1});
+      List.of(new LightPolygon(
+        new double[] {2,4.5,4.5,2,2},
+        new double[] {8,8,4,4,8},
+        List.of(),
+        List.of())));
     // area is 1.5*4=6
     Region region2 = new Region(
         1337,
         10,
-        new double[][] {{4.5,6,6,4.5,4.5}},
-        new double[][] {{8,8,4,4,8}},
-        new int[] {-1});
+      List.of(new LightPolygon(
+        new double[] {4.5,6,6,4.5,4.5},
+        new double[] {8,8,4,4,8},
+        List.of(),
+        List.of())));
     // area is 1*4=4
     Region region3 = new Region(
         133742,
         15,
-        new double[][] {{6,7,7,6,6}},
-        new double[][] {{8,8,4,4,8}},
-        new int[] {-1});
+      List.of(new LightPolygon(
+        new double[] {6,7,7,6,6},
+        new double[] {8,8,4,4,8},
+        List.of(),
+        List.of())));
     double factorOfArea3 = 3.;
     double[] targetAreas = new double[] {5, Double.NaN, 5 * factorOfArea3};
     double originalBoxMinX = 1;
@@ -116,15 +126,15 @@ public class CartogramApiTest {
     assertTrue(resultRegions.get(1).isNaN());
     assertFalse(resultRegions.get(2).isNaN());
 
-    ResultPolygon polygon1 = resultRegions.get(0).getPolygons().get(0);
+    LightPolygon polygon1 = resultRegions.get(0).getPolygons().get(0);
     double area1 = PolygonUtilities.calculateOrientedArea(
         polygon1.getExteriorRingX(),
         polygon1.getExteriorRingY());
-    ResultPolygon polygon2 = resultRegions.get(1).getPolygons().get(0);
+    LightPolygon polygon2 = resultRegions.get(1).getPolygons().get(0);
     double area2 = PolygonUtilities.calculateOrientedArea(
         polygon2.getExteriorRingX(),
         polygon2.getExteriorRingY());
-    ResultPolygon polygon3 = resultRegions.get(2).getPolygons().get(0);
+    LightPolygon polygon3 = resultRegions.get(2).getPolygons().get(0);
     double area3 = PolygonUtilities.calculateOrientedArea(
         polygon3.getExteriorRingX(),
         polygon3.getExteriorRingY());
@@ -143,16 +153,20 @@ public class CartogramApiTest {
     Region region1 = new Region(
         13,
         5,
-        new double[][] {{2,5,5,2,2}},
-        new double[][] {{8,8,4,4,8}},
-        new int[] {-1});
+      List.of(new LightPolygon(
+        new double[] {2,5,5,2,2},
+        new double[] {8,8,4,4,8},
+        List.of(),
+        List.of())));
     // has area (6-5)*(8-4)=4
     Region region2 = new Region(
         1337,
         10,
-        new double[][] {{5,6,6,5,5}},
-        new double[][] {{8,8,4,4,8}},
-        new int[] {-1});
+      List.of(new LightPolygon(
+        new double[] {5,6,6,5,5},
+        new double[] {8,8,4,4,8},
+        List.of(),
+        List.of())));
     // meaning: region1 initially has triple the size of region2 but should only be half the size of region2
     double[] targetAreas = new double[] {4500, 9000};
     double originalBoxMinX = 1;
@@ -177,15 +191,15 @@ public class CartogramApiTest {
     assertEquals(2, resultRegions.size());
     assertFalse(resultRegions.get(0).isNaN());
     assertFalse(resultRegions.get(1).isNaN());
-    List<ResultPolygon> polygons = resultRegions.get(0).getPolygons();
+    List<LightPolygon> polygons = resultRegions.get(0).getPolygons();
     assertEquals(1, polygons.size());
-    ResultPolygon polygon1 = polygons.get(0);
+    LightPolygon polygon1 = polygons.get(0);
     assertTrue(polygon1.getInteriorRingsX().isEmpty());
     assertTrue(polygon1.getInteriorRingsY().isEmpty());
     double area1 = PolygonUtilities.calculateOrientedArea(
         polygon1.getExteriorRingX(),
         polygon1.getExteriorRingY());
-    ResultPolygon polygon2 = resultRegions.get(1).getPolygons().get(0);
+    LightPolygon polygon2 = resultRegions.get(1).getPolygons().get(0);
     double area2 = PolygonUtilities.calculateOrientedArea(
         polygon2.getExteriorRingX(),
         polygon2.getExteriorRingY());
@@ -199,7 +213,7 @@ public class CartogramApiTest {
       double originalBoxMinY,
       double originalBoxMaxX,
       double originalBoxMaxY,
-      ResultPolygon polygon1) {
+      LightPolygon polygon1) {
     assertTrue(Arrays.stream(polygon1.getExteriorRingX()).min().orElseThrow() >= originalBoxMinX);
     assertTrue(Arrays.stream(polygon1.getExteriorRingX()).max().orElseThrow() <= originalBoxMaxX);
     assertTrue(Arrays.stream(polygon1.getExteriorRingY()).min().orElseThrow() >= originalBoxMinY);
