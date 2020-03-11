@@ -1,6 +1,9 @@
 package de.dandit.cartogram.core.api;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Following is the input and how it is understood:
@@ -19,7 +22,7 @@ public class MapFeatureData {
   private final double mapMaxX;
   private final double mapMaxY;
 
-  private final double[] targetAreaPerRegion; // use negative for invalid areas, use NaN for explicitly set not available value
+  private final Map<Integer, Double> targetAreaPerRegion; // use negative for invalid areas, use NaN for explicitly set not available value
   private final List<Region> regions;
 
   public MapFeatureData(double mapMinX, double mapMinY, double mapMaxX, double mapMaxY,
@@ -30,7 +33,10 @@ public class MapFeatureData {
     this.mapMaxX = mapMaxX;
     this.mapMaxY = mapMaxY;
     this.regions = regions;
-    this.targetAreaPerRegion = targetAreaPerRegion;
+    this.targetAreaPerRegion = new HashMap<>(targetAreaPerRegion.length);
+    for (int i = 0; i < targetAreaPerRegion.length; i++) {
+      this.targetAreaPerRegion.put(regions.get(i).getId(), targetAreaPerRegion[i]);
+    }
   }
 
   public double getMapMinX() {
@@ -49,7 +55,7 @@ public class MapFeatureData {
     return mapMaxY;
   }
 
-  public double[] getTargetAreaPerRegion() {
+  public Map<Integer, Double> getTargetAreaPerRegion() {
     return targetAreaPerRegion;
   }
 

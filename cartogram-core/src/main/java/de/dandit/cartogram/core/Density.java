@@ -3,6 +3,7 @@ package de.dandit.cartogram.core;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import de.dandit.cartogram.core.api.*;
 import de.dandit.cartogram.core.context.CartogramContext;
@@ -48,7 +49,7 @@ public class Density {
 
     double[][] ringsX = new double[ringCount][];
     double[][] ringsY = new double[ringCount][];
-    int[] polygonId = new int[ringCount];
+    int[] regionIdByRing = new int[ringCount];
     int[][] ringsInPolygonByRegion = new int[regions.size()][];
     int ringCounter = 0;
     int regionCounter = 0;
@@ -59,7 +60,7 @@ public class Density {
       for (LightPolygon polygon : region.getPolygons()) {
         ringsX[ringCounter] = polygon.getExteriorRingX();
         ringsY[ringCounter] = polygon.getExteriorRingY();
-        polygonId[ringCounter] = region.getId();
+        regionIdByRing[ringCounter] = region.getId();
         ringsInPolygon[currentRingCounter] = -(currentPolygonIndex + 1);
         ringCounter++;
         currentRingCounter++;
@@ -67,7 +68,7 @@ public class Density {
         for (int i = 0; i < polygon.getInteriorRingsX().size(); i++) {
           ringsX[ringCounter] = polygon.getInteriorRingsX().get(i);
           ringsY[ringCounter] = polygon.getInteriorRingsY().get(i);
-          polygonId[ringCounter] = region.getId();
+          regionIdByRing[ringCounter] = region.getId();
           ringsInPolygon[currentRingCounter] = currentPolygonIndex;
           ringCounter++;
           currentRingCounter++;
@@ -77,7 +78,7 @@ public class Density {
       ringsInPolygonByRegion[regionCounter] = ringsInPolygon;
       regionCounter++;
     }
-    return new PolygonData(ringsX, ringsY, polygonId, ringsInPolygonByRegion);
+    return new PolygonData(ringsX, ringsY, regionIdByRing, ringsInPolygonByRegion);
   }
 
   private static int getRingCount(List<LightPolygon> polygons) {
@@ -86,12 +87,8 @@ public class Density {
       .sum();
   }
 
-  private static MapGrid transformMapToLSpace(FftPlanFactory fftPlanFactory, Logging logging, MapFeatureData featureData, double[][] ringsX, double[][] ringsY) {
-    double mapMinX = featureData.getMapMinX();
-    double mapMinY = featureData.getMapMinY();
-    double mapMaxX = featureData.getMapMaxX();
-    double mapMaxY = featureData.getMapMaxY();
-
+  private static MapGrid transformMapToLSpace(FftPlanFactory fftPlanFactory, Logging logging,
+    double mapMinX, double mapMinY, double mapMaxX, double mapMaxY, double[][] ringsX, double[][] ringsY) {
     double newMaxX = 0.5 * ((1.0 + PADDING) * mapMaxX + (1.0 - PADDING) * mapMinX);
     double newMinX = 0.5 * ((1.0 - PADDING) * mapMaxX + (1.0 + PADDING) * mapMinX);
     double newMaxY = 0.5 * ((1.0 + PADDING) * mapMaxY + (1.0 - PADDING) * mapMinY);
@@ -160,11 +157,19 @@ public class Density {
   }
 
   public static CartogramContext initializeContext(MapFeatureData featureData, CartogramConfig config) {
-    PolygonData polygonData = initPolygonData(featureData);
     Logging logging = config.getLogging();
-    RegionData regionData = PolygonUtilities.processMap(logging, featureData, polygonData);
+    logging.debug("Amount of regions (before processing): {0}", featureData.getRegions().size());
+    RegionData regionData = PolygonUtilities.processMap(logging, featureData, initPolygonData(featureData));
     logging.debug("Amount of regions: {0}", regionData.getRegionId().length);
-    MapGrid mapGrid = transformMapToLSpace(config.getFftPlanFactory(), logging, featureData, regionData.getRingsX(), regionData.getRingsY());
+    MapGrid mapGrid = transformMapToLSpace(
+      config.getFftPlanFactory(),
+      logging,
+      featureData.getMapMinX(),
+      featureData.getMapMinY(),
+      featureData.getMapMaxX(),
+      featureData.getMapMaxY(),
+      regionData.getRingsX(),
+      regionData.getRingsY());
 
     int regionCount = regionData.getRingsInRegion().length;
     double[] targetArea = regionData.getTargetArea();
@@ -179,10 +184,10 @@ public class Density {
 
     interior(mapGrid, regionData);
 
-    double[] featureTargetArea = featureData.getTargetAreaPerRegion();
+    Map<Integer,Double> featureTargetArea = featureData.getTargetAreaPerRegion();
 
     for (int i = 0; i < regionCount; i++) {
-      targetArea[i] = featureTargetArea[i];
+      targetArea[i] = featureTargetArea.get(regionData.getRegionId()[i]);
       if (Double.isNaN(targetArea[i])) {
         regionHasNaN[i] = true;
         targetArea[i] = 0.;

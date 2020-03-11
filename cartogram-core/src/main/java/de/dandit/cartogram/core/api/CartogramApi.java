@@ -65,36 +65,37 @@ public class CartogramApi {
       cartogramContext.getMapGrid().getLy());
   }
 
-  private ResultRegion createResultRegion(int regionId, int[] polyIndices,
-                                          int[] ringIsHoleOfPolygon,
+  private ResultRegion createResultRegion(int regionId, int[] ringsInRegion,
+                                          int[] ringsInPolygon,
                                           double[][] cartogramRingsX,
                                           double[][] cartogramRingsY,
                                           boolean regionNaN) {
-    Map<Integer, double[]> shellsX = new HashMap<>();
-    Map<Integer, double[]> shellsY = new HashMap<>();
+    Map<Integer, double[]> ringsX = new HashMap<>();
+    Map<Integer, double[]> ringsY = new HashMap<>();
     Map<Integer, List<double[]>> holesX = new HashMap<>();
     Map<Integer, List<double[]>> holesY = new HashMap<>();
-    for (int j = 0; j < polyIndices.length; j++) {
-      double[] cornersX = cartogramRingsX[polyIndices[j]];
-      double[] cornersY = cartogramRingsY[polyIndices[j]];
-      if (ringIsHoleOfPolygon[j] < 0) {
-        int index = -(ringIsHoleOfPolygon[j] + 1);
-        shellsX.put(index, cornersX);
-        shellsY.put(index, cornersY);
+    for (int j = 0; j < ringsInRegion.length; j++) {
+      double[] currentRingX = cartogramRingsX[ringsInRegion[j]];
+      double[] currentRingY = cartogramRingsY[ringsInRegion[j]];
+      if (ringsInPolygon[j] < 0) {
+        int index = -(ringsInPolygon[j] + 1);
+        ringsX.put(index, currentRingX);
+        ringsY.put(index, currentRingY);
       } else {
-        List<double[]> holesXForShell = holesX.computeIfAbsent(ringIsHoleOfPolygon[j], unused -> new ArrayList<>());
-        holesXForShell.add(cornersX);
-        List<double[]> holesYForShell = holesY.computeIfAbsent(ringIsHoleOfPolygon[j], unused -> new ArrayList<>());
-        holesYForShell.add(cornersY);
+        List<double[]> interiorRingsX = holesX.computeIfAbsent(ringsInPolygon[j], unused -> new ArrayList<>());
+        interiorRingsX.add(currentRingX);
+        List<double[]> interiorRingsY = holesY.computeIfAbsent(ringsInPolygon[j], unused -> new ArrayList<>());
+        interiorRingsY.add(currentRingY);
       }
     }
     List<LightPolygon> polygons = new ArrayList<>();
-    for (var indexedShellX : shellsX.entrySet()) {
+    for (var indexedRingX : ringsX.entrySet()) {
+      Integer key = indexedRingX.getKey();
       polygons.add(new LightPolygon(
-        indexedShellX.getValue(),
-        shellsY.get(indexedShellX.getKey()),
-        holesX.getOrDefault(indexedShellX.getKey(), List.of()),
-        holesY.getOrDefault(indexedShellX.getKey(), List.of())));
+        indexedRingX.getValue(),
+        ringsY.get(key),
+        holesX.getOrDefault(key, List.of()),
+        holesY.getOrDefault(key, List.of())));
     }
 
     return new ResultRegion(regionId, polygons, regionNaN);

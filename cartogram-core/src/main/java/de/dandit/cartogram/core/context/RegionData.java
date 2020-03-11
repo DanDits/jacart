@@ -25,13 +25,15 @@ public class RegionData {
    */
   private final int[][] ringsInPolygonByRegion;
 
-  public RegionData(List<Region> regions, int[] polygonId, double[][] ringsX, double[][] ringsY, int[][] ringsInPolygonByRegion) {
+  public RegionData(int[] regionIdByRing, double[][] ringsX, double[][] ringsY, int[][] ringsInPolygonByRegion) {
     this.ringsX = ringsX;
     this.ringsY = ringsY;
-    this.ringsInPolygonByRegion = ringsInPolygonByRegion;
-    int regionsCount = regions.size();
-    this.regionId = regions.stream()
-      .mapToInt(Region::getId)
+    this.ringsInPolygonByRegion = Arrays.stream(ringsInPolygonByRegion)
+      .filter(r -> r.length > 0)
+      .toArray(int[][]::new);
+    int regionsCount = this.ringsInPolygonByRegion.length;
+    this.regionId = Arrays.stream(regionIdByRing)
+      .distinct()
       .toArray();
 
     // using a map instead of an array to support large ids and sparse ids and non positive ids
@@ -41,7 +43,7 @@ public class RegionData {
     }
     this.regionNaN = new boolean[regionsCount];
     this.regionPerimeter = new double[regionsCount];
-    this.ringInRegion = initPolygonInRegions(regionIdInv, regionId, polygonId);
+    this.ringInRegion = initPolygonInRegions(regionIdInv, regionId, regionIdByRing);
     this.targetArea = new double[regionsCount];
     this.cartogramRingsX = initEmptyCartogramRings(ringsX);
     this.cartogramRingsY = initEmptyCartogramRings(ringsX);
@@ -61,16 +63,16 @@ public class RegionData {
     return regionIdInverse.getOrDefault(id, -1);
   }
 
-  private static int[][] initPolygonInRegions(Map<Integer, Integer> regionIdInverse, int[] regionId, int[] polygonId) {
+  private static int[][] initPolygonInRegions(Map<Integer, Integer> regionIdInverse, int[] regionId, int[] regionIdByRing) {
     int regionCount = regionId.length;
     int[][] ringsInRegion = new int[regionCount][];
-    int lastId = polygonId[0];
+    int lastId = regionIdByRing[0];
     int[] ringsInRegionCount = new int[regionCount];
-    double polygonCount = polygonId.length;
-    for (int i : polygonId) {
-      if (i != -99999) {
-        ringsInRegionCount[regionIdToIndex(regionIdInverse, i)]++;
-        lastId = i;
+    double ringCount = regionIdByRing.length;
+    for (int currentId : regionIdByRing) {
+      if (currentId != Integer.MIN_VALUE) {
+        ringsInRegionCount[regionIdToIndex(regionIdInverse, currentId)]++;
+        lastId = currentId;
       } else {
         ringsInRegionCount[regionIdToIndex(regionIdInverse, lastId)]++;
       }
@@ -81,13 +83,13 @@ public class RegionData {
     for (int j = 0; j < regionCount; j++) {
       ringsInRegionCount[j] = 0;
     }
-    lastId = polygonId[0];
-    for (int j = 0; j < polygonCount; j++) {
-      if (polygonId[j] != -99999) {
-        int regionIndex = regionIdToIndex(regionIdInverse, polygonId[j]);
+    lastId = regionIdByRing[0];
+    for (int j = 0; j < ringCount; j++) {
+      if (regionIdByRing[j] != Integer.MIN_VALUE) {
+        int regionIndex = regionIdToIndex(regionIdInverse, regionIdByRing[j]);
         ringsInRegion[regionIndex]
           [ringsInRegionCount[regionIndex]++] = j;
-        lastId = polygonId[j];
+        lastId = regionIdByRing[j];
       } else {
         int regionIndex = regionIdToIndex(regionIdInverse, lastId);
         ringsInRegion[regionIndex]

@@ -3,13 +3,13 @@ package de.dandit.cartogram.core.context;
 public class PolygonData {
   private final double[][] polygonRingsX;
   private final double[][] polygonRingsY;
-  private final int[] polygonId;
+  private final int[] regionIdByRing;
   private final int[][] ringsInPolygonByRegion;
 
-  public PolygonData(double[][] polygonRingsX, double[][] polygonRingsY, int[] polygonId, int[][] ringsInPolygonByRegion) {
+  public PolygonData(double[][] polygonRingsX, double[][] polygonRingsY, int[] regionIdByRing, int[][] ringsInPolygonByRegion) {
     this.polygonRingsX = polygonRingsX;
     this.polygonRingsY = polygonRingsY;
-    this.polygonId = polygonId;
+    this.regionIdByRing = regionIdByRing;
     this.ringsInPolygonByRegion = ringsInPolygonByRegion;
   }
 
@@ -21,8 +21,8 @@ public class PolygonData {
     return polygonRingsY;
   }
 
-  public int[] getPolygonId() {
-    return polygonId;
+  public int[] getRegionIdByRing() {
+    return regionIdByRing;
   }
 
   public int[][] getRingsInPolygonByRegion() {

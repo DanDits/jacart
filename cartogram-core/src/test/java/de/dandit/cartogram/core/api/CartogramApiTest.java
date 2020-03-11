@@ -145,6 +145,78 @@ public class CartogramApiTest {
     assertInBounds(originalBoxMinX, originalBoxMinY, originalBoxMaxX, originalBoxMaxY, polygon3);
   }
 
+
+  @Test
+  public void handleRemovingTinyRings() throws ConvergenceGoalFailedException {
+    // area is 2.5*4=10 (non tiny)
+    Region region1 = new Region(
+      13,
+      5,
+      List.of(new LightPolygon(
+        new double[] {2,4.5,4.5,2,2},
+        new double[] {8,8,4,4,8},
+        List.of(),
+        List.of())));
+    // two polygons:
+    // first: area is 1.5*4=6 (non tiny) but has a tiny interior ring and a non tiny interior ring
+    // second: area is tiny
+    double tinyDelta = 0.0000001;
+    Region region2 = new Region(
+      1337,
+      10,
+      List.of(new LightPolygon(
+        new double[] {4.5,6,6,4.5,4.5},
+        new double[] {8,8,4,4,8},
+        List.of(new double[] {4.6,4.6+tinyDelta,4.6+tinyDelta,4.6,4.6}, new double[] {4.7, 5, 5, 4.7,4.7}),
+        List.of(new double[] {4.9+tinyDelta,4.9+tinyDelta,4.9,4.9,4.9+tinyDelta}, new double[] {6,6,5,5,6})),
+        new LightPolygon(
+          new double[] {4.5,4.5+tinyDelta,4.5+tinyDelta,4.5,4.5},
+          new double[] {4+tinyDelta,4+tinyDelta,4,4,4+tinyDelta},
+          List.of(new double[] {4.5,4.5+tinyDelta,4.5+tinyDelta,4.5,4.5}),
+          List.of(new double[] {4+tinyDelta,4+tinyDelta,4,4,4+tinyDelta}))));
+    // area is tiny
+    Region region3 = new Region(
+      133742,
+      15,
+      List.of(new LightPolygon(
+        new double[] {6,6+tinyDelta,6+tinyDelta,6,6},
+        new double[] {4+tinyDelta,4+tinyDelta,4,4,4+tinyDelta},
+        List.of(),
+        List.of())));
+    double factorOfArea3 = 3.;
+    double[] targetAreas = new double[] {5, 1, 5 * factorOfArea3};
+    double originalBoxMinX = 1;
+    double originalBoxMinY = 3;
+    double originalBoxMaxX = 7;
+    double originalBoxMaxY = 9;
+    MapFeatureData mapFeatureData = new MapFeatureData(originalBoxMinX, originalBoxMinY, originalBoxMaxX, originalBoxMaxY,
+      List.of(region1, region2, region3),
+      targetAreas);
+    double givenMaximumAreaError = 0.1;
+    CartogramConfig config = new CartogramConfig(
+      givenMaximumAreaError,
+      true,
+      Logging.ofStandardOutput(),
+      FftPlanFactory.ofDefault(ParallelismConfig.ofCommonPool()),
+      true,
+      ParallelismConfig.ofCommonPool());
+
+    CartogramResult result = new CartogramApi().calculateGaSeMo(mapFeatureData, config);
+
+    assertTrue(result.getMaximumAreaError() <= givenMaximumAreaError);
+    List<ResultRegion> resultRegions = result.getResultRegions();
+    assertEquals(2, resultRegions.size());
+    assertFalse(resultRegions.get(0).isNaN());
+    assertFalse(resultRegions.get(1).isNaN());
+    assertEquals(13, resultRegions.get(0).getRegionId());
+    assertEquals(1337, resultRegions.get(1).getRegionId());
+
+    assertEquals(1, resultRegions.get(0).getPolygons().size());
+    assertEquals(1, resultRegions.get(1).getPolygons().size());
+    assertEquals(0, resultRegions.get(0).getPolygons().get(0).getInteriorRingsX().size());
+    assertEquals(1, resultRegions.get(1).getPolygons().get(0).getInteriorRingsX().size());
+  }
+
   @DisplayName("Converges to precision")
   @ParameterizedTest(name = " with maximum area error below {0}")
   @ValueSource(doubles = {1.,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.01,0.001,0.0001,0.00001,0.000001})

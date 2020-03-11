@@ -17,13 +17,13 @@ public class GeometryConverter {
     this.geometryFactory = Objects.requireNonNull(geometryFactory);
   }
 
-  public Polygon asPolygon(double[] pointsX, double[] pointsY, List<double[]> holesX, List<double[]> holesY) {
+  public Polygon asPolygon(double[] pointsX, double[] pointsY, List<double[]> interiorRingsX, List<double[]> interiorRingsY) {
     LinearRing outerRing = asRing(pointsX, pointsY);
-    LinearRing[] jtsHoles = new LinearRing[holesX.size()];
-    for (int i = 0; i < holesX.size(); i++) {
-      jtsHoles[i] = asRing(holesX.get(i), holesY.get(i));
+    LinearRing[] interiorRings = new LinearRing[interiorRingsX.size()];
+    for (int i = 0; i < interiorRingsX.size(); i++) {
+      interiorRings[i] = asRing(interiorRingsX.get(i), interiorRingsY.get(i));
     }
-    return geometryFactory.createPolygon(outerRing, jtsHoles);
+    return geometryFactory.createPolygon(outerRing, interiorRings);
   }
 
   private LinearRing asRing(double[] pointsX, double[] pointsY) {

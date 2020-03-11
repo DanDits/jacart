@@ -1,9 +1,13 @@
 package de.dandit.cartogram.core;
 
+import de.dandit.cartogram.core.api.Region;
 import de.dandit.cartogram.core.context.PolygonData;
 import de.dandit.cartogram.core.context.RegionData;
 import de.dandit.cartogram.core.api.Logging;
 import de.dandit.cartogram.core.api.MapFeatureData;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class PolygonUtilities {
@@ -16,7 +20,7 @@ public class PolygonUtilities {
 
   public static RegionData processMap(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
     polygonData = removeTinyPolygonsInNonLSpace(logging, mapData, polygonData);
-    return createRegionData(mapData, polygonData);
+    return createRegionData(polygonData);
   }
 
   // positive for clockwise oriented order, negative for ccw oriented order
@@ -42,8 +46,8 @@ public class PolygonUtilities {
       (ringY[0] - ringY[pointCount - 1]) * (ringY[0] - ringY[pointCount - 1]));
   }
 
-  private static RegionData createRegionData(MapFeatureData mapData, PolygonData polygonData) {
-    return new RegionData(mapData.getRegions(), polygonData.getPolygonId(), polygonData.getPolygonRingsX(), polygonData.getPolygonRingsY(), polygonData.getRingsInPolygonByRegion());
+  private static RegionData createRegionData(PolygonData polygonData) {
+    return new RegionData(polygonData.getRegionIdByRing(), polygonData.getPolygonRingsX(), polygonData.getPolygonRingsY(), polygonData.getRingsInPolygonByRegion());
   }
 
   public static PolygonData removeTinyPolygonsInNonLSpace(Logging logging, MapFeatureData mapData, PolygonData polygonData) {
@@ -64,7 +68,7 @@ public class PolygonUtilities {
       double orientedArea = calculateOrientedArea(ringsX[ringIndex], ringsY[ringIndex]);
       double currentArea = Math.abs(orientedArea);
       logging.debug("Polygon {3} (id= {0}) with {1} points has area |{2,number,#.######E0}|",
-        polygonData.getPolygonId()[ringIndex], ringsX[ringIndex].length, orientedArea, ringIndex);
+        polygonData.getRegionIdByRing()[ringIndex], ringsX[ringIndex].length, orientedArea, ringIndex);
       ringHasTinyArea[ringIndex] = currentArea < relativeTinyAreaThreshold;
     }
     int nonTinyRingCount = 0;
@@ -74,17 +78,34 @@ public class PolygonUtilities {
         nonTinyRingCount++;
       }
     }
-    if (false) {
+    if (nonTinyRingCount < ringCount) {
       logging.debug("Removing tiny polygons.");
 
       int[] nonTinyRingsCount = new int[nonTinyRingCount];
-      int[] nonTinyRingId = new int[nonTinyRingCount];
+      int[] nonTinyRegionIdByRing = new int[nonTinyRingCount];
       nonTinyRingCount = 0;
-      int[] polygonId = polygonData.getPolygonId();
+      int[] regionIdByRing = polygonData.getRegionIdByRing();
+      int[][] ringsInPolygonByRegion = polygonData.getRingsInPolygonByRegion();
+      Map<Integer, Integer> regionIdToRegionPolygonCount = new HashMap<>(mapData.getRegions().size());
+      Map<Integer, Integer> regionIdToRegionIndex = new HashMap<>(mapData.getRegions().size());
+      List<List<Integer>> nonTinyRingsInPolygonByRegion = new ArrayList<>(mapData.getRegions().size());
+      int currRegionIndex = 0;
+      for (Region region : mapData.getRegions()) {
+        regionIdToRegionIndex.put(region.getId(), currRegionIndex);
+        nonTinyRingsInPolygonByRegion.add(new ArrayList<>());
+        currRegionIndex++;
+      }
+
       for (int ringIndex = 0; ringIndex < ringCount; ringIndex++) {
+        int regionId = regionIdByRing[ringIndex];
+        // assumes order of rings fits order of rings in the ringsInPolygonByRegion mapping but allows for rings of different regions to mix up
+        Integer polygonIndex = regionIdToRegionPolygonCount.compute(regionId, (key, old) -> old == null ? 0 : old + 1);
+        int regionIndex = regionIdToRegionIndex.get(regionId);
+        int[] ringsInPolygon = ringsInPolygonByRegion[regionIndex];
         if (!ringHasTinyArea[ringIndex]) {
+          nonTinyRingsInPolygonByRegion.get(regionIndex).add(ringsInPolygon[polygonIndex]);
           nonTinyRingsCount[nonTinyRingCount] = ringsX[ringIndex].length;
-          nonTinyRingId[nonTinyRingCount] = polygonId[ringIndex];
+          nonTinyRegionIdByRing[nonTinyRingCount] = regionId;
           nonTinyRingCount++;
         }
       }
@@ -109,18 +130,20 @@ public class PolygonUtilities {
         }
       }
 
-      // TODO the ring ids are now wrong. Also what should we do about polygons where the complete region is too small?
-      return createOverriddenPolygons(nonTinyRingCount, nonTinyRingsX, nonTinyRingsY, nonTinyRingsCount, nonTinyRingId, polygonData.getRingsInPolygonByRegion());
+      return createOverriddenPolygons(nonTinyRingCount, nonTinyRingsX, nonTinyRingsY, nonTinyRingsCount, nonTinyRegionIdByRing,
+        nonTinyRingsInPolygonByRegion.stream()
+          .map(a -> a.stream().mapToInt(b -> b).toArray())
+          .toArray(int[][]::new));
     }
     return polygonData;
   }
 
   private static PolygonData createOverriddenPolygons(int nonTinyRingCount, double[][] nonTinyRingX,
-                                                      double[][] nonTinyRingY, int[] nonTinyRingsCount, int[] nonTinyPolygonId, int[][] ringsInPolygonByRegion) {
-    int[] polygonId = new int[nonTinyRingCount];
+                                                      double[][] nonTinyRingY, int[] nonTinyRingsCount, int[] nonTinyRegionIdByRing, int[][] ringsInPolygonByRegion) {
+    int[] regionIdByRing = new int[nonTinyRingCount];
     int[] ringCount = new int[nonTinyRingCount];
     for (int ringIndex = 0; ringIndex < nonTinyRingCount; ringIndex++) {
-      polygonId[ringIndex] = nonTinyPolygonId[ringIndex];
+      regionIdByRing[ringIndex] = nonTinyRegionIdByRing[ringIndex];
       ringCount[ringIndex] = nonTinyRingsCount[ringIndex];
     }
     double[][] ringsX = new double[nonTinyRingCount][];
@@ -135,6 +158,6 @@ public class PolygonUtilities {
         ringsY[ringIndex][pointIndex] = nonTinyRingY[ringIndex][pointIndex];
       }
     }
-    return new PolygonData(ringsX, ringsY, polygonId, ringsInPolygonByRegion);
+    return new PolygonData(ringsX, ringsY, regionIdByRing, ringsInPolygonByRegion);
   }
 }
