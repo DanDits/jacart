@@ -3,6 +3,7 @@
 gpg --version # check if gpg is installed and what version
 gpg --gen-key # generate a new key, follow prompts
 gpg --keyserver hkp://pool.sks-keyservers.net --send-keys 5A4178EE814AABC4 # published this key, expires 2022-03-07
+# also submitted key thek.asc (ascii armored key) to http://keyserver.ubuntu.com:11371/ this was used by the nexus when doing the second deployment for some reasons the first did not work anymore
 
 # Deploying/ publishing with maven:
 # edit .m2/settings.xml to include setterings.servers.server with id=ossrh,username=DanDits,password=... Use this id(ossrh) in the pom.xml's distributionManagement.(snapshot)Repository.id
